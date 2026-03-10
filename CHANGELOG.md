@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.19.2 (2026-03-09)
+
+### Bug Fixes
+
+- **#657**: Coerce string params to list/dict in MCP tools
+  - MCP clients that serialize `list`/`dict` arguments as JSON strings no longer fail Pydantic validation
+  - Adds `BeforeValidator` coercion to `search_notes` (`entity_types`, `note_types`, `tags`, `metadata_filters`), `write_note` (`metadata`), and `canvas` (`nodes`, `edges`)
+- **#655**: Handle SQLite and Windows semantic search regressions
+  - Fix embedding status query for non-semantic SQLite databases
+  - Windows-safe log file rotation with per-process log filenames
+  - Robust `setup_logging` that handles all environments cleanly
+
 ## v0.19.1 (2026-03-08)
 
 ### Bug Fixes
