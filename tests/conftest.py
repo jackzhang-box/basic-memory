@@ -138,6 +138,8 @@ def config_manager(app_config: BasicMemoryConfig, config_home: Path, monkeypatch
     from basic_memory import config as config_module
 
     config_module._CONFIG_CACHE = None
+    config_module._CONFIG_MTIME = None
+    config_module._CONFIG_SIZE = None
 
     # Create a new ConfigManager that uses the test home directory
     config_manager = ConfigManager()

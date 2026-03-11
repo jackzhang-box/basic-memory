@@ -76,6 +76,8 @@ class TestWorkspaceSetDefault:
         monkeypatch.setenv("HOME", str(temp_path))
         monkeypatch.setenv("BASIC_MEMORY_CONFIG_DIR", str(config_dir))
         basic_memory.config._CONFIG_CACHE = None
+        basic_memory.config._CONFIG_MTIME = None
+        basic_memory.config._CONFIG_SIZE = None
 
         config_manager = ConfigManager()
         test_config = BasicMemoryConfig(
@@ -106,6 +108,8 @@ class TestWorkspaceSetDefault:
 
         # Verify config was updated
         basic_memory.config._CONFIG_CACHE = None
+        basic_memory.config._CONFIG_MTIME = None
+        basic_memory.config._CONFIG_SIZE = None
         config = ConfigManager().config
         assert config.default_workspace == "11111111-1111-1111-1111-111111111111"
 
