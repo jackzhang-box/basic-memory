@@ -134,13 +134,11 @@ def _check_homebrew_update_available(silent: bool) -> tuple[bool, str | None]:
         silent=silent,
         capture_output=True,
     )
-    if result.returncode != 0:
-        stderr = (result.stderr or "").strip()
-        stdout = (result.stdout or "").strip()
-        detail = stderr or stdout or "brew outdated failed"
-        raise RuntimeError(detail)
-
-    is_outdated = bool((result.stdout or "").strip())
+    # Trigger: brew outdated exits 1 when the formula IS outdated (with name on stdout).
+    # Why: non-zero exit here means "outdated", not "error".
+    # Outcome: check stdout for the package name to determine outdated status.
+    stdout = (result.stdout or "").strip()
+    is_outdated = PACKAGE_NAME in stdout
     return is_outdated, None
 
 

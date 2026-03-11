@@ -12,6 +12,7 @@ from basic_memory.cli.auto_update import (
     AutoUpdateResult,
     AutoUpdateStatus,
     InstallSource,
+    _check_homebrew_update_available,
     _is_interactive_session,
     detect_install_source,
     maybe_run_periodic_auto_update,
@@ -127,6 +128,30 @@ def test_force_bypasses_auto_update_disabled(monkeypatch, tmp_path):
     assert result.status == AutoUpdateStatus.UP_TO_DATE
     assert result.checked is True
     assert manager.save_calls == 1
+
+
+def test_check_homebrew_update_available_exit_code_1_means_outdated(monkeypatch):
+    """brew outdated exits 1 when the formula is outdated, not on error."""
+
+    def _fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command, 1, stdout="basicmachines-co/basic-memory/basic-memory\n", stderr=""
+        )
+
+    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _fake_run)
+    is_outdated, _ = _check_homebrew_update_available(silent=False)
+    assert is_outdated is True
+
+
+def test_check_homebrew_update_available_exit_code_0_means_up_to_date(monkeypatch):
+    """brew outdated exits 0 when the formula is up to date."""
+
+    def _fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _fake_run)
+    is_outdated, _ = _check_homebrew_update_available(silent=False)
+    assert is_outdated is False
 
 
 def test_homebrew_outdated_triggers_upgrade(monkeypatch, tmp_path):

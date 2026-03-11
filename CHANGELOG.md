@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.20.2 (2026-03-10)
+
+### Bug Fixes
+
+- Fix auto-update Homebrew detection: `brew outdated` exits 1 when a formula is outdated, not on error
+  - Previously treated exit code 1 as a failure, causing "Automatic update check failed" instead of detecting the available update
+
 ## v0.20.1 (2026-03-10)
 
 ### Bug Fixes
