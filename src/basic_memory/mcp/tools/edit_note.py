@@ -275,7 +275,7 @@ async def edit_note(
         "mcp.tool.edit_note",
         entrypoint="mcp",
         tool_name="edit_note",
-        project_name=project,
+        requested_project=project,
         workspace_id=workspace,
         edit_operation=operation,
         output_format=output_format,

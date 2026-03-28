@@ -39,7 +39,9 @@ async def to_graph_context(
         entity_ids_needed: set[int] = set()
         for context_item in context_result.results:
             for item in (
-                [context_item.primary_result] + context_item.observations + context_item.related_results
+                [context_item.primary_result]
+                + context_item.observations
+                + context_item.related_results
             ):
                 if item.type == SearchItemType.ENTITY:
                     # Entity's own ID for its external_id
@@ -100,9 +102,7 @@ async def to_graph_context(
                         created_at=item.created_at,
                     )
                 case SearchItemType.RELATION:
-                    from_title = (
-                        entity_title_lookup.get(item.from_id) if item.from_id else None
-                    )  # pyright: ignore
+                    from_title = entity_title_lookup.get(item.from_id) if item.from_id else None  # pyright: ignore
                     to_title = entity_title_lookup.get(item.to_id) if item.to_id else None
                     from_ext_id = (
                         entity_external_id_lookup.get(item.from_id) if item.from_id else None
@@ -154,7 +154,8 @@ async def to_graph_context(
             generated_at=context_result.metadata.generated_at,
             primary_count=context_result.metadata.primary_count,
             related_count=context_result.metadata.related_count,
-            total_results=context_result.metadata.primary_count + context_result.metadata.related_count,
+            total_results=context_result.metadata.primary_count
+            + context_result.metadata.related_count,
             total_relations=context_result.metadata.total_relations,
             total_observations=context_result.metadata.total_observations,
         )

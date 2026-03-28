@@ -16,8 +16,8 @@ from basic_memory.mcp.project_context import (
     resolve_project_and_path,
 )
 from basic_memory.mcp.server import mcp
+from basic_memory.mcp.tools.search import search_notes
 from basic_memory.schemas.memory import memory_url_path
-from basic_memory.schemas.search import SearchQuery
 from basic_memory.utils import validate_project_path
 
 
@@ -144,7 +144,7 @@ async def read_note(
         "mcp.tool.read_note",
         entrypoint="mcp",
         tool_name="read_note",
-        project_name=project,
+        requested_project=project,
         workspace_id=workspace,
         output_format=output_format,
         page=page,
@@ -199,12 +199,11 @@ async def read_note(
                 )
 
                 # Import here to avoid circular import
-                from basic_memory.mcp.clients import KnowledgeClient, ResourceClient, SearchClient
+                from basic_memory.mcp.clients import KnowledgeClient, ResourceClient
 
                 # Use typed clients for API calls
                 knowledge_client = KnowledgeClient(client, active_project.external_id)
                 resource_client = ResourceClient(client, active_project.external_id)
-                search_client = SearchClient(client, active_project.external_id)
 
                 async def _read_json_payload(entity_id: str) -> dict:
                     with telemetry.scope(
@@ -214,7 +213,9 @@ async def read_note(
                         phase="shape_response",
                     ):
                         entity = await knowledge_client.get_entity(entity_id)
-                        response = await resource_client.read(entity_id, page=page, page_size=page_size)
+                        response = await resource_client.read(
+                            entity_id, page=page, page_size=page_size
+                        )
                         content_text = response.text
                         body_content, parsed_frontmatter = _parse_opening_frontmatter(content_text)
                         return {
@@ -241,15 +242,22 @@ async def read_note(
                     return results if isinstance(results, list) else []
 
                 async def _search_candidates(identifier_text: str, *, title_only: bool) -> dict:
-                    query = SearchQuery(title=identifier_text) if title_only else SearchQuery(
-                        text=identifier_text
-                    )
-                    response = await search_client.search(
-                        query.model_dump(mode="json", exclude_none=True),
+                    # Trigger: direct entity resolution failed for the caller's identifier.
+                    # Why: search_notes applies the same memory:// normalization and tool-level
+                    #      query handling as the rest of MCP routing, which raw client calls skip.
+                    # Outcome: unresolved memory URLs still fall back through normalized search.
+                    search_type = "title" if title_only else "text"
+                    response = await search_notes(
+                        project=active_project.name,
+                        workspace=workspace,
+                        query=identifier_text,
+                        search_type=search_type,
                         page=page,
                         page_size=page_size,
+                        output_format="json",
+                        context=context,
                     )
-                    return response.model_dump(mode="json")
+                    return response if isinstance(response, dict) else {}
 
                 def _result_title(item: dict) -> str:
                     return str(item.get("title") or "")

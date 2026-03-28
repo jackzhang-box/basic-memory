@@ -57,7 +57,10 @@ async def search(
         page_size=page_size,
         retrieval_mode=query.retrieval_mode.value,
         has_query=bool(
-            (query.text and query.text.strip()) or query.title or query.permalink or query.permalink_match
+            (query.text and query.text.strip())
+            or query.title
+            or query.permalink
+            or query.permalink_match
         ),
         has_filters=bool(query.note_types or query.entity_types or query.metadata_filters),
     ):

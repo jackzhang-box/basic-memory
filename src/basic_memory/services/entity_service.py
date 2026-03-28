@@ -433,7 +433,9 @@ class EntityService(BaseService[EntityModel]):
             action="update",
             phase="upsert_entity",
         ):
-            entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
+            entity = await self.upsert_entity_from_markdown(
+                file_path, entity_markdown, is_new=False
+            )
 
         with telemetry.scope(
             "entity_service.update.update_checksum",
@@ -465,7 +467,9 @@ class EntityService(BaseService[EntityModel]):
             action="fast_write",
             phase="resolve_entity",
         ):
-            existing = await self.repository.get_by_external_id(external_id) if external_id else None
+            existing = (
+                await self.repository.get_by_external_id(external_id) if external_id else None
+            )
 
         # Trigger: external_id already exists
         # Why: avoid duplicate entities when title-derived paths change
@@ -698,7 +702,9 @@ class EntityService(BaseService[EntityModel]):
             action="reindex",
             phase="upsert_entity",
         ):
-            updated = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
+            updated = await self.upsert_entity_from_markdown(
+                file_path, entity_markdown, is_new=False
+            )
         with telemetry.scope(
             "entity_service.reindex.update_checksum",
             domain="entity_service",
@@ -1019,7 +1025,9 @@ class EntityService(BaseService[EntityModel]):
             action="edit",
             phase="upsert_entity",
         ):
-            entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
+            entity = await self.upsert_entity_from_markdown(
+                file_path, entity_markdown, is_new=False
+            )
 
         with telemetry.scope(
             "entity_service.edit.update_checksum",

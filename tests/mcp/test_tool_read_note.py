@@ -264,6 +264,63 @@ async def test_read_note_memory_url_with_project_prefix(app, test_project):
     assert "Testing memory:// URL handling with project prefix" in content
 
 
+@pytest.mark.asyncio
+async def test_read_note_memory_url_fallback_uses_search_tool_normalization(
+    monkeypatch, app, test_project
+):
+    """Fallback search should go back through search_notes for memory:// normalization."""
+    await write_note(
+        project=test_project.name,
+        title="Memory URL Fallback Note",
+        directory="test",
+        content="Fallback note content",
+    )
+
+    import importlib
+
+    read_note_module = importlib.import_module("basic_memory.mcp.tools.read_note")
+    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    OriginalKnowledgeClient = clients_mod.KnowledgeClient
+
+    fallback_memory_url = f"memory://{test_project.name}/test/memory-url-fallback-note"
+    search_calls: list[tuple[str, str, str | None]] = []
+
+    class SelectiveKnowledgeClient(OriginalKnowledgeClient):
+        async def resolve_entity(self, identifier: str, *, strict: bool = False) -> int:
+            if strict and identifier.endswith("test/memory-url-fallback-note"):
+                raise RuntimeError("force direct lookup failure")
+            return await super().resolve_entity(identifier, strict=strict)
+
+    async def fake_search_notes_fn(*, query, search_type, project, **kwargs):
+        search_calls.append((search_type, query, project))
+        return {
+            "results": [
+                {
+                    "title": "Memory URL Fallback Note",
+                    "permalink": "test/memory-url-fallback-note",
+                    "content": "",
+                    "type": "entity",
+                    "score": 1.0,
+                    "file_path": "test/Memory URL Fallback Note.md",
+                }
+            ],
+            "current_page": 1,
+            "page_size": 10,
+        }
+
+    monkeypatch.setattr(clients_mod, "KnowledgeClient", SelectiveKnowledgeClient)
+    monkeypatch.setattr(read_note_module, "search_notes", fake_search_notes_fn)
+
+    result = await read_note(fallback_memory_url)
+
+    assert search_calls == [
+        ("title", fallback_memory_url, test_project.name),
+        ("text", fallback_memory_url, test_project.name),
+    ]
+    assert "I couldn't find an exact match" in result
+    assert "Memory URL Fallback Note" in result
+
+
 class TestReadNoteSecurityValidation:
     """Test read_note security validation features."""
 

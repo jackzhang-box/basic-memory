@@ -5,6 +5,7 @@ to the Basic Memory API, with improved error handling and logging.
 """
 
 import typing
+from contextlib import contextmanager
 from typing import Optional
 
 from httpx import Response, URL, AsyncClient, HTTPStatusError
@@ -25,6 +26,58 @@ from mcp.server.fastmcp.exceptions import ToolError
 
 from basic_memory import telemetry
 from basic_memory.config import ConfigManager
+
+
+def _classify_http_outcome(status_code: int) -> str:
+    """Map HTTP status codes to a low-cardinality outcome label."""
+    if 200 <= status_code < 300:
+        return "success"
+    if 300 <= status_code < 400:  # pragma: no cover
+        return "redirect"
+    if 400 <= status_code < 500:
+        return "client_error"
+    if 500 <= status_code < 600:
+        return "server_error"
+    return "unknown"  # pragma: no cover
+
+
+class _RequestSpan:
+    """Small adapter for attaching outcome metadata to a live request span."""
+
+    def __init__(self, active_span: typing.Any | None):
+        self._active_span = active_span
+
+    def record_response(self, response: Response) -> None:
+        self._set_attributes(
+            {
+                "status_code": response.status_code,
+                "is_success": response.is_success,
+                "outcome": _classify_http_outcome(response.status_code),
+            }
+        )
+
+    def record_transport_error(self, exc: Exception) -> None:
+        self._set_attributes(
+            {
+                "is_success": False,
+                "outcome": "transport_error",
+                "error_type": type(exc).__name__,
+            }
+        )
+
+    def _set_attributes(self, attrs: dict[str, typing.Any]) -> None:
+        if self._active_span is None:
+            return
+
+        set_attributes = getattr(self._active_span, "set_attributes", None)
+        if callable(set_attributes):
+            set_attributes(attrs)
+            return
+
+        set_attribute = getattr(self._active_span, "set_attribute", None)
+        if callable(set_attribute):
+            for key, value in attrs.items():
+                set_attribute(key, value)
 
 
 def get_error_message(
@@ -136,6 +189,7 @@ def _resolve_error_message(
     return get_error_message(status_code, url, method)
 
 
+@contextmanager
 def _request_scope(
     method: str,
     *,
@@ -146,16 +200,18 @@ def _request_scope(
     has_body: bool = False,
 ):
     """Create the shared MCP transport span used by all HTTP helpers."""
-    return telemetry.scope(
-        "mcp.http.request",
-        method=method,
-        client_name=client_name,
-        operation=operation,
-        path_template=path_template,
-        phase="request",
-        has_query=bool(params),
-        has_body=has_body,
-    )
+    attrs = {
+        "method": method,
+        "client_name": client_name,
+        "operation": operation,
+        "path_template": path_template,
+        "phase": "request",
+        "has_query": bool(params),
+        "has_body": has_body,
+    }
+    with telemetry.contextualize(**attrs):
+        with telemetry.started_span("mcp.http.request", **attrs) as active_span:
+            yield _RequestSpan(active_span)
 
 
 async def call_get(
@@ -194,6 +250,7 @@ async def call_get(
     """
     logger.debug(f"Calling GET '{url}' params: '{params}'")
     error_message = None
+    request_span: _RequestSpan | None = None
 
     try:
         with _request_scope(
@@ -202,7 +259,7 @@ async def call_get(
             operation=operation,
             path_template=path_template,
             params=params,
-        ):
+        ) as request_span:
             response = await client.get(
                 url,
                 params=params,
@@ -213,6 +270,7 @@ async def call_get(
                 timeout=timeout,
                 extensions=extensions,
             )
+            request_span.record_response(response)
 
         if response.is_success:
             return response
@@ -239,6 +297,10 @@ async def call_get(
 
     except HTTPStatusError as e:
         raise ToolError(error_message) from e
+    except Exception as e:
+        if request_span is not None:
+            request_span.record_transport_error(e)
+        raise
 
 
 async def call_put(
@@ -285,6 +347,7 @@ async def call_put(
     """
     logger.debug(f"Calling PUT '{url}'")
     error_message = None
+    request_span: _RequestSpan | None = None
 
     try:
         with _request_scope(
@@ -294,7 +357,7 @@ async def call_put(
             path_template=path_template,
             params=params,
             has_body=any(value is not None for value in (content, data, files, json)),
-        ):
+        ) as request_span:
             response = await client.put(
                 url,
                 content=content,
@@ -309,6 +372,7 @@ async def call_put(
                 timeout=timeout,
                 extensions=extensions,
             )
+            request_span.record_response(response)
 
         if response.is_success:
             return response
@@ -336,6 +400,10 @@ async def call_put(
 
     except HTTPStatusError as e:
         raise ToolError(error_message) from e
+    except Exception as e:
+        if request_span is not None:
+            request_span.record_transport_error(e)
+        raise
 
 
 async def call_patch(
@@ -381,6 +449,7 @@ async def call_patch(
         ToolError: If the request fails with an appropriate error message
     """
     logger.debug(f"Calling PATCH '{url}'")
+    request_span: _RequestSpan | None = None
 
     try:
         with _request_scope(
@@ -390,7 +459,7 @@ async def call_patch(
             path_template=path_template,
             params=params,
             has_body=any(value is not None for value in (content, data, files, json)),
-        ):
+        ) as request_span:
             response = await client.patch(
                 url,
                 content=content,
@@ -405,6 +474,7 @@ async def call_patch(
                 timeout=timeout,
                 extensions=extensions,
             )
+            request_span.record_response(response)
 
         if response.is_success:
             return response
@@ -437,6 +507,10 @@ async def call_patch(
         error_message = _resolve_error_message(status_code, url, "PATCH", response_data)
 
         raise ToolError(error_message) from e
+    except Exception as e:
+        if request_span is not None:
+            request_span.record_transport_error(e)
+        raise
 
 
 async def call_post(
@@ -483,6 +557,7 @@ async def call_post(
     """
     logger.debug(f"Calling POST '{url}'")
     error_message = None
+    request_span: _RequestSpan | None = None
 
     try:
         with _request_scope(
@@ -492,7 +567,7 @@ async def call_post(
             path_template=path_template,
             params=params,
             has_body=any(value is not None for value in (content, data, files, json)),
-        ):
+        ) as request_span:
             response = await client.post(
                 url=url,
                 content=content,
@@ -507,7 +582,8 @@ async def call_post(
                 timeout=timeout,
                 extensions=extensions,
             )
-        logger.debug(f"response: {response.json()}")
+            request_span.record_response(response)
+        logger.debug(f"response: {_extract_response_data(response)}")
 
         if response.is_success:
             return response
@@ -534,6 +610,10 @@ async def call_post(
 
     except HTTPStatusError as e:
         raise ToolError(error_message) from e
+    except Exception as e:
+        if request_span is not None:
+            request_span.record_transport_error(e)
+        raise
 
 
 async def resolve_entity_id(client: AsyncClient, project_external_id: str, identifier: str) -> str:
@@ -604,6 +684,7 @@ async def call_delete(
     """
     logger.debug(f"Calling DELETE '{url}'")
     error_message = None
+    request_span: _RequestSpan | None = None
 
     try:
         with _request_scope(
@@ -612,7 +693,7 @@ async def call_delete(
             operation=operation,
             path_template=path_template,
             params=params,
-        ):
+        ) as request_span:
             response = await client.delete(
                 url=url,
                 params=params,
@@ -623,6 +704,7 @@ async def call_delete(
                 timeout=timeout,
                 extensions=extensions,
             )
+            request_span.record_response(response)
 
         if response.is_success:
             return response
@@ -649,3 +731,7 @@ async def call_delete(
 
     except HTTPStatusError as e:
         raise ToolError(error_message) from e
+    except Exception as e:
+        if request_span is not None:
+            request_span.record_transport_error(e)
+        raise

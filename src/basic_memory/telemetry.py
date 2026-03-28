@@ -159,13 +159,20 @@ operation = scope
 @contextmanager
 def span(name: str, **attrs: Any) -> Iterator[None]:
     """Create a manual Logfire span when telemetry is enabled."""
+    with started_span(name, **attrs):
+        yield
+
+
+@contextmanager
+def started_span(name: str, **attrs: Any) -> Iterator[Any | None]:
+    """Create a manual Logfire span and expose the active span handle when available."""
     logfire = _load_logfire()
     if logfire is None or not _STATE.configured:  # pragma: no cover
         yield  # pragma: no cover
         return  # pragma: no cover
 
-    with logfire.span(name, **_filter_attributes(attrs)):
-        yield
+    with logfire.span(name, **_filter_attributes(attrs)) as active_span:
+        yield active_span
 
 
 __all__ = [
@@ -177,5 +184,6 @@ __all__ = [
     "reset_telemetry_state",
     "scope",
     "span",
+    "started_span",
     "telemetry_enabled",
 ]

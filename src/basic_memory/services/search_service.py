@@ -174,10 +174,7 @@ class SearchService:
         retrieval_mode = query.retrieval_mode or SearchRetrievalMode.FTS
         strict_search_text = query.text
         has_query = bool(
-            strict_search_text
-            or query.title
-            or query.permalink
-            or query.permalink_match
+            strict_search_text or query.title or query.permalink or query.permalink_match
         )
         has_filters = bool(
             metadata_filters
@@ -658,7 +655,9 @@ class SearchService:
                         )
                     )
                     if len(obs_content_stems) > MAX_CONTENT_STEMS_SIZE:  # pragma: no cover
-                        obs_content_stems = obs_content_stems[:MAX_CONTENT_STEMS_SIZE]  # pragma: no cover
+                        obs_content_stems = obs_content_stems[
+                            :MAX_CONTENT_STEMS_SIZE
+                        ]  # pragma: no cover
                     rows_to_index.append(
                         SearchIndexRow(
                             id=obs.id,

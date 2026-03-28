@@ -33,7 +33,15 @@ class FakeLogfire:
     @contextmanager
     def span(self, name: str, **attrs):
         self.span_calls.append((name, attrs))
-        yield
+
+        class FakeStartedSpan:
+            def set_attribute(self, key: str, value) -> None:
+                attrs[key] = value
+
+            def set_attributes(self, new_attrs: dict) -> None:
+                attrs.update(new_attrs)
+
+        yield FakeStartedSpan()
 
 
 def test_configure_telemetry_disabled_is_noop() -> None:
@@ -138,6 +146,34 @@ def test_span_uses_logfire_when_enabled(monkeypatch) -> None:
         pass
 
     assert fake_logfire.span_calls == [("mcp.tool.write_note", {"project_name": "main"})]
+
+
+def test_started_span_exposes_mutable_logfire_handle(monkeypatch) -> None:
+    fake_logfire = FakeLogfire()
+    telemetry.reset_telemetry_state()
+    monkeypatch.setattr(telemetry, "_load_logfire", lambda: fake_logfire)
+    telemetry.configure_telemetry(
+        "basic-memory-mcp",
+        environment="dev",
+        enable_logfire=True,
+    )
+
+    with telemetry.started_span("mcp.http.request", method="GET") as span:
+        assert span is not None
+        span.set_attribute("status_code", 200)
+        span.set_attributes({"is_success": True, "outcome": "success"})
+
+    assert fake_logfire.span_calls == [
+        (
+            "mcp.http.request",
+            {
+                "method": "GET",
+                "status_code": 200,
+                "is_success": True,
+                "outcome": "success",
+            },
+        )
+    ]
 
 
 def test_operation_creates_span_and_log_context(monkeypatch) -> None:
