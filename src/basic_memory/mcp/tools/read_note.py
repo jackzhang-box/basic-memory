@@ -16,8 +16,8 @@ from basic_memory.mcp.project_context import (
     resolve_project_and_path,
 )
 from basic_memory.mcp.server import mcp
-from basic_memory.mcp.tools.search import search_notes
 from basic_memory.schemas.memory import memory_url_path
+from basic_memory.schemas.search import SearchQuery
 from basic_memory.utils import validate_project_path
 
 
@@ -144,7 +144,7 @@ async def read_note(
         "mcp.tool.read_note",
         entrypoint="mcp",
         tool_name="read_note",
-        requested_project=project,
+        project_name=project,
         workspace_id=workspace,
         output_format=output_format,
         page=page,
@@ -199,24 +199,31 @@ async def read_note(
                 )
 
                 # Import here to avoid circular import
-                from basic_memory.mcp.clients import KnowledgeClient, ResourceClient
+                from basic_memory.mcp.clients import KnowledgeClient, ResourceClient, SearchClient
 
                 # Use typed clients for API calls
                 knowledge_client = KnowledgeClient(client, active_project.external_id)
                 resource_client = ResourceClient(client, active_project.external_id)
+                search_client = SearchClient(client, active_project.external_id)
 
                 async def _read_json_payload(entity_id: str) -> dict:
-                    entity = await knowledge_client.get_entity(entity_id)
-                    response = await resource_client.read(entity_id, page=page, page_size=page_size)
-                    content_text = response.text
-                    body_content, parsed_frontmatter = _parse_opening_frontmatter(content_text)
-                    return {
-                        "title": entity.title,
-                        "permalink": entity.permalink,
-                        "file_path": entity.file_path,
-                        "content": content_text if include_frontmatter else body_content,
-                        "frontmatter": parsed_frontmatter,
-                    }
+                    with telemetry.scope(
+                        "mcp.read_note.shape_response",
+                        domain="mcp",
+                        action="read_note",
+                        phase="shape_response",
+                    ):
+                        entity = await knowledge_client.get_entity(entity_id)
+                        response = await resource_client.read(entity_id, page=page, page_size=page_size)
+                        content_text = response.text
+                        body_content, parsed_frontmatter = _parse_opening_frontmatter(content_text)
+                        return {
+                            "title": entity.title,
+                            "permalink": entity.permalink,
+                            "file_path": entity.file_path,
+                            "content": content_text if include_frontmatter else body_content,
+                            "frontmatter": parsed_frontmatter,
+                        }
 
                 def _empty_json_payload() -> dict:
                     return {
@@ -232,6 +239,17 @@ async def read_note(
                         return []
                     results = payload.get("results")
                     return results if isinstance(results, list) else []
+
+                async def _search_candidates(identifier_text: str, *, title_only: bool) -> dict:
+                    query = SearchQuery(title=identifier_text) if title_only else SearchQuery(
+                        text=identifier_text
+                    )
+                    response = await search_client.search(
+                        query.model_dump(mode="json", exclude_none=True),
+                        page=page,
+                        page_size=page_size,
+                    )
+                    return response.model_dump(mode="json")
 
                 def _result_title(item: dict) -> str:
                     return str(item.get("title") or "")
@@ -265,14 +283,7 @@ async def read_note(
 
                 # Fallback 1: Try title search via API
                 logger.info(f"Search title for: {identifier}")
-                title_results = await search_notes(
-                    query=identifier,
-                    search_type="title",
-                    project=active_project.name,
-                    workspace=workspace,
-                    output_format="json",
-                    context=context,
-                )
+                title_results = await _search_candidates(identifier, title_only=True)
 
                 title_candidates = _search_results(title_results)
                 if title_candidates:
@@ -319,14 +330,7 @@ async def read_note(
 
                 # Fallback 2: Text search as a last resort
                 logger.info(f"Title search failed, trying text search for: {identifier}")
-                text_results = await search_notes(
-                    query=identifier,
-                    search_type="text",
-                    project=active_project.name,
-                    workspace=workspace,
-                    output_format="json",
-                    context=context,
-                )
+                text_results = await _search_candidates(identifier, title_only=False)
 
                 # We didn't find a direct match, construct a helpful error message
                 text_candidates = _search_results(text_results)

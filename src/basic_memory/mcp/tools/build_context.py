@@ -206,7 +206,7 @@ async def build_context(
         "mcp.tool.build_context",
         entrypoint="mcp",
         tool_name="build_context",
-        requested_project=project,
+        project_name=project,
         workspace_id=workspace,
         depth=depth or 1,
         timeframe=timeframe,

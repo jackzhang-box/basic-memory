@@ -153,7 +153,7 @@ async def write_note(
         "mcp.tool.write_note",
         entrypoint="mcp",
         tool_name="write_note",
-        requested_project=project,
+        project_name=project,
         workspace_id=workspace,
         note_type=note_type,
         overwrite=effective_overwrite,

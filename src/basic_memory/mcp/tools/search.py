@@ -528,7 +528,7 @@ async def search_notes(
         "mcp.tool.search_notes",
         entrypoint="mcp",
         tool_name="search_notes",
-        requested_project=project,
+        project_name=project,
         workspace_id=workspace,
         search_type=search_type or "default",
         output_format=output_format,
@@ -537,7 +537,7 @@ async def search_notes(
         has_query=bool(query and query.strip()),
         note_type_filter_count=len(note_types),
         entity_type_filter_count=len(entity_types),
-        has_metadata_filters=bool(metadata_filters),
+        has_filters=bool(metadata_filters or tags or status or note_types or entity_types or after_date),
         has_tags_filter=bool(tags),
         has_status_filter=bool(status),
     ):

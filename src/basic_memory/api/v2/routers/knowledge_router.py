@@ -13,6 +13,7 @@ Key improvements:
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Response, Path, Query
 from loguru import logger
 
+from basic_memory import telemetry
 from basic_memory.deps import (
     EntityServiceV2ExternalDep,
     SearchServiceV2ExternalDep,
@@ -142,47 +143,66 @@ async def resolve_identifier(
             "resolution_method": "permalink"
         }
     """
-    logger.info(f"API v2 request: resolve_identifier for '{data.identifier}'")
+    with telemetry.operation(
+        "api.request.knowledge.resolve_entity",
+        entrypoint="api",
+        domain="knowledge",
+        action="resolve_entity",
+    ):
+        logger.info(f"API v2 request: resolve_identifier for '{data.identifier}'")
 
-    # Try to resolve by external_id first
-    entity = await entity_repository.get_by_external_id(data.identifier)
-    resolution_method = "external_id" if entity else "search"
+        with telemetry.scope(
+            "api.knowledge.resolve_entity.lookup_entity",
+            domain="knowledge",
+            action="resolve_entity",
+            phase="lookup_entity",
+        ):
+            entity = await entity_repository.get_by_external_id(data.identifier)
+        resolution_method = "external_id" if entity else "search"
 
-    # If not found by external_id, try other resolution methods
-    # Pass source_path for context-aware resolution (prefers notes closer to source)
-    # Pass strict to control fuzzy search fallback (default False allows fuzzy matching)
-    if not entity:
-        entity = await link_resolver.resolve_link(
-            data.identifier, source_path=data.source_path, strict=data.strict
+        if not entity:
+            with telemetry.scope(
+                "api.knowledge.resolve_entity.resolve_link",
+                domain="knowledge",
+                action="resolve_entity",
+                phase="resolve_link",
+            ):
+                entity = await link_resolver.resolve_link(
+                    data.identifier, source_path=data.source_path, strict=data.strict
+                )
+            if entity:
+                if entity.permalink == data.identifier:
+                    resolution_method = "permalink"
+                elif entity.title == data.identifier:
+                    resolution_method = "title"
+                elif entity.file_path == data.identifier:
+                    resolution_method = "path"
+                else:
+                    resolution_method = "search"
+
+        if not entity:
+            raise HTTPException(status_code=404, detail=f"Entity not found: '{data.identifier}'")
+
+        with telemetry.scope(
+            "api.knowledge.resolve_entity.shape_response",
+            domain="knowledge",
+            action="resolve_entity",
+            phase="shape_response",
+        ):
+            result = EntityResolveResponse(
+                external_id=entity.external_id,
+                entity_id=entity.id,
+                permalink=entity.permalink,
+                file_path=entity.file_path,
+                title=entity.title,
+                resolution_method=resolution_method,
+            )
+
+        logger.debug(
+            f"API v2 response: resolved '{data.identifier}' to external_id={result.external_id} via {resolution_method}"
         )
-        if entity:
-            # Determine resolution method
-            if entity.permalink == data.identifier:
-                resolution_method = "permalink"
-            elif entity.title == data.identifier:
-                resolution_method = "title"
-            elif entity.file_path == data.identifier:
-                resolution_method = "path"
-            else:
-                resolution_method = "search"
 
-    if not entity:
-        raise HTTPException(status_code=404, detail=f"Entity not found: '{data.identifier}'")
-
-    result = EntityResolveResponse(
-        external_id=entity.external_id,
-        entity_id=entity.id,
-        permalink=entity.permalink,
-        file_path=entity.file_path,
-        title=entity.title,
-        resolution_method=resolution_method,
-    )
-
-    logger.debug(
-        f"API v2 response: resolved '{data.identifier}' to external_id={result.external_id} via {resolution_method}"
-    )
-
-    return result
+        return result
 
 
 ## Read endpoints
@@ -208,18 +228,36 @@ async def get_entity_by_id(
     Raises:
         HTTPException: 404 if entity not found
     """
-    logger.info(f"API v2 request: get_entity_by_id entity_id={entity_id}")
+    with telemetry.operation(
+        "api.request.knowledge.get_entity",
+        entrypoint="api",
+        domain="knowledge",
+        action="get_entity",
+    ):
+        logger.info(f"API v2 request: get_entity_by_id entity_id={entity_id}")
 
-    entity = await entity_repository.get_by_external_id(entity_id)
-    if not entity:
-        raise HTTPException(
-            status_code=404, detail=f"Entity with external_id '{entity_id}' not found"
-        )
+        with telemetry.scope(
+            "api.knowledge.get_entity.load_entity",
+            domain="knowledge",
+            action="get_entity",
+            phase="load_entity",
+        ):
+            entity = await entity_repository.get_by_external_id(entity_id)
+        if not entity:
+            raise HTTPException(
+                status_code=404, detail=f"Entity with external_id '{entity_id}' not found"
+            )
 
-    result = EntityResponseV2.model_validate(entity)
-    logger.info(f"API v2 response: external_id={entity_id}, title='{result.title}'")
+        with telemetry.scope(
+            "api.knowledge.get_entity.shape_response",
+            domain="knowledge",
+            action="get_entity",
+            phase="shape_response",
+        ):
+            result = EntityResponseV2.model_validate(entity)
+        logger.info(f"API v2 response: external_id={entity_id}, title='{result.title}'")
 
-    return result
+        return result
 
 
 ## Create endpoints
@@ -248,39 +286,80 @@ async def create_entity(
     Returns:
         Created entity with generated external_id (UUID) and file content
     """
-    logger.info(
-        "API v2 request", endpoint="create_entity", note_type=data.note_type, title=data.title
-    )
-
-    if fast:
-        entity = await entity_service.fast_write_entity(data)
-        task_scheduler.schedule(
-            "reindex_entity",
-            entity_id=entity.id,
-            project_id=project_id,
-        )
-    else:
-        entity = await entity_service.create_entity(data)
-        await search_service.index_entity(entity)
-        _schedule_vector_sync_if_enabled(
-            task_scheduler=task_scheduler,
-            app_config=app_config,
-            entity_id=entity.id,
-            project_id=project_id,
+    with telemetry.operation(
+        "api.request.knowledge.create_entity",
+        entrypoint="api",
+        domain="knowledge",
+        action="create_entity",
+        fast=fast,
+    ):
+        logger.info(
+            "API v2 request", endpoint="create_entity", note_type=data.note_type, title=data.title
         )
 
-    result = EntityResponseV2.model_validate(entity)
-    if fast:
-        result = result.model_copy(update={"observations": [], "relations": []})
+        with telemetry.scope(
+            "api.knowledge.create_entity.write_entity",
+            domain="knowledge",
+            action="create_entity",
+            phase="write_entity",
+            fast=fast,
+        ):
+            if fast:
+                entity = await entity_service.fast_write_entity(data)
+            else:
+                entity = await entity_service.create_entity(data)
 
-    # Always read and return file content
-    content = await file_service.read_file_content(entity.file_path)
-    result = result.model_copy(update={"content": content})
+        if fast:
+            with telemetry.scope(
+                "api.knowledge.create_entity.enqueue_reindex",
+                domain="knowledge",
+                action="create_entity",
+                phase="enqueue_reindex",
+                fast=fast,
+            ):
+                task_scheduler.schedule(
+                    "reindex_entity",
+                    entity_id=entity.id,
+                    project_id=project_id,
+                )
+        else:
+            with telemetry.scope(
+                "api.knowledge.create_entity.search_index",
+                domain="knowledge",
+                action="create_entity",
+                phase="search_index",
+            ):
+                await search_service.index_entity(entity)
+            with telemetry.scope(
+                "api.knowledge.create_entity.vector_sync",
+                domain="knowledge",
+                action="create_entity",
+                phase="vector_sync",
+            ):
+                _schedule_vector_sync_if_enabled(
+                    task_scheduler=task_scheduler,
+                    app_config=app_config,
+                    entity_id=entity.id,
+                    project_id=project_id,
+                )
 
-    logger.info(
-        f"API v2 response: endpoint='create_entity' external_id={entity.external_id}, title={result.title}, permalink={result.permalink}, status_code=201"
-    )
-    return result
+        result = EntityResponseV2.model_validate(entity)
+        if fast:
+            result = result.model_copy(update={"observations": [], "relations": []})
+
+        with telemetry.scope(
+            "api.knowledge.create_entity.read_content",
+            domain="knowledge",
+            action="create_entity",
+            phase="read_content",
+        ):
+            content = await file_service.read_file_content(entity.file_path)
+        result = result.model_copy(update={"content": content})
+
+        logger.info(
+            f"API v2 response: endpoint='create_entity' external_id={entity.external_id}, title={result.title}, permalink={result.permalink}, status_code=201"
+        )
+        return result
 
 
 ## Update endpoints
@@ -315,61 +394,104 @@ async def update_entity_by_id(
     Returns:
         Updated entity with file content
     """
-    logger.info(f"API v2 request: update_entity_by_id entity_id={entity_id}")
+    with telemetry.operation(
+        "api.request.knowledge.update_entity",
+        entrypoint="api",
+        domain="knowledge",
+        action="update_entity",
+        fast=fast,
+    ):
+        logger.info(f"API v2 request: update_entity_by_id entity_id={entity_id}")
 
-    # Check if entity exists (external_id is the source of truth for v2)
-    existing = await entity_repository.get_by_external_id(entity_id)
-    created = existing is None
+        with telemetry.scope(
+            "api.knowledge.update_entity.load_entity",
+            domain="knowledge",
+            action="update_entity",
+            phase="load_entity",
+        ):
+            existing = await entity_repository.get_by_external_id(entity_id)
+        created = existing is None
 
-    if fast:
-        entity = await entity_service.fast_write_entity(data, external_id=entity_id)
-        response.status_code = 200 if existing else 201
-        task_scheduler.schedule(
-            "reindex_entity",
-            entity_id=entity.id,
-            project_id=project_id,
-            resolve_relations=created,
-        )
-    else:
-        if existing:
-            # Update the existing entity in-place to avoid path-based duplication
-            entity = await entity_service.update_entity(existing, data)
-            response.status_code = 200
-        else:
-            # Create new entity, then bind external_id to the requested UUID
-            entity = await entity_service.create_entity(data)
-            if entity.external_id != entity_id:
-                entity = await entity_repository.update(
-                    entity.id,
-                    {"external_id": entity_id},
+        with telemetry.scope(
+            "api.knowledge.update_entity.write_entity",
+            domain="knowledge",
+            action="update_entity",
+            phase="write_entity",
+            fast=fast,
+        ):
+            if fast:
+                entity = await entity_service.fast_write_entity(data, external_id=entity_id)
+                response.status_code = 200 if existing else 201
+            else:
+                if existing:
+                    entity = await entity_service.update_entity(existing, data)
+                    response.status_code = 200
+                else:
+                    entity = await entity_service.create_entity(data)
+                    if entity.external_id != entity_id:
+                        entity = await entity_repository.update(
+                            entity.id,
+                            {"external_id": entity_id},
+                        )
+                        if not entity:
+                            raise HTTPException(
+                                status_code=404,
+                                detail=f"Entity with external_id '{entity_id}' not found",
+                            )
+                    response.status_code = 201
+
+        if fast:
+            with telemetry.scope(
+                "api.knowledge.update_entity.enqueue_reindex",
+                domain="knowledge",
+                action="update_entity",
+                phase="enqueue_reindex",
+                fast=fast,
+            ):
+                task_scheduler.schedule(
+                    "reindex_entity",
+                    entity_id=entity.id,
+                    project_id=project_id,
+                    resolve_relations=created,
                 )
-                if not entity:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"Entity with external_id '{entity_id}' not found",
-                    )
-            response.status_code = 201
+        else:
+            with telemetry.scope(
+                "api.knowledge.update_entity.search_index",
+                domain="knowledge",
+                action="update_entity",
+                phase="search_index",
+            ):
+                await search_service.index_entity(entity)
+            with telemetry.scope(
+                "api.knowledge.update_entity.vector_sync",
+                domain="knowledge",
+                action="update_entity",
+                phase="vector_sync",
+            ):
+                _schedule_vector_sync_if_enabled(
+                    task_scheduler=task_scheduler,
+                    app_config=app_config,
+                    entity_id=entity.id,
+                    project_id=project_id,
+                )
 
-        await search_service.index_entity(entity)
-        _schedule_vector_sync_if_enabled(
-            task_scheduler=task_scheduler,
-            app_config=app_config,
-            entity_id=entity.id,
-            project_id=project_id,
+        result = EntityResponseV2.model_validate(entity)
+        if fast:
+            result = result.model_copy(update={"observations": [], "relations": []})
+
+        with telemetry.scope(
+            "api.knowledge.update_entity.read_content",
+            domain="knowledge",
+            action="update_entity",
+            phase="read_content",
+        ):
+            content = await file_service.read_file_content(entity.file_path)
+        result = result.model_copy(update={"content": content})
+
+        logger.info(
+            f"API v2 response: external_id={entity_id}, created={created}, status_code={response.status_code}"
         )
-
-    result = EntityResponseV2.model_validate(entity)
-    if fast:
-        result = result.model_copy(update={"observations": [], "relations": []})
-
-    # Always read and return file content
-    content = await file_service.read_file_content(entity.file_path)
-    result = result.model_copy(update={"content": content})
-
-    logger.info(
-        f"API v2 response: external_id={entity_id}, created={created}, status_code={response.status_code}"
-    )
-    return result
+        return result
 
 
 @router.patch("/entities/{entity_id}", response_model=EntityResponseV2)
@@ -401,69 +523,113 @@ async def edit_entity_by_id(
     Raises:
         HTTPException: 404 if entity not found, 400 if edit fails
     """
-    logger.info(
-        f"API v2 request: edit_entity_by_id entity_id={entity_id}, operation='{data.operation}'"
-    )
-
-    # Verify entity exists
-    entity = await entity_repository.get_by_external_id(entity_id)
-    if not entity:  # pragma: no cover
-        raise HTTPException(
-            status_code=404, detail=f"Entity with external_id '{entity_id}' not found"
-        )
-
-    try:
-        if fast:
-            updated_entity = await entity_service.fast_edit_entity(
-                entity=entity,
-                operation=data.operation,
-                content=data.content,
-                section=data.section,
-                find_text=data.find_text,
-                expected_replacements=data.expected_replacements,
-            )
-            task_scheduler.schedule(
-                "reindex_entity",
-                entity_id=updated_entity.id,
-                project_id=project_id,
-            )
-        else:
-            # Edit using the entity's permalink or path
-            identifier = entity.permalink or entity.file_path
-            updated_entity = await entity_service.edit_entity(
-                identifier=identifier,
-                operation=data.operation,
-                content=data.content,
-                section=data.section,
-                find_text=data.find_text,
-                expected_replacements=data.expected_replacements,
-            )
-
-            await search_service.index_entity(updated_entity)
-            _schedule_vector_sync_if_enabled(
-                task_scheduler=task_scheduler,
-                app_config=app_config,
-                entity_id=updated_entity.id,
-                project_id=project_id,
-            )
-
-        result = EntityResponseV2.model_validate(updated_entity)
-        if fast:
-            result = result.model_copy(update={"observations": [], "relations": []})
-
-        # Always read and return file content
-        content = await file_service.read_file_content(updated_entity.file_path)
-        result = result.model_copy(update={"content": content})
-
+    with telemetry.operation(
+        "api.request.knowledge.edit_entity",
+        entrypoint="api",
+        domain="knowledge",
+        action="edit_entity",
+        fast=fast,
+    ):
         logger.info(
-            f"API v2 response: external_id={entity_id}, operation='{data.operation}', status_code=200"
+            f"API v2 request: edit_entity_by_id entity_id={entity_id}, operation='{data.operation}'"
         )
 
-        return result
+        with telemetry.scope(
+            "api.knowledge.edit_entity.load_entity",
+            domain="knowledge",
+            action="edit_entity",
+            phase="load_entity",
+        ):
+            entity = await entity_repository.get_by_external_id(entity_id)
+        if not entity:  # pragma: no cover
+            raise HTTPException(
+                status_code=404, detail=f"Entity with external_id '{entity_id}' not found"
+            )
 
-    except Exception as e:
-        logger.error(f"Error editing entity {entity_id}: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        try:
+            with telemetry.scope(
+                "api.knowledge.edit_entity.write_entity",
+                domain="knowledge",
+                action="edit_entity",
+                phase="write_entity",
+                fast=fast,
+            ):
+                if fast:
+                    updated_entity = await entity_service.fast_edit_entity(
+                        entity=entity,
+                        operation=data.operation,
+                        content=data.content,
+                        section=data.section,
+                        find_text=data.find_text,
+                        expected_replacements=data.expected_replacements,
+                    )
+                else:
+                    identifier = entity.permalink or entity.file_path
+                    updated_entity = await entity_service.edit_entity(
+                        identifier=identifier,
+                        operation=data.operation,
+                        content=data.content,
+                        section=data.section,
+                        find_text=data.find_text,
+                        expected_replacements=data.expected_replacements,
+                    )
+
+            if fast:
+                with telemetry.scope(
+                    "api.knowledge.edit_entity.enqueue_reindex",
+                    domain="knowledge",
+                    action="edit_entity",
+                    phase="enqueue_reindex",
+                    fast=fast,
+                ):
+                    task_scheduler.schedule(
+                        "reindex_entity",
+                        entity_id=updated_entity.id,
+                        project_id=project_id,
+                    )
+            else:
+                with telemetry.scope(
+                    "api.knowledge.edit_entity.search_index",
+                    domain="knowledge",
+                    action="edit_entity",
+                    phase="search_index",
+                ):
+                    await search_service.index_entity(updated_entity)
+                with telemetry.scope(
+                    "api.knowledge.edit_entity.vector_sync",
+                    domain="knowledge",
+                    action="edit_entity",
+                    phase="vector_sync",
+                ):
+                    _schedule_vector_sync_if_enabled(
+                        task_scheduler=task_scheduler,
+                        app_config=app_config,
+                        entity_id=updated_entity.id,
+                        project_id=project_id,
+                    )
+
+            result = EntityResponseV2.model_validate(updated_entity)
+            if fast:
+                result = result.model_copy(update={"observations": [], "relations": []})
+
+            with telemetry.scope(
+                "api.knowledge.edit_entity.read_content",
+                domain="knowledge",
+                action="edit_entity",
+                phase="read_content",
+            ):
+                content = await file_service.read_file_content(updated_entity.file_path)
+            result = result.model_copy(update={"content": content})
+
+            logger.info(
+                f"API v2 response: external_id={entity_id}, operation='{data.operation}', status_code=200"
+            )
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error editing entity {entity_id}: {e}")
+            raise HTTPException(status_code=400, detail=str(e))
 
 
 ## Delete endpoints

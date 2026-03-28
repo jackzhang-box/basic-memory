@@ -91,24 +91,6 @@ def test_configure_telemetry_retries_without_send_to_logfire(monkeypatch) -> Non
     assert "send_to_logfire" not in fake_logfire.configure_calls[1]
 
 
-def test_bind_telemetry_context_filters_nulls() -> None:
-    bound = telemetry.bind_telemetry_context(project_name="main", workspace_id=None)
-    extra = bound._options[-1]  # type: ignore[attr-defined]
-    assert extra == {"project_name": "main"}
-
-
-def test_bind_telemetry_context_merges_active_context() -> None:
-    with telemetry.contextualize(project_name="main", route_mode="local_asgi"):
-        bound = telemetry.bind_telemetry_context(tool_name="write_note", workspace_id=None)
-
-    extra = bound._options[-1]  # type: ignore[attr-defined]
-    assert extra == {
-        "project_name": "main",
-        "route_mode": "local_asgi",
-        "tool_name": "write_note",
-    }
-
-
 def test_contextualize_adds_filtered_loguru_context() -> None:
     records: list[dict] = []
     sink_id = logger.add(lambda message: records.append(message.record["extra"].copy()))

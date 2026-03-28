@@ -8,7 +8,6 @@ helpers for manual spans and logger context binding.
 from __future__ import annotations
 
 from contextlib import contextmanager
-from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, Iterator
 
@@ -41,7 +40,6 @@ class TelemetryState:
 
 _STATE = TelemetryState()
 _LOGFIRE_HANDLER: dict[str, Any] | None = None
-_ACTIVE_LOG_CONTEXT: ContextVar[dict[str, Any]] = ContextVar("basic_memory_log_context", default={})
 
 
 def reset_telemetry_state() -> None:
@@ -57,17 +55,11 @@ def reset_telemetry_state() -> None:
     _STATE.send_to_logfire = False
     _STATE.warnings.clear()
     _LOGFIRE_HANDLER = None
-    _ACTIVE_LOG_CONTEXT.set({})
 
 
 def _filter_attributes(attrs: dict[str, Any]) -> dict[str, Any]:
     """Drop null attributes so span and log payloads stay compact."""
     return {key: value for key, value in attrs.items() if value is not None}
-
-
-def _current_log_context() -> dict[str, Any]:
-    """Return the currently active telemetry context for this execution flow."""
-    return dict(_ACTIVE_LOG_CONTEXT.get())
 
 
 def configure_telemetry(
@@ -144,26 +136,11 @@ def pop_telemetry_warnings() -> list[str]:
     return warnings
 
 
-def bind_telemetry_context(**attrs: Any):
-    """Bind stable telemetry attributes onto the shared Loguru logger."""
-    merged_attrs = _current_log_context()
-    merged_attrs.update(_filter_attributes(attrs))
-    return logger.bind(**merged_attrs)
-
-
 @contextmanager
 def contextualize(**attrs: Any) -> Iterator[None]:
-    """Apply stable telemetry attributes to all Loguru calls in this scope."""
-    filtered_attrs = _filter_attributes(attrs)
-    merged_attrs = _current_log_context()
-    merged_attrs.update(filtered_attrs)
-    context_token = _ACTIVE_LOG_CONTEXT.set(merged_attrs)
-
-    try:
-        with logger.contextualize(**filtered_attrs):
-            yield
-    finally:
-        _ACTIVE_LOG_CONTEXT.reset(context_token)
+    """Apply filtered telemetry attributes to Loguru calls in this scope."""
+    with logger.contextualize(**_filter_attributes(attrs)):
+        yield
 
 
 @contextmanager
@@ -182,12 +159,8 @@ operation = scope
 @contextmanager
 def span(name: str, **attrs: Any) -> Iterator[None]:
     """Create a manual Logfire span when telemetry is enabled."""
-    if not telemetry_enabled():
-        yield
-        return
-
     logfire = _load_logfire()
-    if logfire is None:  # pragma: no cover
+    if logfire is None or not _STATE.configured:  # pragma: no cover
         yield  # pragma: no cover
         return  # pragma: no cover
 
@@ -196,7 +169,6 @@ def span(name: str, **attrs: Any) -> Iterator[None]:
 
 
 __all__ = [
-    "bind_telemetry_context",
     "contextualize",
     "configure_telemetry",
     "get_logfire_handler",

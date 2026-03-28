@@ -173,33 +173,52 @@ class SearchService:
 
         retrieval_mode = query.retrieval_mode or SearchRetrievalMode.FTS
         strict_search_text = query.text
+        has_query = bool(
+            strict_search_text
+            or query.title
+            or query.permalink
+            or query.permalink_match
+        )
+        has_filters = bool(
+            metadata_filters
+            or query.note_types
+            or query.entity_types
+            or after_date
+            or query.tags
+            or query.status
+        )
 
         with telemetry.scope(
             "search.execute",
             retrieval_mode=retrieval_mode.value,
-            has_text_query=bool(strict_search_text),
-            has_title_query=bool(query.title),
-            has_permalink_query=bool(query.permalink or query.permalink_match),
-            has_metadata_filters=bool(metadata_filters),
+            has_query=has_query,
+            has_filters=has_filters,
             limit=limit,
             offset=offset,
         ):
             logger.trace(f"Searching with query: {query}")
-            # First pass: preserve existing strict search behavior.
-            results = await self.repository.search(
-                search_text=strict_search_text,
-                permalink=query.permalink,
-                permalink_match=query.permalink_match,
-                title=query.title,
-                note_types=query.note_types,
-                search_item_types=query.entity_types,
-                after_date=after_date,
-                metadata_filters=metadata_filters,
-                retrieval_mode=retrieval_mode,
-                min_similarity=query.min_similarity,
-                limit=limit,
-                offset=offset,
-            )
+            with telemetry.scope(
+                "search.repository_query",
+                retrieval_mode=retrieval_mode.value,
+                phase="repository_query",
+                has_query=has_query,
+                has_filters=has_filters,
+            ):
+                # First pass: preserve existing strict search behavior.
+                results = await self.repository.search(
+                    search_text=strict_search_text,
+                    permalink=query.permalink,
+                    permalink_match=query.permalink_match,
+                    title=query.title,
+                    note_types=query.note_types,
+                    search_item_types=query.entity_types,
+                    after_date=after_date,
+                    metadata_filters=metadata_filters,
+                    retrieval_mode=retrieval_mode,
+                    min_similarity=query.min_similarity,
+                    limit=limit,
+                    offset=offset,
+                )
 
         # Trigger: strict FTS with plain multi-term text returned no results.
         # Why: natural-language queries often include stopwords that over-constrain implicit AND.
@@ -225,20 +244,27 @@ class SearchService:
             limit=limit,
             offset=offset,
         ):
-            return await self.repository.search(
-                search_text=relaxed_search_text,
-                permalink=query.permalink,
-                permalink_match=query.permalink_match,
-                title=query.title,
-                note_types=query.note_types,
-                search_item_types=query.entity_types,
-                after_date=after_date,
-                metadata_filters=metadata_filters,
-                retrieval_mode=retrieval_mode,
-                min_similarity=query.min_similarity,
-                limit=limit,
-                offset=offset,
-            )
+            with telemetry.scope(
+                "search.repository_query",
+                retrieval_mode=retrieval_mode.value,
+                phase="repository_query",
+                has_query=has_query,
+                has_filters=has_filters,
+            ):
+                return await self.repository.search(
+                    search_text=relaxed_search_text,
+                    permalink=query.permalink,
+                    permalink_match=query.permalink_match,
+                    title=query.title,
+                    note_types=query.note_types,
+                    search_item_types=query.entity_types,
+                    after_date=after_date,
+                    metadata_filters=metadata_filters,
+                    retrieval_mode=retrieval_mode,
+                    min_similarity=query.min_similarity,
+                    limit=limit,
+                    offset=offset,
+                )
 
     @staticmethod
     def _tokenize_fts_text(search_text: str) -> list[str]:
@@ -372,13 +398,22 @@ class SearchService:
             f"permalink={entity.permalink} project_id={entity.project_id}"
         )
         try:
-            # delete all search index data associated with entity
-            await self.repository.delete_by_entity_id(entity_id=entity.id)
+            with telemetry.scope(
+                "search.index_entity_data",
+                phase="index_entity_data",
+                result_count=1,
+            ):
+                with telemetry.scope(
+                    "search.index.delete_existing",
+                    phase="delete_existing",
+                    result_count=1,
+                ):
+                    await self.repository.delete_by_entity_id(entity_id=entity.id)
 
-            # reindex
-            await self.index_entity_markdown(
-                entity, content
-            ) if entity.is_markdown else await self.index_entity_file(entity)
+                if entity.is_markdown:
+                    await self.index_entity_markdown(entity, content)
+                else:
+                    await self.index_entity_file(entity)
 
             logger.debug(
                 f"[BackgroundTask] Completed search index for entity_id={entity.id} "
@@ -490,23 +525,28 @@ class SearchService:
         self,
         entity: Entity,
     ) -> None:
-        # Index entity file with no content
-        await self.repository.index_item(
-            SearchIndexRow(
-                id=entity.id,
-                entity_id=entity.id,
-                type=SearchItemType.ENTITY.value,
-                title=_strip_nul(entity.title),
-                permalink=entity.permalink,  # Required for Postgres NOT NULL constraint
-                file_path=entity.file_path,
-                metadata={
-                    "note_type": entity.note_type,
-                },
-                created_at=entity.created_at,
-                updated_at=_mtime_to_datetime(entity),
-                project_id=entity.project_id,
+        with telemetry.scope(
+            "search.index_file",
+            phase="index_file",
+            result_count=1,
+        ):
+            # Index entity file with no content
+            await self.repository.index_item(
+                SearchIndexRow(
+                    id=entity.id,
+                    entity_id=entity.id,
+                    type=SearchItemType.ENTITY.value,
+                    title=_strip_nul(entity.title),
+                    permalink=entity.permalink,  # Required for Postgres NOT NULL constraint
+                    file_path=entity.file_path,
+                    metadata={
+                        "note_type": entity.note_type,
+                    },
+                    created_at=entity.created_at,
+                    updated_at=_mtime_to_datetime(entity),
+                    project_id=entity.project_id,
+                )
             )
-        )
 
     async def index_entity_markdown(
         self,
@@ -539,129 +579,142 @@ class SearchService:
         The project_id is automatically added by the repository when indexing.
         """
 
-        # Collect all search index rows to batch insert at the end
-        rows_to_index = []
+        with telemetry.scope(
+            "search.index_markdown",
+            phase="index_markdown",
+            result_count=1,
+        ):
+            rows_to_index = []
 
-        content_stems = []
-        content_snippet = ""
-        title_variants = self._generate_variants(entity.title)
-        content_stems.extend(title_variants)
+            content_stems = []
+            content_snippet = ""
+            title_variants = self._generate_variants(entity.title)
+            content_stems.extend(title_variants)
 
-        # Use provided content or read from file
-        if content is None:
-            content = await self.file_service.read_entity_content(entity)
-        if content:
-            content_stems.append(content)
-            # Store full content for vector embedding quality.
-            # The chunker in the vector pipeline splits this into
-            # appropriately-sized pieces for embedding.
-            content_snippet = _strip_nul(content)
+            if content is None:
+                with telemetry.scope(
+                    "search.index.read_content",
+                    phase="read_content",
+                    result_count=1,
+                ):
+                    content = await self.file_service.read_entity_content(entity)
+            if content:
+                content_stems.append(content)
+                content_snippet = _strip_nul(content)
 
-        if entity.permalink:
-            content_stems.extend(self._generate_variants(entity.permalink))
+            with telemetry.scope(
+                "search.index.build_rows",
+                phase="build_rows",
+                result_count=1,
+            ):
+                if entity.permalink:
+                    content_stems.extend(self._generate_variants(entity.permalink))
 
-        content_stems.extend(self._generate_variants(entity.file_path))
+                content_stems.extend(self._generate_variants(entity.file_path))
 
-        # Add entity tags from frontmatter to search content
-        entity_tags = self._extract_entity_tags(entity)
-        if entity_tags:
-            content_stems.extend(entity_tags)
+                entity_tags = self._extract_entity_tags(entity)
+                if entity_tags:
+                    content_stems.extend(entity_tags)
 
-        entity_content_stems = _strip_nul("\n".join(p for p in content_stems if p and p.strip()))
-
-        # Truncate to stay under Postgres's 8KB index row limit
-        if len(entity_content_stems) > MAX_CONTENT_STEMS_SIZE:  # pragma: no cover
-            entity_content_stems = entity_content_stems[:MAX_CONTENT_STEMS_SIZE]  # pragma: no cover
-
-        # Add entity row
-        rows_to_index.append(
-            SearchIndexRow(
-                id=entity.id,
-                type=SearchItemType.ENTITY.value,
-                title=_strip_nul(entity.title),
-                content_stems=entity_content_stems,
-                content_snippet=content_snippet,
-                permalink=entity.permalink,
-                file_path=entity.file_path,
-                entity_id=entity.id,
-                metadata={
-                    "note_type": entity.note_type,
-                },
-                created_at=entity.created_at,
-                updated_at=_mtime_to_datetime(entity),
-                project_id=entity.project_id,
-            )
-        )
-
-        # Add observation rows - dedupe by permalink to avoid unique constraint violations
-        # Two observations with same entity/category/content generate identical permalinks
-        seen_permalinks: set[str] = {entity.permalink} if entity.permalink else set()
-        for obs in entity.observations:
-            obs_permalink = obs.permalink
-            if obs_permalink in seen_permalinks:
-                logger.debug(f"Skipping duplicate observation permalink: {obs_permalink}")
-                continue
-            seen_permalinks.add(obs_permalink)
-
-            # Index with parent entity's file path since that's where it's defined
-            obs_content_stems = _strip_nul(
-                "\n".join(p for p in self._generate_variants(obs.content) if p and p.strip())
-            )
-            # Truncate to stay under Postgres's 8KB index row limit
-            if len(obs_content_stems) > MAX_CONTENT_STEMS_SIZE:  # pragma: no cover
-                obs_content_stems = obs_content_stems[:MAX_CONTENT_STEMS_SIZE]  # pragma: no cover
-            rows_to_index.append(
-                SearchIndexRow(
-                    id=obs.id,
-                    type=SearchItemType.OBSERVATION.value,
-                    title=_strip_nul(f"{obs.category}: {obs.content[:100]}..."),
-                    content_stems=obs_content_stems,
-                    content_snippet=_strip_nul(obs.content),
-                    permalink=obs_permalink,
-                    file_path=entity.file_path,
-                    category=obs.category,
-                    entity_id=entity.id,
-                    metadata={
-                        "tags": obs.tags,
-                    },
-                    created_at=entity.created_at,
-                    updated_at=_mtime_to_datetime(entity),
-                    project_id=entity.project_id,
+                entity_content_stems = _strip_nul(
+                    "\n".join(p for p in content_stems if p and p.strip())
                 )
-            )
 
-        # Add relation rows (only outgoing relations defined in this file)
-        for rel in entity.outgoing_relations:
-            # Create descriptive title showing the relationship
-            relation_title = _strip_nul(
-                f"{rel.from_entity.title} → {rel.to_entity.title}"
-                if rel.to_entity
-                else f"{rel.from_entity.title}"
-            )
+                if len(entity_content_stems) > MAX_CONTENT_STEMS_SIZE:  # pragma: no cover
+                    entity_content_stems = entity_content_stems[
+                        :MAX_CONTENT_STEMS_SIZE
+                    ]  # pragma: no cover
 
-            rel_content_stems = _strip_nul(
-                "\n".join(p for p in self._generate_variants(relation_title) if p and p.strip())
-            )
-            rows_to_index.append(
-                SearchIndexRow(
-                    id=rel.id,
-                    title=relation_title,
-                    permalink=rel.permalink,
-                    content_stems=rel_content_stems,
-                    file_path=entity.file_path,
-                    type=SearchItemType.RELATION.value,
-                    entity_id=entity.id,
-                    from_id=rel.from_id,
-                    to_id=rel.to_id,
-                    relation_type=rel.relation_type,
-                    created_at=entity.created_at,
-                    updated_at=_mtime_to_datetime(entity),
-                    project_id=entity.project_id,
+                rows_to_index.append(
+                    SearchIndexRow(
+                        id=entity.id,
+                        type=SearchItemType.ENTITY.value,
+                        title=_strip_nul(entity.title),
+                        content_stems=entity_content_stems,
+                        content_snippet=content_snippet,
+                        permalink=entity.permalink,
+                        file_path=entity.file_path,
+                        entity_id=entity.id,
+                        metadata={
+                            "note_type": entity.note_type,
+                        },
+                        created_at=entity.created_at,
+                        updated_at=_mtime_to_datetime(entity),
+                        project_id=entity.project_id,
+                    )
                 )
-            )
 
-        # Batch insert all rows at once
-        await self.repository.bulk_index_items(rows_to_index)
+                seen_permalinks: set[str] = {entity.permalink} if entity.permalink else set()
+                for obs in entity.observations:
+                    obs_permalink = obs.permalink
+                    if obs_permalink in seen_permalinks:
+                        logger.debug(f"Skipping duplicate observation permalink: {obs_permalink}")
+                        continue
+                    seen_permalinks.add(obs_permalink)
+
+                    obs_content_stems = _strip_nul(
+                        "\n".join(
+                            p for p in self._generate_variants(obs.content) if p and p.strip()
+                        )
+                    )
+                    if len(obs_content_stems) > MAX_CONTENT_STEMS_SIZE:  # pragma: no cover
+                        obs_content_stems = obs_content_stems[:MAX_CONTENT_STEMS_SIZE]  # pragma: no cover
+                    rows_to_index.append(
+                        SearchIndexRow(
+                            id=obs.id,
+                            type=SearchItemType.OBSERVATION.value,
+                            title=_strip_nul(f"{obs.category}: {obs.content[:100]}..."),
+                            content_stems=obs_content_stems,
+                            content_snippet=_strip_nul(obs.content),
+                            permalink=obs_permalink,
+                            file_path=entity.file_path,
+                            category=obs.category,
+                            entity_id=entity.id,
+                            metadata={
+                                "tags": obs.tags,
+                            },
+                            created_at=entity.created_at,
+                            updated_at=_mtime_to_datetime(entity),
+                            project_id=entity.project_id,
+                        )
+                    )
+
+                for rel in entity.outgoing_relations:
+                    relation_title = _strip_nul(
+                        f"{rel.from_entity.title} -> {rel.to_entity.title}"
+                        if rel.to_entity
+                        else f"{rel.from_entity.title}"
+                    )
+
+                    rel_content_stems = _strip_nul(
+                        "\n".join(
+                            p for p in self._generate_variants(relation_title) if p and p.strip()
+                        )
+                    )
+                    rows_to_index.append(
+                        SearchIndexRow(
+                            id=rel.id,
+                            title=relation_title,
+                            permalink=rel.permalink,
+                            content_stems=rel_content_stems,
+                            file_path=entity.file_path,
+                            type=SearchItemType.RELATION.value,
+                            entity_id=entity.id,
+                            from_id=rel.from_id,
+                            to_id=rel.to_id,
+                            relation_type=rel.relation_type,
+                            created_at=entity.created_at,
+                            updated_at=_mtime_to_datetime(entity),
+                            project_id=entity.project_id,
+                        )
+                    )
+
+            with telemetry.scope(
+                "search.index.bulk_upsert",
+                phase="bulk_upsert",
+                result_count=len(rows_to_index),
+            ):
+                await self.repository.bulk_index_items(rows_to_index)
 
     async def delete_by_permalink(self, permalink: str):
         """Delete an item from the search index."""

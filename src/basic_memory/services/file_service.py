@@ -11,6 +11,7 @@ import aiofiles
 
 import yaml
 
+from basic_memory import telemetry
 from basic_memory import file_utils
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -79,13 +80,18 @@ class FileService:
         """
         logger.debug(f"Reading entity content, entity_id={entity.id}, permalink={entity.permalink}")
 
-        # markdown_processor is required for entity content reads — fail fast if not configured
-        if self.markdown_processor is None:
-            raise ValueError("markdown_processor is required for read_entity_content")
+        with telemetry.scope(
+            "file_service.read_content",
+            domain="file_service",
+            action="read_content",
+            phase="read_content",
+        ):
+            if self.markdown_processor is None:
+                raise ValueError("markdown_processor is required for read_entity_content")
 
-        file_path = self.get_entity_path(entity)
-        markdown = await self.markdown_processor.read_file(file_path)
-        return markdown.content or ""
+            file_path = self.get_entity_path(entity)
+            markdown = await self.markdown_processor.read_file(file_path)
+            return markdown.content or ""
 
     async def delete_entity_file(self, entity: EntityModel) -> None:
         """Delete entity file from filesystem.
@@ -176,32 +182,34 @@ class FileService:
         full_path = path_obj if path_obj.is_absolute() else self.base_path / path_obj
 
         try:
-            # Ensure parent directory exists
-            await self.ensure_directory(full_path.parent)
+            with telemetry.scope(
+                "file_service.write",
+                domain="file_service",
+                action="write",
+                phase="write",
+            ):
+                await self.ensure_directory(full_path.parent)
 
-            # Write content atomically
-            logger.info(
-                "Writing file: "
-                f"path={path_obj}, "
-                f"content_length={len(content)}, "
-                f"is_markdown={full_path.suffix.lower() == '.md'}"
-            )
-
-            await file_utils.write_file_atomic(full_path, content)
-
-            # Format file if configured
-            final_content = content
-            if self.app_config:
-                formatted_content = await file_utils.format_file(
-                    full_path, self.app_config, is_markdown=self.is_markdown(path)
+                logger.info(
+                    "Writing file: "
+                    f"path={path_obj}, "
+                    f"content_length={len(content)}, "
+                    f"is_markdown={full_path.suffix.lower() == '.md'}"
                 )
-                if formatted_content is not None:
-                    final_content = formatted_content  # pragma: no cover
 
-            # Compute and return checksum of final content
-            checksum = await file_utils.compute_checksum(final_content)
-            logger.debug(f"File write completed path={full_path}, {checksum=}")
-            return checksum
+                await file_utils.write_file_atomic(full_path, content)
+
+                final_content = content
+                if self.app_config:
+                    formatted_content = await file_utils.format_file(
+                        full_path, self.app_config, is_markdown=self.is_markdown(path)
+                    )
+                    if formatted_content is not None:
+                        final_content = formatted_content  # pragma: no cover
+
+                checksum = await file_utils.compute_checksum(final_content)
+                logger.debug(f"File write completed path={full_path}, {checksum=}")
+                return checksum
 
         except Exception as e:
             logger.exception("File write error", path=str(full_path), error=str(e))
@@ -227,16 +235,24 @@ class FileService:
         full_path = path_obj if path_obj.is_absolute() else self.base_path / path_obj
 
         try:
-            logger.debug("Reading file content", operation="read_file_content", path=str(full_path))
-            async with aiofiles.open(full_path, mode="r", encoding="utf-8") as f:
-                content = await f.read()
+            with telemetry.scope(
+                "file_service.read_content",
+                domain="file_service",
+                action="read_content",
+                phase="read_content",
+            ):
+                logger.debug(
+                    "Reading file content", operation="read_file_content", path=str(full_path)
+                )
+                async with aiofiles.open(full_path, mode="r", encoding="utf-8") as f:
+                    content = await f.read()
 
-            logger.debug(
-                "File read completed",
-                path=str(full_path),
-                content_length=len(content),
-            )
-            return content
+                logger.debug(
+                    "File read completed",
+                    path=str(full_path),
+                    content_length=len(content),
+                )
+                return content
 
         except FileNotFoundError:
             # Preserve FileNotFoundError so callers (e.g. sync) can treat it as deletion.
@@ -266,16 +282,22 @@ class FileService:
         full_path = path_obj if path_obj.is_absolute() else self.base_path / path_obj
 
         try:
-            logger.debug("Reading file bytes", operation="read_file_bytes", path=str(full_path))
-            async with aiofiles.open(full_path, mode="rb") as f:
-                content = await f.read()
+            with telemetry.scope(
+                "file_service.read_content",
+                domain="file_service",
+                action="read_content",
+                phase="read_content",
+            ):
+                logger.debug("Reading file bytes", operation="read_file_bytes", path=str(full_path))
+                async with aiofiles.open(full_path, mode="rb") as f:
+                    content = await f.read()
 
-            logger.debug(
-                "File read completed",
-                path=str(full_path),
-                content_length=len(content),
-            )
-            return content
+                logger.debug(
+                    "File read completed",
+                    path=str(full_path),
+                    content_length=len(content),
+                )
+                return content
 
         except Exception as e:
             logger.exception("File read error", path=str(full_path), error=str(e))
@@ -303,21 +325,26 @@ class FileService:
         full_path = path_obj if path_obj.is_absolute() else self.base_path / path_obj
 
         try:
-            logger.debug("Reading file", operation="read_file", path=str(full_path))
+            with telemetry.scope(
+                "file_service.read",
+                domain="file_service",
+                action="read",
+                phase="read",
+            ):
+                logger.debug("Reading file", operation="read_file", path=str(full_path))
 
-            # Use aiofiles for non-blocking read
-            async with aiofiles.open(full_path, mode="r", encoding="utf-8") as f:
-                content = await f.read()
+                async with aiofiles.open(full_path, mode="r", encoding="utf-8") as f:
+                    content = await f.read()
 
-            checksum = await file_utils.compute_checksum(content)
+                checksum = await file_utils.compute_checksum(content)
 
-            logger.debug(
-                "File read completed",
-                path=str(full_path),
-                checksum=checksum,
-                content_length=len(content),
-            )
-            return content, checksum
+                logger.debug(
+                    "File read completed",
+                    path=str(full_path),
+                    checksum=checksum,
+                    content_length=len(content),
+                )
+                return content, checksum
 
         except Exception as e:
             logger.exception("File read error", path=str(full_path), error=str(e))

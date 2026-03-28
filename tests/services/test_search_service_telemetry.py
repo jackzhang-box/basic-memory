@@ -34,12 +34,19 @@ async def test_search_service_wraps_repository_search(search_service, monkeypatc
         "search.execute",
         {
             "retrieval_mode": "fts",
-            "has_text_query": True,
-            "has_title_query": False,
-            "has_permalink_query": False,
-            "has_metadata_filters": False,
+            "has_query": True,
+            "has_filters": False,
             "limit": 10,
             "offset": 0,
+        },
+    )
+    assert spans[1] == (
+        "search.repository_query",
+        {
+            "retrieval_mode": "fts",
+            "phase": "repository_query",
+            "has_query": True,
+            "has_filters": False,
         },
     )
 
@@ -58,8 +65,13 @@ async def test_search_service_emits_relaxed_retry_span(search_service, monkeypat
 
     await search_service.search(SearchQuery(text="who are our main competitors and partners"))
 
-    assert [name for name, _ in spans] == ["search.execute", "search.relaxed_fts_retry"]
-    assert spans[1] == (
+    assert [name for name, _ in spans] == [
+        "search.execute",
+        "search.repository_query",
+        "search.relaxed_fts_retry",
+        "search.repository_query",
+    ]
+    assert spans[2] == (
         "search.relaxed_fts_retry",
         {
             "retrieval_mode": "fts",

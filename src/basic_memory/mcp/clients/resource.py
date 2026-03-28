@@ -7,6 +7,7 @@ from typing import Optional
 
 from httpx import AsyncClient, Response
 
+from basic_memory import telemetry
 from basic_memory.mcp.tools.utils import call_get
 
 
@@ -64,8 +65,18 @@ class ResourceClient:
         if page_size is not None:
             params["page_size"] = page_size
 
-        return await call_get(
-            self.http_client,
-            f"{self._base_path}/{entity_id}",
-            params=params if params else None,
-        )
+        with telemetry.scope(
+            "mcp.client.resource.read",
+            client_name="resource",
+            operation="read",
+            page=page,
+            page_size=page_size,
+        ):
+            return await call_get(
+                self.http_client,
+                f"{self._base_path}/{entity_id}",
+                params=params if params else None,
+                client_name="resource",
+                operation="read",
+                path_template="/v2/projects/{project_id}/resource/{entity_id}",
+            )

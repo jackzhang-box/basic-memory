@@ -51,20 +51,19 @@ async def test_write_note_emits_root_operation_and_project_context(
         output_format="json",
     )
 
-    assert operations == [
-        (
-            "mcp.tool.write_note",
-            {
-                "entrypoint": "mcp",
-                "tool_name": "write_note",
-                "requested_project": test_project.name,
-                "workspace_id": None,
-                "note_type": "note",
-                "overwrite": False,
-                "output_format": "json",
-            },
-        )
-    ]
+    assert operations[0] == (
+        "mcp.tool.write_note",
+        {
+            "entrypoint": "mcp",
+            "tool_name": "write_note",
+            "project_name": test_project.name,
+            "workspace_id": None,
+            "note_type": "note",
+            "overwrite": False,
+            "output_format": "json",
+        },
+    )
+    assert "api.request.knowledge.create_entity" in [name for name, _ in operations]
     assert _contains_context(
         contexts,
         {
@@ -103,21 +102,23 @@ async def test_read_note_emits_root_operation_and_project_context(
         include_frontmatter=True,
     )
 
-    assert operations == [
-        (
-            "mcp.tool.read_note",
-            {
-                "entrypoint": "mcp",
-                "tool_name": "read_note",
-                "requested_project": test_project.name,
-                "workspace_id": None,
-                "output_format": "json",
-                "page": 1,
-                "page_size": 10,
-                "include_frontmatter": True,
-            },
-        )
-    ]
+    assert operations[0] == (
+        "mcp.tool.read_note",
+        {
+            "entrypoint": "mcp",
+            "tool_name": "read_note",
+            "project_name": test_project.name,
+            "workspace_id": None,
+            "output_format": "json",
+            "page": 1,
+            "page_size": 10,
+            "include_frontmatter": True,
+        },
+    )
+    operation_names = [name for name, _ in operations]
+    assert "api.request.knowledge.resolve_entity" in operation_names
+    assert "api.request.resource.get_content" in operation_names
+    assert "api.request.knowledge.get_entity" in operation_names
     assert _contains_context(
         contexts,
         {
@@ -163,7 +164,7 @@ async def test_search_notes_emits_root_operation_and_project_context(
         {
             "entrypoint": "mcp",
             "tool_name": "search_notes",
-            "requested_project": test_project.name,
+            "project_name": test_project.name,
             "workspace_id": None,
             "search_type": "text",
             "output_format": "json",
@@ -172,7 +173,7 @@ async def test_search_notes_emits_root_operation_and_project_context(
             "has_query": True,
             "note_type_filter_count": 0,
             "entity_type_filter_count": 0,
-            "has_metadata_filters": False,
+            "has_filters": True,
             "has_tags_filter": True,
             "has_status_filter": False,
         },
@@ -217,22 +218,23 @@ async def test_edit_note_emits_root_operation_and_project_context(
         output_format="json",
     )
 
-    assert operations == [
-        (
-            "mcp.tool.edit_note",
-            {
-                "entrypoint": "mcp",
-                "tool_name": "edit_note",
-                "requested_project": test_project.name,
-                "workspace_id": None,
-                "edit_operation": "append",
-                "output_format": "json",
-                "has_section": False,
-                "has_find_text": False,
-                "expected_replacements": 1,
-            },
-        )
-    ]
+    assert operations[0] == (
+        "mcp.tool.edit_note",
+        {
+            "entrypoint": "mcp",
+            "tool_name": "edit_note",
+            "project_name": test_project.name,
+            "workspace_id": None,
+            "edit_operation": "append",
+            "output_format": "json",
+            "has_section": False,
+            "has_find_text": False,
+            "expected_replacements": 1,
+        },
+    )
+    operation_names = [name for name, _ in operations]
+    assert "api.request.knowledge.resolve_entity" in operation_names
+    assert "api.request.knowledge.edit_entity" in operation_names
     assert _contains_context(
         contexts,
         {
@@ -275,24 +277,23 @@ async def test_build_context_emits_root_operation_and_project_context(
         output_format="json",
     )
 
-    assert operations == [
-        (
-            "mcp.tool.build_context",
-            {
-                "entrypoint": "mcp",
-                "tool_name": "build_context",
-                "requested_project": test_project.name,
-                "workspace_id": None,
-                "depth": 2,
-                "timeframe": "7d",
-                "page": 1,
-                "page_size": 5,
-                "max_related": 3,
-                "output_format": "json",
-                "is_memory_url": True,
-            },
-        )
-    ]
+    assert operations[0] == (
+        "mcp.tool.build_context",
+        {
+            "entrypoint": "mcp",
+            "tool_name": "build_context",
+            "project_name": test_project.name,
+            "workspace_id": None,
+            "depth": 2,
+            "timeframe": "7d",
+            "page": 1,
+            "page_size": 5,
+            "max_related": 3,
+            "output_format": "json",
+            "is_memory_url": True,
+        },
+    )
+    assert "api.request.memory.build_context" in [name for name, _ in operations]
     assert _contains_context(
         contexts,
         {

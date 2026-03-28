@@ -7,6 +7,7 @@ from typing import Any
 
 from httpx import AsyncClient
 
+from basic_memory import telemetry
 from basic_memory.mcp.tools.utils import call_get, call_post, call_put, call_patch, call_delete
 from basic_memory.schemas.response import (
     EntityResponse,
@@ -58,12 +59,21 @@ class KnowledgeClient:
             ToolError: If the request fails
         """
         params = {"fast": fast} if fast is not None else None
-        response = await call_post(
-            self.http_client,
-            f"{self._base_path}/entities",
-            json=entity_data,
-            params=params,
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.create_entity",
+            client_name="knowledge",
+            operation="create_entity",
+            fast=fast,
+        ):
+            response = await call_post(
+                self.http_client,
+                f"{self._base_path}/entities",
+                json=entity_data,
+                params=params,
+                client_name="knowledge",
+                operation="create_entity",
+                path_template="/v2/projects/{project_id}/knowledge/entities",
+            )
         return EntityResponse.model_validate(response.json())
 
     async def update_entity(
@@ -86,12 +96,21 @@ class KnowledgeClient:
             ToolError: If the request fails
         """
         params = {"fast": fast} if fast is not None else None
-        response = await call_put(
-            self.http_client,
-            f"{self._base_path}/entities/{entity_id}",
-            json=entity_data,
-            params=params,
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.update_entity",
+            client_name="knowledge",
+            operation="update_entity",
+            fast=fast,
+        ):
+            response = await call_put(
+                self.http_client,
+                f"{self._base_path}/entities/{entity_id}",
+                json=entity_data,
+                params=params,
+                client_name="knowledge",
+                operation="update_entity",
+                path_template="/v2/projects/{project_id}/knowledge/entities/{entity_id}",
+            )
         return EntityResponse.model_validate(response.json())
 
     async def get_entity(self, entity_id: str) -> EntityResponse:
@@ -106,10 +125,18 @@ class KnowledgeClient:
         Raises:
             ToolError: If the entity is not found or request fails
         """
-        response = await call_get(
-            self.http_client,
-            f"{self._base_path}/entities/{entity_id}",
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.get_entity",
+            client_name="knowledge",
+            operation="get_entity",
+        ):
+            response = await call_get(
+                self.http_client,
+                f"{self._base_path}/entities/{entity_id}",
+                client_name="knowledge",
+                operation="get_entity",
+                path_template="/v2/projects/{project_id}/knowledge/entities/{entity_id}",
+            )
         return EntityResponse.model_validate(response.json())
 
     async def patch_entity(
@@ -132,12 +159,21 @@ class KnowledgeClient:
             ToolError: If the request fails
         """
         params = {"fast": fast} if fast is not None else None
-        response = await call_patch(
-            self.http_client,
-            f"{self._base_path}/entities/{entity_id}",
-            json=patch_data,
-            params=params,
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.patch_entity",
+            client_name="knowledge",
+            operation="patch_entity",
+            fast=fast,
+        ):
+            response = await call_patch(
+                self.http_client,
+                f"{self._base_path}/entities/{entity_id}",
+                json=patch_data,
+                params=params,
+                client_name="knowledge",
+                operation="patch_entity",
+                path_template="/v2/projects/{project_id}/knowledge/entities/{entity_id}",
+            )
         return EntityResponse.model_validate(response.json())
 
     async def delete_entity(self, entity_id: str) -> DeleteEntitiesResponse:
@@ -152,10 +188,18 @@ class KnowledgeClient:
         Raises:
             ToolError: If the entity is not found or request fails
         """
-        response = await call_delete(
-            self.http_client,
-            f"{self._base_path}/entities/{entity_id}",
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.delete_entity",
+            client_name="knowledge",
+            operation="delete_entity",
+        ):
+            response = await call_delete(
+                self.http_client,
+                f"{self._base_path}/entities/{entity_id}",
+                client_name="knowledge",
+                operation="delete_entity",
+                path_template="/v2/projects/{project_id}/knowledge/entities/{entity_id}",
+            )
         return DeleteEntitiesResponse.model_validate(response.json())
 
     async def move_entity(self, entity_id: str, destination_path: str) -> EntityResponse:
@@ -171,11 +215,19 @@ class KnowledgeClient:
         Raises:
             ToolError: If the request fails
         """
-        response = await call_put(
-            self.http_client,
-            f"{self._base_path}/entities/{entity_id}/move",
-            json={"destination_path": destination_path},
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.move_entity",
+            client_name="knowledge",
+            operation="move_entity",
+        ):
+            response = await call_put(
+                self.http_client,
+                f"{self._base_path}/entities/{entity_id}/move",
+                json={"destination_path": destination_path},
+                client_name="knowledge",
+                operation="move_entity",
+                path_template="/v2/projects/{project_id}/knowledge/entities/{entity_id}/move",
+            )
         return EntityResponse.model_validate(response.json())
 
     async def move_directory(
@@ -193,14 +245,22 @@ class KnowledgeClient:
         Raises:
             ToolError: If the request fails
         """
-        response = await call_post(
-            self.http_client,
-            f"{self._base_path}/move-directory",
-            json={
-                "source_directory": source_directory,
-                "destination_directory": destination_directory,
-            },
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.move_directory",
+            client_name="knowledge",
+            operation="move_directory",
+        ):
+            response = await call_post(
+                self.http_client,
+                f"{self._base_path}/move-directory",
+                json={
+                    "source_directory": source_directory,
+                    "destination_directory": destination_directory,
+                },
+                client_name="knowledge",
+                operation="move_directory",
+                path_template="/v2/projects/{project_id}/knowledge/move-directory",
+            )
         return DirectoryMoveResult.model_validate(response.json())
 
     async def delete_directory(self, directory: str) -> DirectoryDeleteResult:
@@ -215,11 +275,19 @@ class KnowledgeClient:
         Raises:
             ToolError: If the request fails
         """
-        response = await call_post(
-            self.http_client,
-            f"{self._base_path}/delete-directory",
-            json={"directory": directory},
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.delete_directory",
+            client_name="knowledge",
+            operation="delete_directory",
+        ):
+            response = await call_post(
+                self.http_client,
+                f"{self._base_path}/delete-directory",
+                json={"directory": directory},
+                client_name="knowledge",
+                operation="delete_directory",
+                path_template="/v2/projects/{project_id}/knowledge/delete-directory",
+            )
         return DirectoryDeleteResult.model_validate(response.json())
 
     # --- Resolution ---
@@ -237,10 +305,18 @@ class KnowledgeClient:
         Raises:
             ToolError: If the identifier cannot be resolved
         """
-        response = await call_post(
-            self.http_client,
-            f"{self._base_path}/resolve",
-            json={"identifier": identifier, "strict": strict},
-        )
+        with telemetry.scope(
+            "mcp.client.knowledge.resolve_entity",
+            client_name="knowledge",
+            operation="resolve_entity",
+        ):
+            response = await call_post(
+                self.http_client,
+                f"{self._base_path}/resolve",
+                json={"identifier": identifier, "strict": strict},
+                client_name="knowledge",
+                operation="resolve_entity",
+                path_template="/v2/projects/{project_id}/knowledge/resolve",
+            )
         data = response.json()
         return data["external_id"]

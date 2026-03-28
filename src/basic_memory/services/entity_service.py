@@ -10,7 +10,7 @@ import yaml
 from loguru import logger
 from sqlalchemy.exc import IntegrityError
 
-
+from basic_memory import telemetry
 from basic_memory.config import ProjectConfig, BasicMemoryConfig
 from basic_memory.file_utils import (
     has_frontmatter,
@@ -281,31 +281,54 @@ class EntityService(BaseService[EntityModel]):
 
         # Get unique permalink (prioritizing content frontmatter) unless disabled
         if self.app_config and self.app_config.disable_permalinks:
-            # Use empty string as sentinel to indicate permalinks are disabled
-            # The permalink property will return None when it sees empty string
             schema._permalink = ""
         else:
-            # Generate and set permalink
-            permalink = await self.resolve_permalink(file_path, content_markdown)
+            with telemetry.scope(
+                "entity_service.create.resolve_permalink",
+                domain="entity_service",
+                action="create",
+                phase="resolve_permalink",
+            ):
+                permalink = await self.resolve_permalink(file_path, content_markdown)
             schema._permalink = permalink
 
         post = await schema_to_markdown(schema)
 
-        # write file
         final_content = dump_frontmatter(post)
-        checksum = await self.file_service.write_file(file_path, final_content)
+        with telemetry.scope(
+            "entity_service.create.write_file",
+            domain="entity_service",
+            action="create",
+            phase="write_file",
+        ):
+            checksum = await self.file_service.write_file(file_path, final_content)
 
-        # parse entity from content we just wrote (avoids re-reading file for cloud compatibility)
-        entity_markdown = await self.entity_parser.parse_markdown_content(
-            file_path=file_path,
-            content=final_content,
-        )
+        with telemetry.scope(
+            "entity_service.create.parse_markdown",
+            domain="entity_service",
+            action="create",
+            phase="parse_markdown",
+        ):
+            entity_markdown = await self.entity_parser.parse_markdown_content(
+                file_path=file_path,
+                content=final_content,
+            )
 
-        # create entity and relations
-        entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=True)
+        with telemetry.scope(
+            "entity_service.create.upsert_entity",
+            domain="entity_service",
+            action="create",
+            phase="upsert_entity",
+        ):
+            entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=True)
 
-        # Set final checksum to mark complete
-        return await self.repository.update(entity.id, {"checksum": checksum})
+        with telemetry.scope(
+            "entity_service.create.update_checksum",
+            domain="entity_service",
+            action="create",
+            phase="update_checksum",
+        ):
+            return await self.repository.update(entity.id, {"checksum": checksum})
 
     async def update_entity(self, entity: EntityModel, schema: EntitySchema) -> EntityModel:
         """Update an entity's content and metadata."""
@@ -316,12 +339,23 @@ class EntityService(BaseService[EntityModel]):
         # Convert file path string to Path
         file_path = Path(entity.file_path)
 
-        # Read existing content via file_service (for cloud compatibility)
-        existing_content = await self.file_service.read_file_content(file_path)
-        existing_markdown = await self.entity_parser.parse_markdown_content(
-            file_path=file_path,
-            content=existing_content,
-        )
+        with telemetry.scope(
+            "entity_service.update.read_file",
+            domain="entity_service",
+            action="update",
+            phase="read_file",
+        ):
+            existing_content = await self.file_service.read_file_content(file_path)
+        with telemetry.scope(
+            "entity_service.update.parse_markdown",
+            domain="entity_service",
+            action="update",
+            phase="parse_markdown",
+        ):
+            existing_markdown = await self.entity_parser.parse_markdown_content(
+                file_path=file_path,
+                content=existing_content,
+            )
 
         # Parse content frontmatter to check for user-specified permalink and note_type
         content_markdown = None
@@ -342,7 +376,13 @@ class EntityService(BaseService[EntityModel]):
         if self.app_config and not self.app_config.disable_permalinks:
             if content_markdown and content_markdown.frontmatter.permalink:
                 # Resolve permalink with the new content frontmatter
-                resolved_permalink = await self.resolve_permalink(file_path, content_markdown)
+                with telemetry.scope(
+                    "entity_service.update.resolve_permalink",
+                    domain="entity_service",
+                    action="update",
+                    phase="resolve_permalink",
+                ):
+                    resolved_permalink = await self.resolve_permalink(file_path, content_markdown)
                 if resolved_permalink != entity.permalink:
                     new_permalink = resolved_permalink
                     # Update the schema to use the new permalink
@@ -367,21 +407,41 @@ class EntityService(BaseService[EntityModel]):
         merged_post = frontmatter.Post(post.content)
         merged_post.metadata.update(existing_markdown.frontmatter.metadata)
 
-        # write file
         final_content = dump_frontmatter(merged_post)
-        checksum = await self.file_service.write_file(file_path, final_content)
+        with telemetry.scope(
+            "entity_service.update.write_file",
+            domain="entity_service",
+            action="update",
+            phase="write_file",
+        ):
+            checksum = await self.file_service.write_file(file_path, final_content)
 
-        # parse entity from content we just wrote (avoids re-reading file for cloud compatibility)
-        entity_markdown = await self.entity_parser.parse_markdown_content(
-            file_path=file_path,
-            content=final_content,
-        )
+        with telemetry.scope(
+            "entity_service.update.parse_markdown",
+            domain="entity_service",
+            action="update",
+            phase="parse_markdown",
+        ):
+            entity_markdown = await self.entity_parser.parse_markdown_content(
+                file_path=file_path,
+                content=final_content,
+            )
 
-        # update entity and relations
-        entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
+        with telemetry.scope(
+            "entity_service.update.upsert_entity",
+            domain="entity_service",
+            action="update",
+            phase="upsert_entity",
+        ):
+            entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
 
-        # Set final checksum to match file
-        entity = await self.repository.update(entity.id, {"checksum": checksum})
+        with telemetry.scope(
+            "entity_service.update.update_checksum",
+            domain="entity_service",
+            action="update",
+            phase="update_checksum",
+        ):
+            entity = await self.repository.update(entity.id, {"checksum": checksum})
 
         return entity
 
@@ -399,7 +459,13 @@ class EntityService(BaseService[EntityModel]):
         )
 
         # --- Identity & File Path ---
-        existing = await self.repository.get_by_external_id(external_id) if external_id else None
+        with telemetry.scope(
+            "entity_service.fast_write.resolve_entity",
+            domain="entity_service",
+            action="fast_write",
+            phase="resolve_entity",
+        ):
+            existing = await self.repository.get_by_external_id(external_id) if external_id else None
 
         # Trigger: external_id already exists
         # Why: avoid duplicate entities when title-derived paths change
@@ -429,18 +495,35 @@ class EntityService(BaseService[EntityModel]):
             schema._permalink = ""
         else:
             if existing and not (content_markdown and content_markdown.frontmatter.permalink):
-                schema._permalink = existing.permalink or await self.resolve_permalink(
-                    file_path, skip_conflict_check=True
-                )
+                with telemetry.scope(
+                    "entity_service.fast_write.resolve_permalink",
+                    domain="entity_service",
+                    action="fast_write",
+                    phase="resolve_permalink",
+                ):
+                    schema._permalink = existing.permalink or await self.resolve_permalink(
+                        file_path, skip_conflict_check=True
+                    )
             else:
-                schema._permalink = await self.resolve_permalink(
-                    file_path, content_markdown, skip_conflict_check=True
-                )
+                with telemetry.scope(
+                    "entity_service.fast_write.resolve_permalink",
+                    domain="entity_service",
+                    action="fast_write",
+                    phase="resolve_permalink",
+                ):
+                    schema._permalink = await self.resolve_permalink(
+                        file_path, content_markdown, skip_conflict_check=True
+                    )
 
-        # --- File Write ---
         post = await schema_to_markdown(schema)
         final_content = dump_frontmatter(post)
-        checksum = await self.file_service.write_file(file_path, final_content)
+        with telemetry.scope(
+            "entity_service.fast_write.write_file",
+            domain="entity_service",
+            action="fast_write",
+            phase="write_file",
+        ):
+            checksum = await self.file_service.write_file(file_path, final_content)
 
         # --- Minimal DB Upsert ---
         metadata = normalize_frontmatter_metadata(post.metadata or {})
@@ -462,7 +545,13 @@ class EntityService(BaseService[EntityModel]):
             # Preserve existing created_by; only update last_updated_by
             if user_id is not None:
                 update_data["last_updated_by"] = user_id
-            updated = await self.repository.update(existing.id, update_data)
+            with telemetry.scope(
+                "entity_service.fast_write.upsert_entity",
+                domain="entity_service",
+                action="fast_write",
+                phase="upsert_entity",
+            ):
+                updated = await self.repository.update(existing.id, update_data)
             if not updated:
                 raise ValueError(f"Failed to update entity in database: {existing.id}")
             return updated
@@ -473,7 +562,13 @@ class EntityService(BaseService[EntityModel]):
         if user_id is not None:
             create_data["created_by"] = user_id
             create_data["last_updated_by"] = user_id
-        return await self.repository.create(create_data)
+        with telemetry.scope(
+            "entity_service.fast_write.upsert_entity",
+            domain="entity_service",
+            action="fast_write",
+            phase="upsert_entity",
+        ):
+            return await self.repository.create(create_data)
 
     async def fast_edit_entity(
         self,
@@ -487,13 +582,30 @@ class EntityService(BaseService[EntityModel]):
         """Edit an entity quickly and defer full indexing to background."""
         logger.debug(f"Fast editing entity: {entity.external_id}, operation: {operation}")
 
-        # --- File Edit ---
         file_path = Path(entity.file_path)
-        current_content, _ = await self.file_service.read_file(file_path)
-        new_content = self.apply_edit_operation(
-            current_content, operation, content, section, find_text, expected_replacements
-        )
-        checksum = await self.file_service.write_file(file_path, new_content)
+        with telemetry.scope(
+            "entity_service.fast_edit.read_file",
+            domain="entity_service",
+            action="fast_edit",
+            phase="read_file",
+        ):
+            current_content, _ = await self.file_service.read_file(file_path)
+        with telemetry.scope(
+            "entity_service.fast_edit.apply_operation",
+            domain="entity_service",
+            action="fast_edit",
+            phase="apply_operation",
+        ):
+            new_content = self.apply_edit_operation(
+                current_content, operation, content, section, find_text, expected_replacements
+            )
+        with telemetry.scope(
+            "entity_service.fast_edit.write_file",
+            domain="entity_service",
+            action="fast_edit",
+            phase="write_file",
+        ):
+            checksum = await self.file_service.write_file(file_path, new_content)
 
         # --- Frontmatter Overrides ---
         update_data = {
@@ -528,39 +640,84 @@ class EntityService(BaseService[EntityModel]):
         if self.app_config and self.app_config.disable_permalinks:
             update_data["permalink"] = None
         elif content_markdown and content_markdown.frontmatter.permalink:
-            update_data["permalink"] = await self.resolve_permalink(
-                file_path, content_markdown, skip_conflict_check=True
-            )
+            with telemetry.scope(
+                "entity_service.fast_edit.resolve_permalink",
+                domain="entity_service",
+                action="fast_edit",
+                phase="resolve_permalink",
+            ):
+                update_data["permalink"] = await self.resolve_permalink(
+                    file_path, content_markdown, skip_conflict_check=True
+                )
 
-        updated = await self.repository.update(entity.id, update_data)
+        with telemetry.scope(
+            "entity_service.fast_edit.update_entity",
+            domain="entity_service",
+            action="fast_edit",
+            phase="update_entity",
+        ):
+            updated = await self.repository.update(entity.id, update_data)
         if not updated:
             raise ValueError(f"Failed to update entity in database: {entity.id}")
         return updated
 
     async def reindex_entity(self, entity_id: int) -> None:
         """Parse file content and rebuild observations/relations/search for an entity."""
-        entity = await self.repository.find_by_id(entity_id)
+        with telemetry.scope(
+            "entity_service.reindex.load_entity",
+            domain="entity_service",
+            action="reindex",
+            phase="load_entity",
+        ):
+            entity = await self.repository.find_by_id(entity_id)
         if not entity:
             raise EntityNotFoundError(f"Entity not found: {entity_id}")
 
-        # --- Full Parse ---
         file_path = Path(entity.file_path)
-        content = await self.file_service.read_file_content(file_path)
-        entity_markdown = await self.entity_parser.parse_markdown_content(
-            file_path=file_path,
-            content=content,
-        )
+        with telemetry.scope(
+            "entity_service.reindex.read_file",
+            domain="entity_service",
+            action="reindex",
+            phase="read_file",
+        ):
+            content = await self.file_service.read_file_content(file_path)
+        with telemetry.scope(
+            "entity_service.reindex.parse_markdown",
+            domain="entity_service",
+            action="reindex",
+            phase="parse_markdown",
+        ):
+            entity_markdown = await self.entity_parser.parse_markdown_content(
+                file_path=file_path,
+                content=content,
+            )
 
-        # --- DB Reindex ---
-        updated = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
-        checksum = await self.file_service.compute_checksum(file_path)
-        updated = await self.repository.update(updated.id, {"checksum": checksum})
+        with telemetry.scope(
+            "entity_service.reindex.upsert_entity",
+            domain="entity_service",
+            action="reindex",
+            phase="upsert_entity",
+        ):
+            updated = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
+        with telemetry.scope(
+            "entity_service.reindex.update_checksum",
+            domain="entity_service",
+            action="reindex",
+            phase="update_checksum",
+        ):
+            checksum = await self.file_service.compute_checksum(file_path)
+            updated = await self.repository.update(updated.id, {"checksum": checksum})
         if not updated:
             raise ValueError(f"Failed to update entity in database: {entity.id}")
 
-        # --- Search Reindex ---
         if self.search_service:
-            await self.search_service.index_entity_data(updated, content=content)
+            with telemetry.scope(
+                "entity_service.reindex.search_index",
+                domain="entity_service",
+                action="reindex",
+                phase="search_index",
+            ):
+                await self.search_service.index_entity_data(updated, content=content)
 
     async def delete_entity(self, permalink_or_id: str | int) -> bool:
         """Delete entity and its file."""
@@ -808,34 +965,69 @@ class EntityService(BaseService[EntityModel]):
         """
         logger.debug(f"Editing entity: {identifier}, operation: {operation}")
 
-        # Find the entity using the link resolver with strict mode for destructive operations
-        entity = await self.link_resolver.resolve_link(identifier, strict=True)
+        with telemetry.scope(
+            "entity_service.edit.resolve_entity",
+            domain="entity_service",
+            action="edit",
+            phase="resolve_entity",
+        ):
+            entity = await self.link_resolver.resolve_link(identifier, strict=True)
         if not entity:
             raise EntityNotFoundError(f"Entity not found: {identifier}")
 
-        # Read the current file content
         file_path = Path(entity.file_path)
-        current_content, _ = await self.file_service.read_file(file_path)
+        with telemetry.scope(
+            "entity_service.edit.read_file",
+            domain="entity_service",
+            action="edit",
+            phase="read_file",
+        ):
+            current_content, _ = await self.file_service.read_file(file_path)
 
-        # Apply the edit operation
-        new_content = self.apply_edit_operation(
-            current_content, operation, content, section, find_text, expected_replacements
-        )
+        with telemetry.scope(
+            "entity_service.edit.apply_operation",
+            domain="entity_service",
+            action="edit",
+            phase="apply_operation",
+        ):
+            new_content = self.apply_edit_operation(
+                current_content, operation, content, section, find_text, expected_replacements
+            )
 
-        # Write the updated content back to the file
-        checksum = await self.file_service.write_file(file_path, new_content)
+        with telemetry.scope(
+            "entity_service.edit.write_file",
+            domain="entity_service",
+            action="edit",
+            phase="write_file",
+        ):
+            checksum = await self.file_service.write_file(file_path, new_content)
 
-        # Parse the content we just wrote (avoids re-reading file for cloud compatibility)
-        entity_markdown = await self.entity_parser.parse_markdown_content(
-            file_path=file_path,
-            content=new_content,
-        )
+        with telemetry.scope(
+            "entity_service.edit.parse_markdown",
+            domain="entity_service",
+            action="edit",
+            phase="parse_markdown",
+        ):
+            entity_markdown = await self.entity_parser.parse_markdown_content(
+                file_path=file_path,
+                content=new_content,
+            )
 
-        # Update entity and its relationships
-        entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
+        with telemetry.scope(
+            "entity_service.edit.upsert_entity",
+            domain="entity_service",
+            action="edit",
+            phase="upsert_entity",
+        ):
+            entity = await self.upsert_entity_from_markdown(file_path, entity_markdown, is_new=False)
 
-        # Set final checksum to match file
-        entity = await self.repository.update(entity.id, {"checksum": checksum})
+        with telemetry.scope(
+            "entity_service.edit.update_checksum",
+            domain="entity_service",
+            action="edit",
+            phase="update_checksum",
+        ):
+            entity = await self.repository.update(entity.id, {"checksum": checksum})
 
         return entity
 

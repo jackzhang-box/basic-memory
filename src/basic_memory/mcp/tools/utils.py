@@ -23,6 +23,7 @@ from httpx._types import (
 from loguru import logger
 from mcp.server.fastmcp.exceptions import ToolError
 
+from basic_memory import telemetry
 from basic_memory.config import ConfigManager
 
 
@@ -135,10 +136,35 @@ def _resolve_error_message(
     return get_error_message(status_code, url, method)
 
 
+def _request_scope(
+    method: str,
+    *,
+    client_name: str | None,
+    operation: str | None,
+    path_template: str | None,
+    params: QueryParamTypes | None = None,
+    has_body: bool = False,
+):
+    """Create the shared MCP transport span used by all HTTP helpers."""
+    return telemetry.scope(
+        "mcp.http.request",
+        method=method,
+        client_name=client_name,
+        operation=operation,
+        path_template=path_template,
+        phase="request",
+        has_query=bool(params),
+        has_body=has_body,
+    )
+
+
 async def call_get(
     client: AsyncClient,
     url: URL | str,
     *,
+    client_name: str | None = None,
+    operation: str | None = None,
+    path_template: str | None = None,
     params: QueryParamTypes | None = None,
     headers: HeaderTypes | None = None,
     cookies: CookieTypes | None = None,
@@ -170,16 +196,23 @@ async def call_get(
     error_message = None
 
     try:
-        response = await client.get(
-            url,
+        with _request_scope(
+            "GET",
+            client_name=client_name,
+            operation=operation,
+            path_template=path_template,
             params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
+        ):
+            response = await client.get(
+                url,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
 
         if response.is_success:
             return response
@@ -212,6 +245,9 @@ async def call_put(
     client: AsyncClient,
     url: URL | str,
     *,
+    client_name: str | None = None,
+    operation: str | None = None,
+    path_template: str | None = None,
     content: RequestContent | None = None,
     data: RequestData | None = None,
     files: RequestFiles | None = None,
@@ -251,20 +287,28 @@ async def call_put(
     error_message = None
 
     try:
-        response = await client.put(
-            url,
-            content=content,
-            data=data,
-            files=files,
-            json=json,
+        with _request_scope(
+            "PUT",
+            client_name=client_name,
+            operation=operation,
+            path_template=path_template,
             params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
+            has_body=any(value is not None for value in (content, data, files, json)),
+        ):
+            response = await client.put(
+                url,
+                content=content,
+                data=data,
+                files=files,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
 
         if response.is_success:
             return response
@@ -298,6 +342,9 @@ async def call_patch(
     client: AsyncClient,
     url: URL | str,
     *,
+    client_name: str | None = None,
+    operation: str | None = None,
+    path_template: str | None = None,
     content: RequestContent | None = None,
     data: RequestData | None = None,
     files: RequestFiles | None = None,
@@ -336,20 +383,28 @@ async def call_patch(
     logger.debug(f"Calling PATCH '{url}'")
 
     try:
-        response = await client.patch(
-            url,
-            content=content,
-            data=data,
-            files=files,
-            json=json,
+        with _request_scope(
+            "PATCH",
+            client_name=client_name,
+            operation=operation,
+            path_template=path_template,
             params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
+            has_body=any(value is not None for value in (content, data, files, json)),
+        ):
+            response = await client.patch(
+                url,
+                content=content,
+                data=data,
+                files=files,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
 
         if response.is_success:
             return response
@@ -388,6 +443,9 @@ async def call_post(
     client: AsyncClient,
     url: URL | str,
     *,
+    client_name: str | None = None,
+    operation: str | None = None,
+    path_template: str | None = None,
     content: RequestContent | None = None,
     data: RequestData | None = None,
     files: RequestFiles | None = None,
@@ -427,20 +485,28 @@ async def call_post(
     error_message = None
 
     try:
-        response = await client.post(
-            url=url,
-            content=content,
-            data=data,
-            files=files,
-            json=json,
+        with _request_scope(
+            "POST",
+            client_name=client_name,
+            operation=operation,
+            path_template=path_template,
             params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
+            has_body=any(value is not None for value in (content, data, files, json)),
+        ):
+            response = await client.post(
+                url=url,
+                content=content,
+                data=data,
+                files=files,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
         logger.debug(f"response: {response.json()}")
 
         if response.is_success:
@@ -506,6 +572,9 @@ async def call_delete(
     client: AsyncClient,
     url: URL | str,
     *,
+    client_name: str | None = None,
+    operation: str | None = None,
+    path_template: str | None = None,
     params: QueryParamTypes | None = None,
     headers: HeaderTypes | None = None,
     cookies: CookieTypes | None = None,
@@ -537,16 +606,23 @@ async def call_delete(
     error_message = None
 
     try:
-        response = await client.delete(
-            url=url,
+        with _request_scope(
+            "DELETE",
+            client_name=client_name,
+            operation=operation,
+            path_template=path_template,
             params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
+        ):
+            response = await client.delete(
+                url=url,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
 
         if response.is_success:
             return response

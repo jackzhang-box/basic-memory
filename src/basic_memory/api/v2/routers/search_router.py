@@ -51,18 +51,28 @@ async def search(
     with telemetry.operation(
         "api.request.search",
         entrypoint="api",
+        domain="search",
+        action="search",
         page=page,
         page_size=page_size,
         retrieval_mode=query.retrieval_mode.value,
-        has_text_query=bool(query.text and query.text.strip()),
-        has_title_query=bool(query.title),
-        has_permalink_query=bool(query.permalink or query.permalink_match),
+        has_query=bool(
+            (query.text and query.text.strip()) or query.title or query.permalink or query.permalink_match
+        ),
+        has_filters=bool(query.note_types or query.entity_types or query.metadata_filters),
     ):
         offset = (page - 1) * page_size
-        # Fetch one extra item to detect whether more pages exist (N+1 trick)
         fetch_limit = page_size + 1
         try:
-            results = await search_service.search(query, limit=fetch_limit, offset=offset)
+            with telemetry.scope(
+                "api.search.search.execute_query",
+                domain="search",
+                action="search",
+                phase="execute_query",
+                page=page,
+                page_size=page_size,
+            ):
+                results = await search_service.search(query, limit=fetch_limit, offset=offset)
         except SemanticSearchDisabledError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except SemanticDependenciesMissingError as exc:
@@ -70,17 +80,38 @@ async def search(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-        has_more = len(results) > page_size
-        if has_more:
-            results = results[:page_size]
+        with telemetry.scope(
+            "api.search.search.paginate_results",
+            domain="search",
+            action="search",
+            phase="paginate_results",
+            result_count=len(results),
+        ):
+            has_more = len(results) > page_size
+            if has_more:
+                results = results[:page_size]
 
-        search_results = await to_search_results(entity_service, results)
-        return SearchResponse(
-            results=search_results,
-            current_page=page,
-            page_size=page_size,
-            has_more=has_more,
-        )
+        with telemetry.scope(
+            "api.search.search.hydrate_results",
+            domain="search",
+            action="search",
+            phase="hydrate_results",
+            result_count=len(results),
+        ):
+            search_results = await to_search_results(entity_service, results)
+        with telemetry.scope(
+            "api.search.search.build_response",
+            domain="search",
+            action="search",
+            phase="build_response",
+            result_count=len(search_results),
+        ):
+            return SearchResponse(
+                results=search_results,
+                current_page=page,
+                page_size=page_size,
+                has_more=has_more,
+            )
 
 
 @router.post("/search/reindex")

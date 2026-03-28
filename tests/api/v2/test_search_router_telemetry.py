@@ -51,12 +51,13 @@ async def test_search_router_wraps_request_in_manual_operation() -> None:
             "api.request.search",
             {
                 "entrypoint": "api",
+                "domain": "search",
+                "action": "search",
                 "page": 2,
                 "page_size": 5,
                 "retrieval_mode": "fts",
-                "has_text_query": True,
-                "has_title_query": False,
-                "has_permalink_query": False,
+                "has_query": True,
+                "has_filters": False,
             },
         )
     ]
