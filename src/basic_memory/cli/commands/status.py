@@ -12,7 +12,7 @@ from rich.panel import Panel
 from rich.tree import Tree
 
 from basic_memory.cli.app import app
-from basic_memory.cli.commands.routing import force_routing, validate_routing_flags
+from basic_memory.cli.commands.routing import force_routing
 from basic_memory.config import ConfigManager
 from basic_memory.mcp.async_client import get_client
 from basic_memory.mcp.clients import ProjectClient
@@ -169,26 +169,23 @@ def status(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Show sync status between files and database.
 
     Use --json for machine-readable output.
     Use --local to force local routing when cloud mode is enabled.
-    Use --cloud to force cloud routing when cloud mode is disabled.
     """
     from basic_memory.cli.commands.command_utils import run_with_cleanup
 
     try:
-        validate_routing_flags(local, cloud)
-        # Trigger: no explicit routing flag provided
-        # Why: status scans the local filesystem — cloud routing would use the
+        # Trigger: status scans the local filesystem — cloud routing would use the
         #      Docker-internal path stored in the cloud database, which doesn't
         #      exist locally.
-        # Outcome: default to local routing unless --cloud was explicitly requested.
-        if not local and not cloud:
+        # Why: always default to local routing for status checks.
+        # Outcome: force local routing unless --local was already set.
+        if not local:
             local = True
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             project_name, sync_report = run_with_cleanup(run_status(project))
 
         if json_output:

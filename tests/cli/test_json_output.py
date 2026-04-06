@@ -375,7 +375,7 @@ def mock_client(monkeypatch):
 
 
 def test_project_list_json_outputs_projects(write_config, mock_client, tmp_path, monkeypatch):
-    """project list --json --local outputs structured JSON with project data."""
+    """project list --json outputs structured JSON with project data."""
     alpha_local = (tmp_path / "alpha-local").as_posix()
 
     write_config(
@@ -406,7 +406,7 @@ def test_project_list_json_outputs_projects(write_config, mock_client, tmp_path,
 
     monkeypatch.setattr(ProjectClient, "list_projects", fake_list_projects)
 
-    result = runner.invoke(cli_app, ["project", "list", "--json", "--local"])
+    result = runner.invoke(cli_app, ["project", "list", "--json"])
 
     assert result.exit_code == 0, f"CLI failed: {result.output}"
     data = _parse_json_output(result.output)
@@ -415,6 +415,5 @@ def test_project_list_json_outputs_projects(write_config, mock_client, tmp_path,
     proj = data["projects"][0]
     assert proj["name"] == "alpha"
     assert proj["is_default"] is True
-    assert "local_path" in proj
-    assert "cli_route" in proj
-    assert "mcp_stdio" in proj
+    assert "path" in proj
+    assert "mode" in proj

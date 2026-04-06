@@ -27,7 +27,6 @@ async def write_note(
     content: str,
     directory: str,
     project: Optional[str] = None,
-    workspace: Optional[str] = None,
     tags: list[str] | str | None = None,
     note_type: str = "note",
     metadata: Annotated[dict | None, BeforeValidator(coerce_dict)] = None,
@@ -154,15 +153,13 @@ async def write_note(
         entrypoint="mcp",
         tool_name="write_note",
         requested_project=project,
-        workspace_id=workspace,
         note_type=note_type,
         overwrite=effective_overwrite,
         output_format=output_format,
     ):
-        async with get_project_client(project, workspace, context) as (client, active_project):
+        async with get_project_client(project, context=context) as (client, active_project):
             with telemetry.contextualize(
                 project_name=active_project.name,
-                workspace_id=workspace,
                 tool_name="write_note",
             ):
                 logger.info(

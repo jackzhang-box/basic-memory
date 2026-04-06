@@ -6,8 +6,8 @@ from . import (
     import_chatgpt,
     tool,
     project,
-    format,
     schema,
+    sync_commands,
     update,
 )
 
@@ -22,7 +22,7 @@ __all__ = [
     "import_chatgpt",
     "tool",
     "project",
-    "format",
     "schema",
+    "sync_commands",
     "update",
 ]

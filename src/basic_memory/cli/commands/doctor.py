@@ -13,7 +13,7 @@ import typer
 
 from basic_memory.cli.app import app
 from basic_memory.cli.commands.command_utils import run_with_cleanup
-from basic_memory.cli.commands.routing import force_routing, validate_routing_flags
+from basic_memory.cli.commands.routing import force_routing
 from basic_memory.markdown.entity_parser import EntityParser
 from basic_memory.markdown.markdown_processor import MarkdownProcessor
 from basic_memory.markdown.schemas import EntityFrontmatter, EntityMarkdown
@@ -137,15 +137,13 @@ def doctor(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ) -> None:
     """Run local consistency checks to verify file/database sync."""
     try:
-        validate_routing_flags(local, cloud)
         # Doctor runs local filesystem checks — always default to local routing
-        if not local and not cloud:
+        if not local:
             local = True
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             run_with_cleanup(run_doctor())
     except (ToolError, ValueError) as e:
         console.print(f"[red]Doctor failed: {e}[/red]")

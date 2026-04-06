@@ -180,7 +180,6 @@ dependencies = [
     { name = "pybars3" },
     { name = "pydantic", extra = ["email", "timezone"] },
     { name = "pydantic-settings" },
-    { name = "pyjwt" },
     { name = "pyright" },
     { name = "pytest-aio" },
     { name = "pytest-asyncio" },
@@ -194,11 +193,6 @@ dependencies = [
     { name = "typer" },
     { name = "unidecode" },
     { name = "watchfiles" },
-]
-
-[package.optional-dependencies]
-telemetry = [
-    { name = "logfire" },
 ]
 
 [package.dev-dependencies]
@@ -235,7 +229,6 @@ requires-dist = [
     { name = "fastmcp", specifier = ">=3.0.1,<4" },
     { name = "greenlet", specifier = ">=3.1.1" },
     { name = "httpx", specifier = ">=0.28.0" },
-    { name = "logfire", marker = "extra == 'telemetry'", specifier = ">=4.19.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "markdown-it-py", specifier = ">=3.0.0" },
     { name = "mcp", specifier = ">=1.23.1" },
@@ -249,7 +242,6 @@ requires-dist = [
     { name = "pybars3", specifier = ">=0.9.7" },
     { name = "pydantic", extras = ["email", "timezone"], specifier = ">=2.12.0" },
     { name = "pydantic-settings", specifier = ">=2.6.1" },
-    { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pyright", specifier = ">=1.1.390" },
     { name = "pytest-aio", specifier = ">=1.9.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
@@ -264,7 +256,6 @@ requires-dist = [
     { name = "unidecode", specifier = ">=1.3.8" },
     { name = "watchfiles", specifier = ">=1.0.4" },
 ]
-provides-extras = ["telemetry"]
 
 [package.metadata.requires-dev]
 dev = [

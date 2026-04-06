@@ -303,7 +303,6 @@ def _format_search_markdown(result: SearchResponse, project: str, query: str | N
 async def search_notes(
     query: Optional[str] = None,
     project: Optional[str] = None,
-    workspace: Optional[str] = None,
     page: int = 1,
     page_size: int = 10,
     search_type: str | None = None,
@@ -529,7 +528,6 @@ async def search_notes(
         entrypoint="mcp",
         tool_name="search_notes",
         requested_project=project,
-        workspace_id=workspace,
         search_type=search_type or "default",
         output_format=output_format,
         page=page,
@@ -543,10 +541,9 @@ async def search_notes(
         has_tags_filter=bool(tags),
         has_status_filter=bool(status),
     ):
-        async with get_project_client(project, workspace, context) as (client, active_project):
+        async with get_project_client(project, context=context) as (client, active_project):
             with telemetry.contextualize(
                 project_name=active_project.name,
-                workspace_id=workspace,
                 tool_name="search_notes",
             ):
                 # Handle memory:// URLs by resolving to permalink search

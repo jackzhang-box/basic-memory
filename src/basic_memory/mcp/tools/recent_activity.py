@@ -44,7 +44,6 @@ async def recent_activity(
     page: int = 1,
     page_size: int = 10,
     project: Optional[str] = None,
-    workspace: Optional[str] = None,
     output_format: Literal["text", "json"] = "text",
     context: Context | None = None,
 ) -> str | list[dict]:
@@ -278,7 +277,7 @@ async def recent_activity(
             f"Getting recent activity from project {resolved_project}: type={type}, depth={depth}, timeframe={timeframe}"
         )
 
-        async with get_project_client(resolved_project, workspace, context) as (
+        async with get_project_client(resolved_project, context=context) as (
             client,
             active_project,
         ):

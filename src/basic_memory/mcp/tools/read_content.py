@@ -160,7 +160,6 @@ def optimize_image(img, content_length, max_output_bytes=350000):
 async def read_content(
     path: str,
     project: Optional[str] = None,
-    workspace: Optional[str] = None,
     context: Context | None = None,
 ) -> dict:
     """Read a file's raw content by path or permalink.
@@ -218,7 +217,7 @@ async def read_content(
 
     logger.info(f"MCP tool call tool=read_content project={project} path={path}")
 
-    async with get_project_client(project, workspace, context) as (client, active_project):
+    async with get_project_client(project, context=context) as (client, active_project):
         # Resolve path with project-prefix awareness for memory:// URLs
         _, url, _ = await resolve_project_and_path(client, path, project, context)
 

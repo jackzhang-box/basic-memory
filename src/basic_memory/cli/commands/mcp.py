@@ -49,18 +49,11 @@ def mcp(
     """
     # --- Routing setup ---
     # Trigger: MCP server command invocation.
-    # Why: HTTP/SSE transports serve as local API endpoints and must never
-    #      route through cloud. Stdio is a client-facing protocol that
-    #      should honor per-project routing (local or cloud).
-    # Outcome: HTTP/SSE get explicit local override; stdio passes through
-    #          whatever env vars are already set (honoring external overrides)
-    #          and defaults to per-project routing resolution.
+    # Why: HTTP/SSE transports serve as local API endpoints and must always
+    #      route locally. Stdio defaults to local routing as well.
+    # Outcome: HTTP/SSE get explicit local override; stdio uses default routing.
     if transport in ("streamable-http", "sse"):
         os.environ["BASIC_MEMORY_FORCE_LOCAL"] = "true"
-        os.environ.pop("BASIC_MEMORY_FORCE_CLOUD", None)
-        os.environ["BASIC_MEMORY_EXPLICIT_ROUTING"] = "true"
-    # stdio: no env var manipulation — per-project routing applies by default,
-    # and externally-set env vars (e.g. BASIC_MEMORY_FORCE_CLOUD) are honored.
 
     # Import mcp tools/prompts to register them with the server
     import basic_memory.mcp.tools  # noqa: F401  # pragma: no cover

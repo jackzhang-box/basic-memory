@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import sys
 from contextlib import asynccontextmanager
 from enum import Enum, auto
@@ -23,6 +24,15 @@ from sqlalchemy.pool import NullPool
 
 from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
 from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
+
+
+def _redact_db_url(url: str) -> str:
+    """Redact credentials from database URLs before logging.
+
+    Replaces user:password@ with user:***@ to prevent credential leaks.
+    """
+    return re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", url)
+
 
 # -----------------------------------------------------------------------------
 # Windows event loop policy
@@ -168,14 +178,14 @@ class DatabaseType(Enum):
         if db_type == cls.POSTGRES:
             if not config.database_url:
                 raise ValueError("DATABASE_URL must be set when using Postgres backend")
-            logger.info(f"Using Postgres database: {config.database_url}")
+            logger.info(f"Using Postgres database: {_redact_db_url(config.database_url)}")
             return config.database_url
 
         # Check if Postgres backend is configured (for backward compatibility)
         if config.database_backend == DatabaseBackend.POSTGRES:
             if not config.database_url:
                 raise ValueError("DATABASE_URL must be set when using Postgres backend")
-            logger.info(f"Using Postgres database: {config.database_url}")
+            logger.info(f"Using Postgres database: {_redact_db_url(config.database_url)}")
             return config.database_url
 
         # SQLite databases
@@ -356,7 +366,7 @@ def _create_engine_and_session(
     if config is None:
         config = ConfigManager().config
     db_url = DatabaseType.get_db_url(db_path, db_type, config)
-    logger.debug(f"Creating engine for db_url: {db_url}")
+    logger.debug(f"Creating engine for db_url: {_redact_db_url(db_url)}")
 
     # Delegate to backend-specific engine creation
     # Check explicit POSTGRES type first, then config setting

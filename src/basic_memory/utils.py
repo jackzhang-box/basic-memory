@@ -13,7 +13,6 @@ from typing import Any, Protocol, Union, runtime_checkable, List, Optional
 from loguru import logger
 from unidecode import unidecode
 
-from basic_memory import telemetry
 
 
 def normalize_project_path(path: str) -> str:
@@ -263,8 +262,8 @@ def setup_logging(
     Args:
         log_level: DEBUG, INFO, WARNING, ERROR
         log_to_file: Write to ~/.basic-memory/basic-memory.log with rotation
-        log_to_stdout: Write to stderr (for Docker/cloud deployments)
-        structured_context: Bind tenant_id, fly_region, etc. for cloud observability
+        log_to_stdout: Write to stderr
+        structured_context: Unused, kept for backward compatibility
     """
     # Remove default handler and any existing handlers
     logger.remove()
@@ -302,28 +301,11 @@ def setup_logging(
     if log_to_stdout:
         logger.add(sys.stderr, level=log_level, backtrace=True, diagnose=True, colorize=True)
 
-    # Add Logfire sink when telemetry bootstrap enabled it for this process.
-    logfire_handler = telemetry.get_logfire_handler()
-    if logfire_handler is not None:
-        logger.add(**logfire_handler)
-
-    # Bind structured context for cloud observability
-    if structured_context:
-        logger.configure(
-            extra={
-                "tenant_id": os.getenv("BASIC_MEMORY_TENANT_ID", "local"),
-                "fly_app_name": os.getenv("FLY_APP_NAME", "local"),
-                "fly_machine_id": os.getenv("FLY_MACHINE_ID", "local"),
-                "fly_region": os.getenv("FLY_REGION", "local"),
-            }
-        )
 
     # Reduce noise from third-party libraries
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("watchfiles.main").setLevel(logging.WARNING)
 
-    for warning_message in telemetry.pop_telemetry_warnings():
-        logger.warning(warning_message)
 
 
 def _cleanup_windows_log_files(log_dir: Path, current_log_name: str) -> None:

@@ -25,7 +25,6 @@ from loguru import logger
 from mcp.server.fastmcp.exceptions import ToolError
 
 from basic_memory import telemetry
-from basic_memory.config import ConfigManager
 
 
 def _classify_http_outcome(status_code: int) -> str:
@@ -154,34 +153,11 @@ def _response_detail_text(response_data: typing.Any) -> str | None:
     return None
 
 
-def _has_configured_cloud_api_key() -> bool:
-    """Check whether a cloud API key is currently configured."""
-    try:
-        return bool(ConfigManager().config.cloud_api_key)
-    except Exception:
-        return False
-
-
 def _resolve_error_message(
     status_code: int, url: URL | str, method: str, response_data: typing.Any
 ) -> str:
-    """Resolve a user-facing error message with cloud auth remediation when relevant."""
+    """Resolve a user-facing error message."""
     detail_text = _response_detail_text(response_data)
-
-    if status_code == 401 and _has_configured_cloud_api_key():
-        detail_lower = detail_text.lower() if detail_text else ""
-        if (
-            "invalid jwt" in detail_lower
-            or "invalid token" in detail_lower
-            or "authentication required" in detail_lower
-            or not detail_lower
-        ):
-            return (
-                "Authentication failed: the configured cloud API key was rejected by the server. "
-                "Basic Memory prioritizes cloud_api_key over OAuth for cloud routing. "
-                "Fix by running `bm cloud api-key save <valid-key>` "
-                "or remove `cloud_api_key` and use `bm cloud login`."
-            )
 
     if detail_text:
         return detail_text

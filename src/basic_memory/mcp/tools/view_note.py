@@ -17,7 +17,6 @@ from basic_memory.mcp.tools.read_note import read_note
 async def view_note(
     identifier: str,
     project: Optional[str] = None,
-    workspace: Optional[str] = None,
     page: int = 1,
     page_size: int = 10,
     context: Context | None = None,
@@ -63,7 +62,6 @@ async def view_note(
         await read_note(
             identifier=identifier,
             project=project,
-            workspace=workspace,
             page=page,
             page_size=page_size,
             context=context,

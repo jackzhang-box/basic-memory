@@ -4,7 +4,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import cast
 
 import typer
 from rich.console import Console, Group
@@ -13,23 +12,11 @@ from rich.table import Table
 from rich.text import Text
 
 from basic_memory.cli.app import app
-from basic_memory.cli.auth import CLIAuth
-from basic_memory.cli.commands.cloud.bisync_commands import get_mount_info
-from basic_memory.cli.commands.cloud.project_sync import (
-    _has_cloud_credentials,
-    _require_cloud_credentials,
-)
-from basic_memory.cli.commands.cloud.rclone_commands import (
-    SyncProject,
-    project_ls,
-)
 from basic_memory.cli.commands.command_utils import get_project_info, run_with_cleanup
-from basic_memory.cli.commands.routing import force_routing, validate_routing_flags
-from basic_memory.config import ConfigManager, ProjectEntry, ProjectMode
+from basic_memory.cli.commands.routing import force_routing
+from basic_memory.config import ConfigManager, ProjectMode
 from basic_memory.mcp.async_client import get_client
 from basic_memory.mcp.clients import ProjectClient
-from basic_memory.schemas.cloud import ProjectVisibility
-from basic_memory.schemas.project_info import ProjectItem, ProjectList
 from basic_memory.utils import generate_permalink, normalize_project_path
 
 console = Console()
@@ -58,225 +45,43 @@ def make_bar(value: int, max_value: int, width: int = 40) -> Text:
     return bar
 
 
-def _normalize_project_visibility(visibility: str | None) -> ProjectVisibility:
-    """Normalize CLI visibility input to the cloud API contract."""
-    if visibility is None:
-        return "workspace"
-
-    normalized = visibility.strip().lower()
-    if normalized in {"workspace", "shared", "private"}:
-        return cast(ProjectVisibility, normalized)
-
-    raise ValueError("Invalid visibility. Expected one of: workspace, shared, private.")
-
-
-def _resolve_workspace_id(config, workspace: str | None) -> str | None:
-    """Resolve a workspace name or tenant_id to a tenant_id."""
-    from basic_memory.mcp.project_context import (
-        _workspace_choices,
-        _workspace_matches_identifier,
-        get_available_workspaces,
-    )
-
-    if workspace is not None:
-        workspaces = run_with_cleanup(get_available_workspaces())
-        matches = [ws for ws in workspaces if _workspace_matches_identifier(ws, workspace)]
-        if not matches:
-            console.print(f"[red]Error: Workspace '{workspace}' not found[/red]")
-            if workspaces:
-                console.print(f"[dim]Available:\n{_workspace_choices(workspaces)}[/dim]")
-            raise typer.Exit(1)
-        if len(matches) > 1:
-            console.print(
-                f"[red]Error: Workspace name '{workspace}' matches multiple workspaces. "
-                f"Use tenant_id instead.[/red]"
-            )
-            console.print(f"[dim]Available:\n{_workspace_choices(workspaces)}[/dim]")
-            raise typer.Exit(1)
-        return matches[0].tenant_id
-
-    if config.default_workspace:
-        return config.default_workspace
-
-    try:
-        workspaces = run_with_cleanup(get_available_workspaces())
-        if len(workspaces) == 1:
-            return workspaces[0].tenant_id
-    except Exception:
-        # Workspace resolution is optional until a command needs a specific tenant.
-        pass
-
-    return None
-
-
 @project_app.command("list")
 def list_projects(
-    local: bool = typer.Option(False, "--local", help="Force local routing for this command"),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
-    workspace: str = typer.Option(None, "--workspace", help="Cloud workspace name or tenant_id"),
     json_output: bool = typer.Option(False, "--json", help="Output in JSON format"),
 ) -> None:
-    """List Basic Memory projects from local and (when available) cloud."""
-    try:
-        validate_routing_flags(local, cloud)
-    except ValueError as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+    """List Basic Memory projects."""
 
-    async def _list_projects(ws: str | None = None):
-        async with get_client(workspace=ws) as client:
+    async def _list_projects():
+        async with get_client() as client:
             return await ProjectClient(client).list_projects()
 
     try:
         config = ConfigManager().config
-        # Use explicit workspace, fall back to config default
-        effective_workspace = workspace or config.default_workspace
 
-        local_result: ProjectList | None = None
-        cloud_result: ProjectList | None = None
-        cloud_error: Exception | None = None
-
-        if cloud:
-            with console.status("[bold blue]Fetching cloud projects...", spinner="dots"):
-                with force_routing(cloud=True):
-                    cloud_result = run_with_cleanup(_list_projects(effective_workspace))
-        elif local:
-            with force_routing(local=True):
-                local_result = run_with_cleanup(_list_projects())
-        else:
-            # Default behavior: always show local projects first.
-            with force_routing(local=True):
-                local_result = run_with_cleanup(_list_projects())
-
-            if _has_cloud_credentials(config):
-                try:
-                    with console.status("[bold blue]Fetching cloud projects...", spinner="dots"):
-                        with force_routing(cloud=True):
-                            cloud_result = run_with_cleanup(_list_projects(effective_workspace))
-                except Exception as exc:  # pragma: no cover
-                    cloud_error = exc
-
-        # Resolve workspace name for cloud projects (best-effort)
-        cloud_ws_name: str | None = None
-        cloud_ws_type: str | None = None
-        if cloud_result and effective_workspace:
-            try:
-                from basic_memory.mcp.project_context import get_available_workspaces
-
-                with console.status("[bold blue]Resolving workspace...", spinner="dots"):
-                    workspaces = run_with_cleanup(get_available_workspaces())
-                matched = next(
-                    (ws for ws in workspaces if ws.tenant_id == effective_workspace),
-                    None,
-                )
-                if matched:
-                    cloud_ws_name = matched.name
-                    cloud_ws_type = matched.workspace_type
-            except Exception:
-                pass
+        with force_routing(local=True):
+            local_result = run_with_cleanup(_list_projects())
 
         table = Table(title="Basic Memory Projects")
         table.add_column("Name", style="cyan")
-        table.add_column("Local Path", style="yellow", no_wrap=True, overflow="fold")
-        table.add_column("Cloud Path", style="green")
-        table.add_column("Workspace", style="green")
-        table.add_column("CLI Route", style="blue")
-        table.add_column("MCP", style="blue")
-        table.add_column("Sync", style="green")
+        table.add_column("Path", style="yellow", no_wrap=True, overflow="fold")
+        table.add_column("Mode", style="blue")
         table.add_column("Default", style="magenta")
 
-        project_names_by_permalink: dict[str, str] = {}
-        local_projects_by_permalink: dict[str, ProjectItem] = {}
-        cloud_projects_by_permalink: dict[str, ProjectItem] = {}
-
+        project_rows: list[dict] = []
         if local_result:
             for project in local_result.projects:
-                permalink = generate_permalink(project.name)
-                project_names_by_permalink[permalink] = project.name
-                local_projects_by_permalink[permalink] = project
+                entry = config.projects.get(project.name)
+                project_path = format_path(normalize_project_path(project.path))
+                mode = entry.mode.value if entry else ProjectMode.LOCAL.value
+                is_default = config.default_project == project.name
 
-        if cloud_result:
-            for project in cloud_result.projects:
-                permalink = generate_permalink(project.name)
-                project_names_by_permalink[permalink] = project.name
-                cloud_projects_by_permalink[permalink] = project
-
-        # --- Build unified project list ---
-        project_rows: list[dict] = []
-        for permalink in sorted(project_names_by_permalink):
-            project_name = project_names_by_permalink[permalink]
-            local_project = local_projects_by_permalink.get(permalink)
-            cloud_project = cloud_projects_by_permalink.get(permalink)
-            entry = config.projects.get(project_name)
-
-            local_path = ""
-            if local_project is not None:
-                local_path = format_path(normalize_project_path(local_project.path))
-            elif entry and entry.local_sync_path:
-                local_path = format_path(entry.local_sync_path)
-            elif entry and entry.mode == ProjectMode.LOCAL and entry.path:
-                local_path = format_path(normalize_project_path(entry.path))
-
-            # Clear local path for cloud-mode projects — only local projects
-            # should display a local path
-            if entry and entry.mode == ProjectMode.CLOUD:
-                local_path = ""
-
-            cloud_path = ""
-            if cloud_project is not None:
-                cloud_path = normalize_project_path(cloud_project.path)
-
-            if local:
-                cli_route = "local (flag)"
-            elif cloud:
-                cli_route = "cloud (flag)"
-            elif entry:
-                cli_route = entry.mode.value
-            elif cloud_project is not None and local_project is None:
-                cli_route = ProjectMode.CLOUD.value
-            else:
-                cli_route = ProjectMode.LOCAL.value
-
-            is_default = config.default_project == project_name
-
-            has_sync = bool(entry and entry.local_sync_path)
-            # Determine MCP transport based on project routing mode
-            if entry and entry.mode == ProjectMode.CLOUD:
-                mcp_transport = "https"
-            elif entry is None and cloud_project is not None:
-                mcp_transport = "https"
-            else:
-                mcp_transport = "stdio"
-
-            # Show workspace name (type) for cloud-sourced projects
-            ws_label = ""
-            if cloud_project is not None and cloud_ws_name:
-                ws_label = f"{cloud_ws_name} ({cloud_ws_type})" if cloud_ws_type else cloud_ws_name
-
-            # display_name is a human label for private UUID-named projects (e.g., "My Project").
-            # Keep "name" as the canonical identifier for scripting/JSON consumers;
-            # the Rich table uses display_name when available.
-            display_name = (
-                cloud_project.display_name if cloud_project and cloud_project.display_name else None
-            )
-            row_data = {
-                "name": project_name,
-                "permalink": permalink,
-                "local_path": local_path,
-                "cloud_path": cloud_path,
-                "cli_route": cli_route,
-                "mcp_stdio": mcp_transport,
-                "sync": has_sync,
-                "is_default": is_default,
-            }
-            if display_name:
-                row_data["display_name"] = display_name
-            if ws_label:
-                row_data["workspace"] = cloud_ws_name or ""
-                if cloud_ws_type:
-                    row_data["workspace_type"] = cloud_ws_type
-
-            project_rows.append(row_data)
+                row_data = {
+                    "name": project.name,
+                    "path": project_path,
+                    "mode": mode,
+                    "is_default": is_default,
+                }
+                project_rows.append(row_data)
 
         # --- JSON output ---
         if json_output:
@@ -286,24 +91,13 @@ def list_projects(
         # --- Rich table output ---
         for row_data in project_rows:
             table.add_row(
-                row_data.get("display_name") or row_data["name"],
-                row_data["local_path"],
-                row_data["cloud_path"],
-                row_data.get("workspace", "")
-                + (f" ({row_data['workspace_type']})" if row_data.get("workspace_type") else ""),
-                row_data["cli_route"],
-                row_data["mcp_stdio"],
-                "[X]" if row_data["sync"] else "",
+                row_data["name"],
+                row_data["path"],
+                row_data["mode"],
                 "[X]" if row_data["is_default"] else "",
             )
 
         console.print(table)
-        if cloud_error is not None:
-            console.print(f"[yellow]Cloud project discovery failed: {cloud_error}[/yellow]")
-            console.print(
-                "[dim]Showing local projects only. "
-                "Run 'bm cloud login' or 'bm cloud api-key save <key>' if this is a credentials issue.[/dim]"
-            )
     except Exception as e:
         console.print(f"[red]Error listing projects: {str(e)}[/red]")
         raise typer.Exit(1)
@@ -312,136 +106,26 @@ def list_projects(
 @project_app.command("add")
 def add_project(
     name: str = typer.Argument(..., help="Name of the project"),
-    path: str = typer.Argument(
-        None, help="Path to the project directory (required for local mode)"
-    ),
-    local_path: str = typer.Option(
-        None, "--local-path", help="Local sync path for cloud mode (optional)"
-    ),
-    workspace: str = typer.Option(
-        None,
-        "--workspace",
-        help="Cloud workspace name or tenant_id (cloud mode only)",
-    ),
-    visibility: str = typer.Option(
-        None,
-        "--visibility",
-        help="Cloud project visibility: workspace, shared, or private",
-    ),
+    path: str = typer.Argument(..., help="Path to the project directory"),
     set_default: bool = typer.Option(False, "--default", help="Set as default project"),
-    local: bool = typer.Option(
-        False, "--local", help="Force local API routing (ignore cloud mode)"
-    ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ) -> None:
-    """Add a new project.
+    """Add a new local project.
 
-    Use --local to force local routing when cloud mode is enabled.
-    Use --cloud to force cloud routing when cloud mode is disabled.
-
-    Cloud mode examples:\n
-        bm project add research                           # No local sync\n
-        bm project add research --local-path ~/docs       # With local sync\n
-        bm project add research --cloud --visibility shared\n
-        bm project add research --cloud --workspace Personal --visibility shared\n
-
-    Local mode example:\n
+    Example:\n
         bm project add research ~/Documents/research
     """
-    try:
-        validate_routing_flags(local, cloud)
-    except ValueError as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+    # Resolve to absolute path
+    resolved_path = Path(os.path.abspath(os.path.expanduser(path))).as_posix()
 
-    config = ConfigManager().config
-
-    # Determine effective mode: default local, cloud only when explicitly requested.
-    effective_cloud_mode = cloud and not local
-    resolved_workspace_id: str | None = None
-
-    # Resolve local sync path early (needed for both cloud and local mode)
-    local_sync_path: str | None = None
-    if local_path:
-        local_sync_path = Path(os.path.abspath(os.path.expanduser(local_path))).as_posix()
-
-    if effective_cloud_mode:
-        _require_cloud_credentials(config)
-        try:
-            resolved_visibility = _normalize_project_visibility(visibility)
-        except ValueError as e:
-            console.print(f"[red]Error: {e}[/red]")
-            raise typer.Exit(1)
-        resolved_workspace_id = _resolve_workspace_id(config, workspace)
-        # Cloud mode: path auto-generated from name, local sync is optional
-
-        async def _add_project():
-            async with get_client(workspace=resolved_workspace_id) as client:
-                data = {
-                    "name": name,
-                    "path": generate_permalink(name),
-                    "local_sync_path": local_sync_path,
-                    "set_default": set_default,
-                    "visibility": resolved_visibility,
-                }
-                return await ProjectClient(client).create_project(data)
-    else:
-        if workspace is not None:
-            console.print("[red]Error: --workspace is only supported in cloud mode[/red]")
-            raise typer.Exit(1)
-        if visibility is not None:
-            console.print("[red]Error: --visibility is only supported in cloud mode[/red]")
-            raise typer.Exit(1)
-        # Local mode: path is required
-        if path is None:
-            console.print("[red]Error: path argument is required in local mode[/red]")
-            raise typer.Exit(1)
-
-        # Resolve to absolute path
-        resolved_path = Path(os.path.abspath(os.path.expanduser(path))).as_posix()
-
-        async def _add_project():
-            async with get_client() as client:
-                data = {"name": name, "path": resolved_path, "set_default": set_default}
-                return await ProjectClient(client).create_project(data)
+    async def _add_project():
+        async with get_client() as client:
+            data = {"name": name, "path": resolved_path, "set_default": set_default}
+            return await ProjectClient(client).create_project(data)
 
     try:
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=True):
             result = run_with_cleanup(_add_project())
         console.print(f"[green]{result.message}[/green]")
-
-        # Trigger: local config needs enough metadata to route future commands back to cloud.
-        # Why: explicit workspace selection and local sync state should persist across CLI sessions.
-        # Outcome: cloud-backed projects keep cloud mode, workspace_id, and optional local sync path.
-        if effective_cloud_mode and (local_sync_path or resolved_workspace_id):
-            entry = config.projects.get(name)
-            if entry:
-                entry.mode = ProjectMode.CLOUD
-                if local_sync_path:
-                    entry.path = local_sync_path
-                    entry.local_sync_path = local_sync_path
-                if resolved_workspace_id:
-                    entry.workspace_id = resolved_workspace_id
-            else:
-                # Project may not be in local config yet (cloud-only add)
-                config.projects[name] = ProjectEntry(
-                    path=local_sync_path or "",
-                    mode=ProjectMode.CLOUD,
-                    local_sync_path=local_sync_path,
-                    workspace_id=resolved_workspace_id,
-                )
-            ConfigManager().save_config(config)
-
-        # Save local sync path to config if in cloud mode
-        if effective_cloud_mode and local_sync_path:
-            # Create local directory if it doesn't exist
-            local_dir = Path(local_sync_path)
-            local_dir.mkdir(parents=True, exist_ok=True)
-
-            console.print(f"\n[green]Local sync path configured: {local_sync_path}[/green]")
-            console.print("\nNext steps:")
-            console.print(f"  1. Preview: bm cloud bisync --name {name} --resync --dry-run")
-            console.print(f"  2. Sync: bm cloud bisync --name {name} --resync")
     except Exception as e:
         console.print(f"[red]Error adding project: {str(e)}[/red]")
         raise typer.Exit(1)
@@ -453,33 +137,11 @@ def remove_project(
     delete_notes: bool = typer.Option(
         False, "--delete-notes", help="Delete project files from disk"
     ),
-    local: bool = typer.Option(
-        False, "--local", help="Force local API routing (ignore cloud mode)"
-    ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ) -> None:
-    """Remove a project.
-
-    Use --local to force local routing when cloud mode is enabled.
-    Use --cloud to force cloud routing when cloud mode is disabled.
-    """
-    try:
-        validate_routing_flags(local, cloud)
-    except ValueError as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+    """Remove a project."""
 
     async def _remove_project():
-        # Resolve workspace so cloud-only projects auto-route without --cloud
-        config = ConfigManager().config
-        entry = config.projects.get(name)
-        ws = None
-        if entry and entry.workspace_id:
-            ws = entry.workspace_id
-        elif config.default_workspace:
-            ws = config.default_workspace
-
-        async with get_client(project_name=name, workspace=ws) as client:
+        async with get_client(project_name=name) as client:
             project_client = ProjectClient(client)
             # Convert name to permalink for efficient resolution
             project_permalink = generate_permalink(name)
@@ -489,56 +151,13 @@ def remove_project(
             )
 
     try:
-        # Get config to check for local sync path and bisync state
-        config = ConfigManager().config
-        local_path_config = None
-        has_bisync_state = False
-
-        entry = config.projects.get(name)
-        if cloud and entry and entry.local_sync_path:
-            local_path_config = entry.local_sync_path
-
-            # Check for bisync state
-            from basic_memory.cli.commands.cloud.rclone_commands import get_project_bisync_state
-
-            bisync_state_path = get_project_bisync_state(name)
-            has_bisync_state = bisync_state_path.exists()
-
-        # Remove project from cloud/API
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=True):
             result = run_with_cleanup(_remove_project())
         console.print(f"[green]{result.message}[/green]")
 
-        # Clean up local sync directory if it exists and delete_notes is True
-        if delete_notes and local_path_config:
-            local_dir = Path(local_path_config)
-            if local_dir.exists():
-                import shutil
-
-                shutil.rmtree(local_dir)
-                console.print(f"[green]Removed local sync directory: {local_path_config}[/green]")
-
-        # Clean up bisync state if it exists
-        if has_bisync_state:
-            from basic_memory.cli.commands.cloud.rclone_commands import get_project_bisync_state
-            import shutil
-
-            bisync_state_path = get_project_bisync_state(name)
-            if bisync_state_path.exists():
-                shutil.rmtree(bisync_state_path)
-                console.print("[green]Removed bisync state[/green]")
-
-        # Clean up cloud sync fields on the project entry
-        if cloud and entry and entry.local_sync_path:
-            entry.local_sync_path = None
-            entry.bisync_initialized = False
-            entry.last_sync = None
-            ConfigManager().save_config(config)
-
         # Show informative message if files were not deleted
         if not delete_notes:
-            if local_path_config:
-                console.print(f"[yellow]Note: Local files remain at {local_path_config}[/yellow]")
+            console.print("[yellow]Note: Project files remain on disk[/yellow]")
 
     except Exception as e:
         console.print(f"[red]Error removing project: {str(e)}[/red]")
@@ -548,26 +167,11 @@ def remove_project(
 @project_app.command("default")
 def set_default_project(
     name: str = typer.Argument(..., help="Name of the project to set as CLI default"),
-    local: bool = typer.Option(
-        False, "--local", help="Force local API routing (required in cloud mode)"
-    ),
 ) -> None:
-    """Set the default project used as fallback when no project is specified.
-
-    In cloud mode, use --local to modify the local configuration.
-    """
+    """Set the default project used as fallback when no project is specified."""
 
     async def _set_default():
-        # Resolve workspace so cloud-only projects auto-route without flags
-        config = ConfigManager().config
-        entry = config.projects.get(name)
-        ws = None
-        if entry and entry.workspace_id:
-            ws = entry.workspace_id
-        elif config.default_workspace:
-            ws = config.default_workspace
-
-        async with get_client(project_name=name, workspace=ws) as client:
+        async with get_client(project_name=name) as client:
             project_client = ProjectClient(client)
             # Convert name to permalink for efficient resolution
             project_permalink = generate_permalink(name)
@@ -575,7 +179,7 @@ def set_default_project(
             return await project_client.set_default(target_project.external_id)
 
     try:
-        with force_routing(local=local):
+        with force_routing(local=True):
             result = run_with_cleanup(_set_default())
         console.print(f"[green]{result.message}[/green]")
     except Exception as e:
@@ -628,69 +232,13 @@ def move_project(
         raise typer.Exit(1)
 
 
-@project_app.command("set-cloud")
-def set_cloud(
-    name: str = typer.Argument(..., help="Name of the project to route through cloud"),
-    workspace: str = typer.Option(
-        None,
-        "--workspace",
-        help="Cloud workspace name or tenant_id to associate with this project",
-    ),
-) -> None:
-    """Set a project to cloud mode (route through cloud API).
-
-    Requires either an API key or an active OAuth session.
-
-    Use --workspace to associate a specific workspace with this project.
-    If omitted, uses the default workspace (if set) or auto-selects when
-    only one workspace is available.
-
-    Examples:
-      bm project set-cloud research --workspace Personal
-      bm project set-cloud research --workspace 11111111-...
-      bm project set-cloud research   # uses default workspace
-    """
-
-    config_manager = ConfigManager()
-    config = config_manager.config
-
-    # Validate project exists in config
-    if name not in config.projects:
-        console.print(f"[red]Error: Project '{name}' not found in config[/red]")
-        raise typer.Exit(1)
-
-    # Validate credentials: API key or OAuth session
-    has_api_key = bool(config.cloud_api_key)
-    has_oauth = False
-    if not has_api_key:
-        auth = CLIAuth(client_id=config.cloud_client_id, authkit_domain=config.cloud_domain)
-        has_oauth = auth.load_tokens() is not None
-
-    if not has_api_key and not has_oauth:
-        console.print("[red]Error: No cloud credentials found[/red]")
-        console.print("[dim]Run 'bm cloud api-key save <key>' or 'bm cloud login' first[/dim]")
-        raise typer.Exit(1)
-
-    resolved_workspace_id = _resolve_workspace_id(config, workspace)
-
-    config.set_project_mode(name, ProjectMode.CLOUD)
-    if resolved_workspace_id:
-        config.projects[name].workspace_id = resolved_workspace_id
-    config_manager.save_config(config)
-
-    console.print(f"[green]Project '{name}' set to cloud mode[/green]")
-    if resolved_workspace_id:
-        console.print(f"[dim]Workspace: {resolved_workspace_id}[/dim]")
-    console.print("[dim]MCP tools and CLI commands for this project will route through cloud[/dim]")
-
-
 @project_app.command("set-local")
 def set_local(
     name: str = typer.Argument(..., help="Name of the project to revert to local mode"),
 ) -> None:
     """Revert a project to local mode (use in-process ASGI transport).
 
-    Clears any associated cloud workspace.
+    Clears any associated git remote configuration.
 
     Example:
       bm project set-local research
@@ -704,41 +252,57 @@ def set_local(
         raise typer.Exit(1)
 
     config.set_project_mode(name, ProjectMode.LOCAL)
-    config.projects[name].workspace_id = None
+    # Clear git-related fields when reverting to local mode
+    config.projects[name].git_remote_url = None
+    config.projects[name].git_branch = None
     config_manager.save_config(config)
 
     console.print(f"[green]Project '{name}' set to local mode[/green]")
     console.print("[dim]MCP tools and CLI commands for this project will use local transport[/dim]")
 
 
+@project_app.command("set-git")
+def set_git(
+    name: str = typer.Argument(..., help="Name of the project"),
+    remote: str = typer.Option(..., "--remote", "-r", help="Git remote URL"),
+    branch: str = typer.Option("main", "--branch", "-b", help="Git branch"),
+) -> None:
+    """Set a project to GIT mode for shared knowledge via git sync.
+
+    Equivalent to `bm sync init` but focused on just updating the project config.
+
+    Example:
+      bm project set-git research --remote git@github.internal:team/kb.git
+    """
+    config_manager = ConfigManager()
+    config = config_manager.config
+
+    if name not in config.projects:
+        console.print(f"[red]Error: Project '{name}' not found in config[/red]")
+        raise typer.Exit(1)
+
+    config.set_project_mode(name, ProjectMode.GIT)
+    config.projects[name].git_remote_url = remote
+    config.projects[name].git_branch = branch
+    config_manager.save_config(config)
+
+    console.print(f"[green]Project '{name}' set to git mode[/green]")
+    console.print(f"  Remote: {remote}")
+    console.print(f"  Branch: {branch}")
+    console.print("[dim]Use `bm sync push/pull` to synchronize changes[/dim]")
+
+
 @project_app.command("ls")
 def ls_project_command(
     name: str = typer.Option(..., "--name", help="Project name to list files from"),
     path: str = typer.Argument(None, help="Path within project (optional)"),
-    local: bool = typer.Option(False, "--local", help="List files from local project instance"),
-    cloud: bool = typer.Option(False, "--cloud", help="List files from cloud project instance"),
 ) -> None:
     """List files in a project.
 
     Examples:
       bm project ls --name research
-      bm project ls --name research --local
-      bm project ls --name research --cloud
       bm project ls --name research subfolder
     """
-    try:
-        validate_routing_flags(local, cloud)
-    except ValueError as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
-
-    # Determine routing: explicit flags take precedence, otherwise check project mode
-    if cloud or local:
-        use_cloud_route = cloud and not local
-    else:
-        config = ConfigManager().config
-        project_mode = config.get_project_mode(name)
-        use_cloud_route = project_mode == ProjectMode.CLOUD
 
     def _list_local_files(project_path: str, subpath: str | None = None) -> list[str]:
         project_root = Path(normalize_project_path(project_path)).expanduser().resolve()
@@ -776,45 +340,16 @@ def ls_project_command(
                         return proj
                 return None
 
-        if use_cloud_route:
-            config = ConfigManager().config
-            _require_cloud_credentials(config)
+        with force_routing(local=True):
+            project_data = run_with_cleanup(_get_project())
+        if not project_data:
+            console.print(f"[red]Error: Project '{name}' not found[/red]")
+            raise typer.Exit(1)
 
-            tenant_info = run_with_cleanup(get_mount_info())
-            bucket_name = tenant_info.bucket_name
-
-            with force_routing(cloud=True):
-                project_data = run_with_cleanup(_get_project())
-            if not project_data:
-                console.print(f"[red]Error: Project '{name}' not found[/red]")
-                raise typer.Exit(1)
-
-            sync_project = SyncProject(
-                name=project_data.name,
-                path=normalize_project_path(project_data.path),
-            )
-            files = project_ls(sync_project, bucket_name, path=path)
-            target_label = "CLOUD"
-        else:
-            with force_routing(local=True):
-                project_data = run_with_cleanup(_get_project())
-            if not project_data:
-                console.print(f"[red]Error: Project '{name}' not found[/red]")
-                raise typer.Exit(1)
-
-            # For cloud-mode projects accessed with --local, use local_sync_path
-            # (the actual local directory) instead of project_data.path from the API
-            local_dir = project_data.path
-            if local:
-                entry = ConfigManager().config.projects.get(name)
-                if entry and entry.local_sync_path:
-                    local_dir = entry.local_sync_path
-
-            files = _list_local_files(local_dir, path)
-            target_label = "LOCAL"
+        files = _list_local_files(project_data.path, path)
 
         if files:
-            heading = f"\n[bold]Files in {name} ({target_label})"
+            heading = f"\n[bold]Files in {name}"
             if path:
                 heading += f"/{path}"
             heading += ":[/bold]"
@@ -823,7 +358,7 @@ def ls_project_command(
                 console.print(f"  {file}")
             console.print(f"\n[dim]Total: {len(files)} files[/dim]")
         else:
-            prefix = f"[yellow]No files found in {name} ({target_label})"
+            prefix = f"[yellow]No files found in {name}"
             console.print(prefix + (f"/{path}" if path else "") + "[/yellow]")
 
     except Exception as e:
@@ -835,25 +370,11 @@ def ls_project_command(
 def display_project_info(
     name: str = typer.Argument(..., help="Name of the project"),
     json_output: bool = typer.Option(False, "--json", help="Output in JSON format"),
-    local: bool = typer.Option(
-        False, "--local", help="Force local API routing (ignore cloud mode)"
-    ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
-    """Display detailed information and statistics about the current project.
-
-    Use --local to force local routing when cloud mode is enabled.
-    Use --cloud to force cloud routing when cloud mode is disabled.
-    """
-    try:
-        validate_routing_flags(local, cloud)
-    except ValueError as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
-
+    """Display detailed information and statistics about a project."""
     try:
         # Get project info
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=True):
             info = run_with_cleanup(get_project_info(name))
 
         if json_output:

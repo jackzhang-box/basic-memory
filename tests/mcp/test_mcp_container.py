@@ -37,12 +37,6 @@ class TestMcpContainer:
         container = McpContainer(config=app_config, mode=RuntimeMode.TEST)
         assert container.should_sync_files is False
 
-    def test_should_not_sync_files_in_cloud_mode(self, app_config):
-        """Sync should be disabled in cloud mode (cloud handles sync differently)."""
-        app_config.sync_changes = True
-        container = McpContainer(config=app_config, mode=RuntimeMode.CLOUD)
-        assert container.should_sync_files is False
-
 
 class TestSyncSkipReason:
     """Tests for sync_skip_reason property."""
@@ -51,11 +45,6 @@ class TestSyncSkipReason:
         """Returns test message when in test mode."""
         container = McpContainer(config=app_config, mode=RuntimeMode.TEST)
         assert container.sync_skip_reason == "Test environment detected"
-
-    def test_skip_reason_in_cloud_mode(self, app_config):
-        """Returns cloud message when in cloud mode."""
-        container = McpContainer(config=app_config, mode=RuntimeMode.CLOUD)
-        assert container.sync_skip_reason == "Cloud mode enabled"
 
     def test_skip_reason_when_sync_disabled(self, app_config):
         """Returns disabled message when sync is disabled."""

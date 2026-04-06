@@ -13,11 +13,10 @@ from loguru import logger
 
 from basic_memory.cli.app import app
 from basic_memory.cli.commands.command_utils import run_with_cleanup
-from basic_memory.cli.commands.routing import force_routing, validate_routing_flags
+from basic_memory.cli.commands.routing import force_routing
 from basic_memory.mcp.tools import build_context as mcp_build_context
 from basic_memory.mcp.tools import edit_note as mcp_edit_note
 from basic_memory.mcp.tools import list_memory_projects as mcp_list_projects
-from basic_memory.mcp.tools import list_workspaces as mcp_list_workspaces
 from basic_memory.mcp.tools import read_note as mcp_read_note
 from basic_memory.mcp.tools import recent_activity as mcp_recent_activity
 from basic_memory.mcp.tools import schema_diff as mcp_schema_diff
@@ -69,7 +68,6 @@ def write_note(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Create or update a markdown note. Content can be provided via --content or stdin.
 
@@ -80,8 +78,6 @@ def write_note(
     bm tool write-note --title "My Note" --folder "notes" --local
     """
     try:
-        validate_routing_flags(local, cloud)
-
         # If content is not provided, read from stdin
         if content is None:
             if not sys.stdin.isatty():
@@ -99,7 +95,7 @@ def write_note(
 
         assert content is not None
 
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_write_note(
                     title=title,
@@ -141,7 +137,6 @@ def read_note(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Read a markdown note from the knowledge base.
 
@@ -152,9 +147,7 @@ def read_note(
     bm tool read-note my-note --page 2 --page-size 5
     """
     try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_read_note(
                     identifier=identifier,
@@ -207,7 +200,6 @@ def edit_note(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Edit an existing markdown note using append/prepend/find_replace/replace_section.
 
@@ -218,9 +210,7 @@ def edit_note(
     bm tool edit-note my-note --operation replace_section --section "## Notes" --content "updated"
     """
     try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_edit_note(
                     identifier=identifier,
@@ -272,7 +262,6 @@ def build_context(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Get context needed to continue a discussion.
 
@@ -282,9 +271,7 @@ def build_context(
     bm tool build-context specs/search --depth 2 --timeframe 30d
     """
     try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_build_context(
                     url=url,
@@ -329,7 +316,6 @@ def recent_activity(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Get recent activity across the knowledge base.
 
@@ -340,9 +326,7 @@ def recent_activity(
     bm tool recent-activity --type entity --type observation
     """
     try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_recent_activity(
                     type=type,  # pyright: ignore[reportArgumentType]
@@ -420,7 +404,6 @@ def search_notes(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Search across all content in the knowledge base.
 
@@ -432,7 +415,6 @@ def search_notes(
     bm tool search-notes --meta status=draft
     """
     try:
-        validate_routing_flags(local, cloud)
 
         mode_flags = [permalink, title, vector, hybrid]
         if sum(1 for enabled in mode_flags if enabled) > 1:  # pragma: no cover
@@ -482,7 +464,7 @@ def search_notes(
         if hybrid:
             search_type = "hybrid"
 
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_search(
                     query=query or None,
@@ -526,7 +508,6 @@ def list_projects(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """List all available projects with their status (JSON output).
 
@@ -536,9 +517,7 @@ def list_projects(
     bm tool list-projects --local
     """
     try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(mcp_list_projects(output_format="json"))
         _print_json(result)
     except ValueError as e:
@@ -547,39 +526,6 @@ def list_projects(
     except Exception as e:  # pragma: no cover
         if not isinstance(e, typer.Exit):
             typer.echo(f"Error during list_projects: {e}", err=True)
-            raise typer.Exit(1)
-        raise
-
-
-# --- list-workspaces ---
-
-
-@tool_app.command("list-workspaces")
-def list_workspaces(
-    local: bool = typer.Option(
-        False, "--local", help="Force local API routing (ignore cloud mode)"
-    ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
-):
-    """List available cloud workspaces (JSON output).
-
-    Examples:
-
-    bm tool list-workspaces
-    bm tool list-workspaces --cloud
-    """
-    try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
-            result = run_with_cleanup(mcp_list_workspaces(output_format="json"))
-        _print_json(result)
-    except ValueError as e:
-        typer.echo(f"Error: {e}", err=True)
-        raise typer.Exit(1)
-    except Exception as e:  # pragma: no cover
-        if not isinstance(e, typer.Exit):
-            typer.echo(f"Error during list_workspaces: {e}", err=True)
             raise typer.Exit(1)
         raise
 
@@ -604,7 +550,6 @@ def schema_validate(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Validate notes against their schemas (JSON output).
 
@@ -618,8 +563,6 @@ def schema_validate(
     bm tool schema-validate --project research
     """
     try:
-        validate_routing_flags(local, cloud)
-
         # Heuristic: if target contains / or ., treat as identifier; otherwise as note type
         note_type, identifier = None, None
         if target:
@@ -628,7 +571,7 @@ def schema_validate(
             else:
                 note_type = target
 
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_schema_validate(
                     note_type=note_type,
@@ -672,7 +615,6 @@ def schema_infer(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Infer schema from existing notes of a type (JSON output).
 
@@ -683,9 +625,7 @@ def schema_infer(
     bm tool schema-infer person --project research
     """
     try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_schema_infer(
                     note_type=note_type,
@@ -726,7 +666,6 @@ def schema_diff(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Show drift between schema and actual usage (JSON output).
 
@@ -736,9 +675,7 @@ def schema_diff(
     bm tool schema-diff person --project research
     """
     try:
-        validate_routing_flags(local, cloud)
-
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_schema_diff(
                     note_type=note_type,

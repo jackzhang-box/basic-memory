@@ -18,7 +18,7 @@ from rich.table import Table
 
 from basic_memory.cli.app import app
 from basic_memory.cli.commands.command_utils import run_with_cleanup
-from basic_memory.cli.commands.routing import force_routing, validate_routing_flags
+from basic_memory.cli.commands.routing import force_routing
 from basic_memory.config import ConfigManager
 from basic_memory.mcp.tools import schema_diff as mcp_schema_diff
 from basic_memory.mcp.tools import schema_infer as mcp_schema_infer
@@ -177,7 +177,6 @@ def validate(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Validate notes against their schemas.
 
@@ -187,10 +186,8 @@ def validate(
     Use --json for machine-readable output.
     Use --strict to exit with error code 1 if any validation errors are found.
     Use --local to force local routing when cloud mode is enabled.
-    Use --cloud to force cloud routing when cloud mode is disabled.
     """
     try:
-        validate_routing_flags(local, cloud)
         project_name = _resolve_project_name(project)
 
         # Heuristic: if target contains / or ., treat as identifier; otherwise as note type
@@ -201,7 +198,7 @@ def validate(
             else:
                 note_type = target
 
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_schema_validate(
                     note_type=note_type,
@@ -258,7 +255,6 @@ def infer(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Infer schema from existing notes of a type.
 
@@ -270,13 +266,11 @@ def infer(
 
     Use --json for machine-readable output.
     Use --local to force local routing when cloud mode is enabled.
-    Use --cloud to force cloud routing when cloud mode is disabled.
     """
     try:
-        validate_routing_flags(local, cloud)
         project_name = _resolve_project_name(project)
 
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_schema_infer(
                     note_type=note_type,
@@ -340,7 +334,6 @@ def diff(
     local: bool = typer.Option(
         False, "--local", help="Force local API routing (ignore cloud mode)"
     ),
-    cloud: bool = typer.Option(False, "--cloud", help="Force cloud API routing"),
 ):
     """Show drift between schema and actual usage.
 
@@ -350,13 +343,11 @@ def diff(
 
     Use --json for machine-readable output.
     Use --local to force local routing when cloud mode is enabled.
-    Use --cloud to force cloud routing when cloud mode is disabled.
     """
     try:
-        validate_routing_flags(local, cloud)
         project_name = _resolve_project_name(project)
 
-        with force_routing(local=local, cloud=cloud):
+        with force_routing(local=local):
             result = run_with_cleanup(
                 mcp_schema_diff(
                     note_type=note_type,

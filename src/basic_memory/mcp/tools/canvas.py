@@ -26,7 +26,6 @@ async def canvas(
     title: str,
     directory: str,
     project: Optional[str] = None,
-    workspace: Optional[str] = None,
     context: Context | None = None,
 ) -> str:
     """Create an Obsidian canvas file with the provided nodes and edges.
@@ -97,7 +96,7 @@ async def canvas(
     Raises:
         ToolError: If project doesn't exist or directory path is invalid
     """
-    async with get_project_client(project, workspace, context) as (client, active_project):
+    async with get_project_client(project, context=context) as (client, active_project):
         # Ensure path has .canvas extension
         file_title = title if title.endswith(".canvas") else f"{title}.canvas"
         file_path = f"{directory}/{file_title}"

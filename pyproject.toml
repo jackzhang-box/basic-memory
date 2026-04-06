@@ -30,7 +30,6 @@ dependencies = [
     "pillow>=11.1.0",
     "pybars3>=0.9.7",
     "fastmcp>=3.0.1,<4",
-    "pyjwt>=2.10.1",
     "python-dotenv>=1.1.0",
     "pytest-aio>=1.9.0",
     "aiofiles>=24.1.0", # Optional observability (disabled by default via config)
@@ -57,9 +56,6 @@ Documentation = "https://github.com/basicmachines-co/basic-memory#readme"
 [project.scripts]
 basic-memory = "basic_memory.cli.main:app"
 bm = "basic_memory.cli.main:app"
-
-[project.optional-dependencies]
-telemetry = ["logfire>=4.19.0"]
 
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]

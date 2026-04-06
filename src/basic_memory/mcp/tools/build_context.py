@@ -135,7 +135,6 @@ def _format_context_markdown(graph: GraphContext, project: str) -> str:
 async def build_context(
     url: MemoryUrl,
     project: Optional[str] = None,
-    workspace: Optional[str] = None,
     depth: str | int | None = 1,
     timeframe: Optional[TimeFrame] = "7d",
     page: int = 1,
@@ -207,7 +206,6 @@ async def build_context(
         entrypoint="mcp",
         tool_name="build_context",
         requested_project=project,
-        workspace_id=workspace,
         depth=depth or 1,
         timeframe=timeframe,
         page=page,
@@ -216,10 +214,9 @@ async def build_context(
         output_format=output_format,
         is_memory_url=str(url).startswith("memory://"),
     ):
-        async with get_project_client(project, workspace, context) as (client, active_project):
+        async with get_project_client(project, context=context) as (client, active_project):
             with telemetry.contextualize(
                 project_name=active_project.name,
-                workspace_id=workspace,
                 tool_name="build_context",
             ):
                 logger.info(

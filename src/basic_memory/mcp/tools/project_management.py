@@ -10,126 +10,10 @@ from typing import Literal
 from fastmcp import Context
 from loguru import logger
 
-from basic_memory.config import ConfigManager, has_cloud_credentials
-from basic_memory.mcp.async_client import get_client, get_cloud_proxy_client, is_factory_mode
+from basic_memory.mcp.async_client import get_client
 from basic_memory.mcp.server import mcp
-from basic_memory.schemas.project_info import ProjectInfoRequest, ProjectItem, ProjectList
+from basic_memory.schemas.project_info import ProjectInfoRequest
 from basic_memory.utils import generate_permalink
-
-
-# --- Helpers for dual-fetch + merge ---
-
-
-async def _fetch_cloud_projects(
-    workspace: str | None = None,
-    context: Context | None = None,
-) -> ProjectList | None:
-    """Fetch projects from the cloud API, returning None on failure.
-
-    Logs warnings on failure so the caller can fall back to local-only results.
-    """
-    try:
-        from basic_memory.mcp.clients import ProjectClient
-
-        async with get_cloud_proxy_client(workspace=workspace) as cloud_client:
-            cloud_project_client = ProjectClient(cloud_client)
-            cloud_list = await cloud_project_client.list_projects()
-        if context:  # pragma: no cover
-            await context.info(f"Discovered {len(cloud_list.projects)} cloud projects")
-        return cloud_list
-    except Exception as exc:
-        logger.warning(f"Cloud project discovery failed: {exc}")
-        if context:  # pragma: no cover
-            await context.info("Cloud project discovery failed, showing local projects only")
-        return None
-
-
-def _merge_projects(
-    local_list: ProjectList | None,
-    cloud_list: ProjectList | None,
-    *,
-    cloud_workspace_name: str | None = None,
-    cloud_workspace_type: str | None = None,
-    cloud_workspace_tenant_id: str | None = None,
-) -> list[dict]:
-    """Merge local and cloud project lists by permalink.
-
-    Returns a sorted list of dicts with unified project metadata.
-    Same merge-by-permalink algorithm used by the CLI `bm project list`.
-    """
-    names_by_permalink: dict[str, str] = {}
-    local_by_permalink: dict[str, ProjectItem] = {}
-    cloud_by_permalink: dict[str, ProjectItem] = {}
-
-    if local_list:
-        for project in local_list.projects:
-            permalink = generate_permalink(project.name)
-            names_by_permalink[permalink] = project.name
-            local_by_permalink[permalink] = project
-
-    if cloud_list:
-        for project in cloud_list.projects:
-            permalink = generate_permalink(project.name)
-            names_by_permalink[permalink] = project.name
-            cloud_by_permalink[permalink] = project
-
-    merged: list[dict] = []
-    for permalink in sorted(names_by_permalink):
-        name = names_by_permalink[permalink]
-        local_proj = local_by_permalink.get(permalink)
-        cloud_proj = cloud_by_permalink.get(permalink)
-
-        # Determine source label
-        if local_proj and cloud_proj:
-            source = "local+cloud"
-        elif cloud_proj:
-            source = "cloud"
-        else:
-            source = "local"
-
-        # Prefer local path for backward compat; fall back to cloud path
-        local_path = local_proj.path if local_proj else None
-        cloud_path = cloud_proj.path if cloud_proj else None
-        path = local_path or cloud_path or ""
-
-        is_default = False
-        if local_proj and local_proj.is_default:
-            is_default = True
-        if cloud_proj and cloud_proj.is_default:
-            is_default = True
-
-        # Prefer cloud display_name / is_private (cloud injects these)
-        display_name = None
-        is_private = False
-        if cloud_proj:
-            display_name = cloud_proj.display_name
-            is_private = cloud_proj.is_private
-        elif local_proj:
-            display_name = local_proj.display_name
-            is_private = local_proj.is_private
-
-        # Attach workspace info for cloud-sourced projects
-        ws_name = cloud_workspace_name if cloud_proj else None
-        ws_type = cloud_workspace_type if cloud_proj else None
-        ws_tenant_id = cloud_workspace_tenant_id if cloud_proj else None
-
-        merged.append(
-            {
-                "name": name,
-                "path": path,
-                "local_path": local_path,
-                "cloud_path": cloud_path,
-                "source": source,
-                "is_default": is_default,
-                "is_private": is_private,
-                "display_name": display_name,
-                "workspace_name": ws_name,
-                "workspace_type": ws_type,
-                "workspace_tenant_id": ws_tenant_id,
-            }
-        )
-
-    return merged
 
 
 def _format_project_list_text(merged: list[dict]) -> str:
@@ -172,19 +56,13 @@ def _format_project_list_json(
 )
 async def list_memory_projects(
     output_format: Literal["text", "json"] = "text",
-    workspace: str | None = None,
     context: Context | None = None,
 ) -> str | dict:
     """List all available projects with their status.
 
-    Shows projects from both local and cloud sources when cloud credentials
-    are available, merging by permalink to give a unified view.
-
     Args:
         output_format: "text" returns the existing human-readable project list.
             "json" returns structured project metadata.
-        workspace: Cloud workspace name or tenant_id. Falls back to
-            config.default_workspace when not specified.
         context: Optional FastMCP context for progress/status logging.
     """
     if context:  # pragma: no cover
@@ -194,66 +72,27 @@ async def list_memory_projects(
 
     from basic_memory.mcp.clients import ProjectClient
 
-    # --- Factory mode (cloud app) ---
-    # Trigger: set_client_factory() was called (e.g., basic-memory-cloud)
-    # Why: there is no local ASGI server; the factory IS the only source
-    # Outcome: single fetch, no merge needed
-    if is_factory_mode():
-        async with get_client() as client:
-            project_client = ProjectClient(client)
-            project_list = await project_client.list_projects()
-
-        merged = _merge_projects(project_list, None)
-        if output_format == "json":
-            return _format_project_list_json(
-                merged, project_list.default_project, constrained_project
-            )
-        if constrained_project:
-            return _format_constrained_text(constrained_project)
-        return _format_project_list_text(merged)
-
-    # --- Normal MCP stdio mode ---
-    # Always fetch local projects via the ASGI transport
+    # Fetch projects via the client (factory mode or local ASGI)
     async with get_client() as client:
         project_client = ProjectClient(client)
-        local_list = await project_client.list_projects()
+        project_list = await project_client.list_projects()
 
-    # Fetch cloud projects when credentials are available
-    cloud_list: ProjectList | None = None
-    cloud_ws_name: str | None = None
-    cloud_ws_type: str | None = None
-    cloud_ws_tenant_id: str | None = None
-    config = ConfigManager().config
-    if has_cloud_credentials(config):
-        # Use explicit workspace, fall back to config default
-        effective_workspace = workspace or config.default_workspace
-        cloud_list = await _fetch_cloud_projects(effective_workspace, context)
+    # Build merged list from local projects
+    merged: list[dict] = []
+    for project in sorted(project_list.projects, key=lambda p: p.name):
+        merged.append(
+            {
+                "name": project.name,
+                "path": project.path,
+                "source": "local",
+                "is_default": project.is_default
+                or project_list.default_project == project.name,
+                "is_private": project.is_private,
+                "display_name": project.display_name,
+            }
+        )
 
-        # Resolve workspace metadata so each cloud project carries its workspace info
-        if cloud_list:
-            cloud_ws_tenant_id = effective_workspace
-            try:
-                from basic_memory.mcp.project_context import get_available_workspaces
-
-                workspaces = await get_available_workspaces(context)
-                matched = next(
-                    (ws for ws in workspaces if ws.tenant_id == effective_workspace),
-                    None,
-                )
-                if matched:
-                    cloud_ws_name = matched.name
-                    cloud_ws_type = matched.workspace_type
-            except Exception:
-                pass  # workspace lookup is best-effort
-
-    merged = _merge_projects(
-        local_list,
-        cloud_list,
-        cloud_workspace_name=cloud_ws_name,
-        cloud_workspace_type=cloud_ws_type,
-        cloud_workspace_tenant_id=cloud_ws_tenant_id,
-    )
-    default_project = local_list.default_project
+    default_project = project_list.default_project
 
     if output_format == "json":
         return _format_project_list_json(merged, default_project, constrained_project)
