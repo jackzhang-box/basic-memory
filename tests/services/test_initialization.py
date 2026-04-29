@@ -11,10 +11,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from basic_memory import db
-from basic_memory.config import BasicMemoryConfig, DatabaseBackend
-from basic_memory.repository.project_repository import ProjectRepository
-from basic_memory.services.initialization import (
+from agent_brain import db
+from agent_brain.config import AgentBrainConfig, DatabaseBackend
+from agent_brain.repository.project_repository import ProjectRepository
+from agent_brain.services.initialization import (
     ensure_initialization,
     initialize_app,
     initialize_database,
@@ -23,7 +23,7 @@ from basic_memory.services.initialization import (
 
 
 @pytest.mark.asyncio
-async def test_initialize_database_creates_engine_and_allows_queries(app_config: BasicMemoryConfig):
+async def test_initialize_database_creates_engine_and_allows_queries(app_config: AgentBrainConfig):
     await db.shutdown_db()
     try:
         await initialize_database(app_config)
@@ -42,7 +42,7 @@ async def test_initialize_database_creates_engine_and_allows_queries(app_config:
 
 @pytest.mark.asyncio
 async def test_initialize_database_raises_on_invalid_postgres_config(
-    app_config: BasicMemoryConfig, config_manager
+    app_config: AgentBrainConfig, config_manager
 ):
     """If config selects Postgres but has no DATABASE_URL, initialization should fail."""
     await db.shutdown_db()
@@ -60,7 +60,7 @@ async def test_initialize_database_raises_on_invalid_postgres_config(
 
 @pytest.mark.asyncio
 async def test_reconcile_projects_with_config_creates_projects_and_default(
-    app_config: BasicMemoryConfig, config_manager, config_home
+    app_config: AgentBrainConfig, config_manager, config_home
 ):
     await db.shutdown_db()
     try:
@@ -70,7 +70,7 @@ async def test_reconcile_projects_with_config_creates_projects_and_default(
         proj_a.mkdir(parents=True, exist_ok=True)
         proj_b.mkdir(parents=True, exist_ok=True)
 
-        from basic_memory.config import ProjectEntry
+        from agent_brain.config import ProjectEntry
 
         updated = app_config.model_copy(
             update={
@@ -105,7 +105,7 @@ async def test_reconcile_projects_with_config_creates_projects_and_default(
 
 @pytest.mark.asyncio
 async def test_reconcile_projects_with_config_swallow_errors(
-    monkeypatch, app_config: BasicMemoryConfig
+    monkeypatch, app_config: AgentBrainConfig
 ):
     """reconcile_projects_with_config should not raise if ProjectService sync fails."""
     await db.shutdown_db()
@@ -116,7 +116,7 @@ async def test_reconcile_projects_with_config_swallow_errors(
             raise ValueError("Project synchronization error")
 
         monkeypatch.setattr(
-            "basic_memory.services.project_service.ProjectService.synchronize_projects",
+            "agent_brain.services.project_service.ProjectService.synchronize_projects",
             boom,
         )
 
@@ -126,7 +126,7 @@ async def test_reconcile_projects_with_config_swallow_errors(
         await db.shutdown_db()
 
 
-def test_ensure_initialization_runs_and_cleans_up(app_config: BasicMemoryConfig, config_manager):
+def test_ensure_initialization_runs_and_cleans_up(app_config: AgentBrainConfig, config_manager):
     # ensure_initialization uses asyncio.run; keep this test synchronous.
     ensure_initialization(app_config)
 
@@ -137,7 +137,7 @@ def test_ensure_initialization_runs_and_cleans_up(app_config: BasicMemoryConfig,
 
 @pytest.mark.asyncio
 async def test_initialize_app_warns_on_frontmatter_permalink_precedence(
-    app_config: BasicMemoryConfig, monkeypatch
+    app_config: AgentBrainConfig, monkeypatch
 ):
     app_config.database_backend = DatabaseBackend.SQLITE
     app_config.ensure_frontmatter_on_sync = True
@@ -145,9 +145,9 @@ async def test_initialize_app_warns_on_frontmatter_permalink_precedence(
 
     init_db_mock = AsyncMock()
     reconcile_mock = AsyncMock()
-    monkeypatch.setattr("basic_memory.services.initialization.initialize_database", init_db_mock)
+    monkeypatch.setattr("agent_brain.services.initialization.initialize_database", init_db_mock)
     monkeypatch.setattr(
-        "basic_memory.services.initialization.reconcile_projects_with_config",
+        "agent_brain.services.initialization.reconcile_projects_with_config",
         reconcile_mock,
     )
 
@@ -156,7 +156,7 @@ async def test_initialize_app_warns_on_frontmatter_permalink_precedence(
     def capture_warning(message: str) -> None:
         warnings.append(message)
 
-    monkeypatch.setattr("basic_memory.services.initialization.logger.warning", capture_warning)
+    monkeypatch.setattr("agent_brain.services.initialization.logger.warning", capture_warning)
 
     await initialize_app(app_config)
 
@@ -170,17 +170,17 @@ async def test_initialize_app_warns_on_frontmatter_permalink_precedence(
 
 @pytest.mark.asyncio
 async def test_initialize_app_no_precedence_warning_when_not_conflicting(
-    app_config: BasicMemoryConfig, monkeypatch
+    app_config: AgentBrainConfig, monkeypatch
 ):
     app_config.ensure_frontmatter_on_sync = False
     app_config.disable_permalinks = True
 
     monkeypatch.setattr(
-        "basic_memory.services.initialization.initialize_database",
+        "agent_brain.services.initialization.initialize_database",
         AsyncMock(),
     )
     monkeypatch.setattr(
-        "basic_memory.services.initialization.reconcile_projects_with_config",
+        "agent_brain.services.initialization.reconcile_projects_with_config",
         AsyncMock(),
     )
 
@@ -189,7 +189,7 @@ async def test_initialize_app_no_precedence_warning_when_not_conflicting(
     def capture_warning(message: str) -> None:
         warnings.append(message)
 
-    monkeypatch.setattr("basic_memory.services.initialization.logger.warning", capture_warning)
+    monkeypatch.setattr("agent_brain.services.initialization.logger.warning", capture_warning)
 
     await initialize_app(app_config)
 
@@ -201,7 +201,7 @@ async def test_initialize_app_no_precedence_warning_when_not_conflicting(
 
 @pytest.mark.asyncio
 async def test_run_migrations_triggers_embedding_backfill_when_entities_exist_but_no_embeddings(
-    monkeypatch, app_config: BasicMemoryConfig
+    monkeypatch, app_config: AgentBrainConfig
 ):
     """run_migrations checks for missing embeddings (actual backfill runs in background from MCP)."""
 
@@ -218,15 +218,15 @@ async def test_run_migrations_triggers_embedding_backfill_when_entities_exist_bu
         db._session_maker = session_marker  # pyright: ignore [reportPrivateUsage]
 
         monkeypatch.setattr(
-            "basic_memory.db.command.upgrade",
+            "agent_brain.db.command.upgrade",
             lambda *args, **kwargs: None,
         )
-        monkeypatch.setattr("basic_memory.db.SQLiteSearchRepository", StubSearchRepository)
-        monkeypatch.setattr("basic_memory.db.PostgresSearchRepository", StubSearchRepository)
+        monkeypatch.setattr("agent_brain.db.SQLiteSearchRepository", StubSearchRepository)
+        monkeypatch.setattr("agent_brain.db.PostgresSearchRepository", StubSearchRepository)
 
         needs_backfill_mock = AsyncMock(return_value=True)
         monkeypatch.setattr(
-            "basic_memory.db._needs_semantic_embedding_backfill", needs_backfill_mock
+            "agent_brain.db._needs_semantic_embedding_backfill", needs_backfill_mock
         )
 
         await db.run_migrations(app_config)
@@ -239,7 +239,7 @@ async def test_run_migrations_triggers_embedding_backfill_when_entities_exist_bu
 
 @pytest.mark.asyncio
 async def test_run_migrations_skips_embedding_backfill_when_embeddings_already_exist(
-    monkeypatch, app_config: BasicMemoryConfig
+    monkeypatch, app_config: AgentBrainConfig
 ):
     """When embeddings already exist, no backfill is needed."""
 
@@ -256,15 +256,15 @@ async def test_run_migrations_skips_embedding_backfill_when_embeddings_already_e
         db._session_maker = session_marker  # pyright: ignore [reportPrivateUsage]
 
         monkeypatch.setattr(
-            "basic_memory.db.command.upgrade",
+            "agent_brain.db.command.upgrade",
             lambda *args, **kwargs: None,
         )
-        monkeypatch.setattr("basic_memory.db.SQLiteSearchRepository", StubSearchRepository)
-        monkeypatch.setattr("basic_memory.db.PostgresSearchRepository", StubSearchRepository)
+        monkeypatch.setattr("agent_brain.db.SQLiteSearchRepository", StubSearchRepository)
+        monkeypatch.setattr("agent_brain.db.PostgresSearchRepository", StubSearchRepository)
 
         needs_backfill_mock = AsyncMock(return_value=False)
         monkeypatch.setattr(
-            "basic_memory.db._needs_semantic_embedding_backfill", needs_backfill_mock
+            "agent_brain.db._needs_semantic_embedding_backfill", needs_backfill_mock
         )
 
         await db.run_migrations(app_config)
@@ -277,12 +277,12 @@ async def test_run_migrations_skips_embedding_backfill_when_embeddings_already_e
 @pytest.mark.asyncio
 async def test_semantic_embedding_backfill_syncs_each_entity(
     monkeypatch,
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
     session_maker,
     test_project,
 ):
     """Automatic backfill should run sync_entity_vectors for every entity in active projects."""
-    from basic_memory.repository.entity_repository import EntityRepository
+    from agent_brain.repository.entity_repository import EntityRepository
 
     entity_repository = EntityRepository(session_maker, project_id=test_project.id)
     created_entity_ids: list[int] = []
@@ -311,7 +311,7 @@ async def test_semantic_embedding_backfill_syncs_each_entity(
         async def sync_entity_vectors_batch(self, entity_ids: list[int], progress_callback=None):
             for entity_id in entity_ids:
                 synced_pairs.append((self.project_id, entity_id))
-            from basic_memory.repository.search_repository_base import VectorSyncBatchResult
+            from agent_brain.repository.search_repository_base import VectorSyncBatchResult
 
             return VectorSyncBatchResult(
                 entities_total=len(entity_ids),
@@ -323,8 +323,8 @@ async def test_semantic_embedding_backfill_syncs_each_entity(
                 write_seconds_total=0.0,
             )
 
-    monkeypatch.setattr("basic_memory.db.SQLiteSearchRepository", StubSearchRepository)
-    monkeypatch.setattr("basic_memory.db.PostgresSearchRepository", StubSearchRepository)
+    monkeypatch.setattr("agent_brain.db.SQLiteSearchRepository", StubSearchRepository)
+    monkeypatch.setattr("agent_brain.db.PostgresSearchRepository", StubSearchRepository)
 
     app_config.semantic_search_enabled = True
 
@@ -337,7 +337,7 @@ async def test_semantic_embedding_backfill_syncs_each_entity(
 @pytest.mark.asyncio
 async def test_semantic_embedding_backfill_skips_when_semantic_disabled(
     monkeypatch,
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
     session_maker,
 ):
     """Automatic backfill should no-op when semantic search is disabled."""
@@ -349,7 +349,7 @@ async def test_semantic_embedding_backfill_skips_when_semantic_disabled(
             called = True
 
         async def sync_entity_vectors_batch(self, entity_ids: list[int], progress_callback=None):
-            from basic_memory.repository.search_repository_base import VectorSyncBatchResult
+            from agent_brain.repository.search_repository_base import VectorSyncBatchResult
 
             return VectorSyncBatchResult(
                 entities_total=len(entity_ids),
@@ -361,8 +361,8 @@ async def test_semantic_embedding_backfill_skips_when_semantic_disabled(
                 write_seconds_total=0.0,
             )
 
-    monkeypatch.setattr("basic_memory.db.SQLiteSearchRepository", StubSearchRepository)
-    monkeypatch.setattr("basic_memory.db.PostgresSearchRepository", StubSearchRepository)
+    monkeypatch.setattr("agent_brain.db.SQLiteSearchRepository", StubSearchRepository)
+    monkeypatch.setattr("agent_brain.db.PostgresSearchRepository", StubSearchRepository)
 
     app_config.semantic_search_enabled = False
     await db._run_semantic_embedding_backfill(app_config, session_maker)  # pyright: ignore [reportPrivateUsage]
@@ -371,12 +371,12 @@ async def test_semantic_embedding_backfill_skips_when_semantic_disabled(
 
 @pytest.mark.asyncio
 async def test_needs_semantic_embedding_backfill_true_when_entities_exist_no_embeddings(
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
     session_maker,
     test_project,
 ):
     """Should return True when entities exist but vector chunks table is empty."""
-    from basic_memory.repository.entity_repository import EntityRepository
+    from agent_brain.repository.entity_repository import EntityRepository
 
     entity_repository = EntityRepository(session_maker, project_id=test_project.id)
     await entity_repository.create(
@@ -404,7 +404,7 @@ async def test_needs_semantic_embedding_backfill_true_when_entities_exist_no_emb
 
 @pytest.mark.asyncio
 async def test_needs_semantic_embedding_backfill_false_when_no_entities(
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
     session_maker,
 ):
     """Should return False when no entities exist (nothing to backfill)."""
@@ -415,7 +415,7 @@ async def test_needs_semantic_embedding_backfill_false_when_no_entities(
 
 @pytest.mark.asyncio
 async def test_needs_semantic_embedding_backfill_false_when_semantic_disabled(
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
     session_maker,
 ):
     """Should return False when semantic search is disabled."""

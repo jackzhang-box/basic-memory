@@ -6,7 +6,7 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 
-from basic_memory import db
+from agent_brain import db
 
 
 def sqlite_alembic_config(database_path: Path) -> Config:
@@ -27,7 +27,7 @@ def sqlite_alembic_config(database_path: Path) -> Config:
 def test_alembic_upgrade_creates_note_content_table(tmp_path, monkeypatch):
     """Running Alembic head should create note_content with its expected contract."""
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path / "basic-memory"))
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path / "agent-brain"))
 
     database_path = tmp_path / "note-content-migration.db"
     command.upgrade(sqlite_alembic_config(database_path), "head")

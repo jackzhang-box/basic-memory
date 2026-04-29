@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from basic_memory.repository.search_repository_base import FUSION_BONUS, SearchRepositoryBase
+from agent_brain.repository.search_repository_base import FUSION_BONUS, SearchRepositoryBase
 
 
 @dataclass

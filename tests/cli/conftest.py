@@ -7,22 +7,22 @@ import pytest_asyncio
 from fastapi import FastAPI
 from httpx import AsyncClient, ASGITransport
 
-from basic_memory.api.app import app as fastapi_app
-from basic_memory.deps import get_project_config, get_engine_factory, get_app_config
+from agent_brain.api.app import app as fastapi_app
+from agent_brain.deps import get_project_config, get_engine_factory, get_app_config
 
 
 @pytest.fixture(autouse=True)
 def isolated_home(tmp_path, monkeypatch) -> Path:
     """Isolate tests from user's HOME directory.
 
-    This prevents tests from reading/writing to ~/.basic-memory/.bmignore
+    This prevents tests from reading/writing to ~/.agent-brain/.bmignore
     or other user-specific configuration.
 
-    Sets BASIC_MEMORY_HOME to tmp_path directly so the default project
+    Sets AGENT_BRAIN_HOME to tmp_path directly so the default project
     writes files to tmp_path, which is where tests expect to find them.
     """
     # Clear config cache to ensure fresh config for each test
-    from basic_memory import config as config_module
+    from agent_brain import config as config_module
 
     config_module._CONFIG_CACHE = None
     config_module._CONFIG_MTIME = None
@@ -31,9 +31,9 @@ def isolated_home(tmp_path, monkeypatch) -> Path:
     monkeypatch.setenv("HOME", str(tmp_path))
     if os.name == "nt":
         monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    # Set to tmp_path directly (not tmp_path/basic-memory) so default project
+    # Set to tmp_path directly (not tmp_path/agent-brain) so default project
     # home is tmp_path - tests expect to find imported files there
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path))
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path))
     return tmp_path
 
 

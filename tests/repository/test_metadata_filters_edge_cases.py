@@ -9,10 +9,10 @@ from datetime import datetime, timezone
 
 import pytest
 
-from basic_memory import db
-from basic_memory.models import Entity
-from basic_memory.repository.search_index_row import SearchIndexRow
-from basic_memory.schemas.search import SearchItemType
+from agent_brain import db
+from agent_brain.models import Entity
+from agent_brain.repository.search_index_row import SearchIndexRow
+from agent_brain.schemas.search import SearchItemType
 
 
 async def _index_entity_with_metadata(search_repository, session_maker, title, entity_metadata):

@@ -6,9 +6,9 @@ import pytest
 
 from mcp.server.fastmcp.exceptions import ToolError
 
-from basic_memory.mcp.tools import recent_activity
-from basic_memory.schemas.search import SearchItemType
-from basic_memory.schemas.memory import (
+from agent_brain.mcp.tools import recent_activity
+from agent_brain.schemas.search import SearchItemType
+from agent_brain.schemas.memory import (
     ActivityStats,
     ProjectActivity,
     GraphContext,
@@ -144,7 +144,7 @@ def test_recent_activity_format_relative_time_and_truncate_helpers():
     """Unit-test helper formatting to keep MCP output stable."""
     import importlib
 
-    recent_activity_module = importlib.import_module("basic_memory.mcp.tools.recent_activity")
+    recent_activity_module = importlib.import_module("agent_brain.mcp.tools.recent_activity")
 
     # _format_relative_time: naive datetime should be treated as UTC.
     naive_dt = datetime.now() - timedelta(days=1)
@@ -176,7 +176,7 @@ async def test_recent_activity_get_project_activity_timezone_normalization(monke
     """_get_project_activity should handle naive datetimes and extract active folders."""
     import importlib
 
-    recent_activity_module = importlib.import_module("basic_memory.mcp.tools.recent_activity")
+    recent_activity_module = importlib.import_module("agent_brain.mcp.tools.recent_activity")
 
     class FakeResponse:
         def __init__(self, payload):
@@ -245,7 +245,7 @@ async def test_recent_activity_get_project_activity_timezone_normalization(monke
 def test_recent_activity_format_project_output_no_results():
     import importlib
 
-    recent_activity_module = importlib.import_module("basic_memory.mcp.tools.recent_activity")
+    recent_activity_module = importlib.import_module("agent_brain.mcp.tools.recent_activity")
 
     empty = GraphContext(
         results=[],
@@ -261,7 +261,7 @@ def test_recent_activity_format_project_output_no_results():
 def test_recent_activity_format_project_output_includes_observation_truncation():
     import importlib
 
-    recent_activity_module = importlib.import_module("basic_memory.mcp.tools.recent_activity")
+    recent_activity_module = importlib.import_module("agent_brain.mcp.tools.recent_activity")
 
     long_content = "This is a very long observation " * 10
 
@@ -299,7 +299,7 @@ def test_recent_activity_format_project_output_includes_observation_truncation()
 def test_recent_activity_format_discovery_output_includes_other_active_projects_and_key_developments():
     import importlib
 
-    recent_activity_module = importlib.import_module("basic_memory.mcp.tools.recent_activity")
+    recent_activity_module = importlib.import_module("agent_brain.mcp.tools.recent_activity")
 
     now = datetime.now(timezone.utc)
     activity_one = GraphContext(
@@ -463,7 +463,7 @@ def test_format_project_output_has_more_pagination_guidance():
     """When has_more is True, activity summary should show pagination guidance."""
     import importlib
 
-    recent_activity_module = importlib.import_module("basic_memory.mcp.tools.recent_activity")
+    recent_activity_module = importlib.import_module("agent_brain.mcp.tools.recent_activity")
 
     now = datetime.now(timezone.utc)
     activity = GraphContext(
@@ -501,7 +501,7 @@ def test_format_project_output_no_more_pages():
     """When has_more is False, activity summary should not show pagination guidance."""
     import importlib
 
-    recent_activity_module = importlib.import_module("basic_memory.mcp.tools.recent_activity")
+    recent_activity_module = importlib.import_module("agent_brain.mcp.tools.recent_activity")
 
     now = datetime.now(timezone.utc)
     activity = GraphContext(

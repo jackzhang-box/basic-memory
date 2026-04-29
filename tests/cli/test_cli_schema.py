@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app as cli_app
+from agent_brain.cli.main import app as cli_app
 
 runner = CliRunner()
 
@@ -85,9 +85,9 @@ def _mock_config_manager():
 # --- validate ---
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_validate",
+    "agent_brain.cli.commands.schema.mcp_schema_validate",
     new_callable=AsyncMock,
     return_value=VALIDATE_REPORT,
 )
@@ -106,9 +106,9 @@ def test_validate_renders_table(mock_mcp, mock_config_cls):
     assert mock_mcp.call_args.kwargs["output_format"] == "json"
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_validate",
+    "agent_brain.cli.commands.schema.mcp_schema_validate",
     new_callable=AsyncMock,
     return_value=VALIDATE_REPORT,
 )
@@ -121,9 +121,9 @@ def test_validate_strict_exits_on_errors(mock_mcp, mock_config_cls):
     assert result.exit_code == 1
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_validate",
+    "agent_brain.cli.commands.schema.mcp_schema_validate",
     new_callable=AsyncMock,
     return_value={"error": "No notes found of type 'person'"},
 )
@@ -137,9 +137,9 @@ def test_validate_error_response(mock_mcp, mock_config_cls):
     assert "No notes found" in result.output
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_validate",
+    "agent_brain.cli.commands.schema.mcp_schema_validate",
     new_callable=AsyncMock,
     return_value=VALIDATE_REPORT,
 )
@@ -157,9 +157,9 @@ def test_validate_identifier_heuristic(mock_mcp, mock_config_cls):
 # --- infer ---
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_infer",
+    "agent_brain.cli.commands.schema.mcp_schema_infer",
     new_callable=AsyncMock,
     return_value=INFER_REPORT,
 )
@@ -177,9 +177,9 @@ def test_infer_renders_table(mock_mcp, mock_config_cls):
     assert mock_mcp.call_args.kwargs["output_format"] == "json"
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_infer",
+    "agent_brain.cli.commands.schema.mcp_schema_infer",
     new_callable=AsyncMock,
     return_value=INFER_REPORT,
 )
@@ -193,9 +193,9 @@ def test_infer_threshold_passthrough(mock_mcp, mock_config_cls):
     assert mock_mcp.call_args.kwargs["threshold"] == 0.5
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_infer",
+    "agent_brain.cli.commands.schema.mcp_schema_infer",
     new_callable=AsyncMock,
     return_value={"error": "No schema pattern found for 'person' (threshold: 25%)"},
 )
@@ -209,9 +209,9 @@ def test_infer_error_response(mock_mcp, mock_config_cls):
     assert "No schema pattern found" in result.output
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_infer",
+    "agent_brain.cli.commands.schema.mcp_schema_infer",
     new_callable=AsyncMock,
     return_value={
         "note_type": "person",
@@ -236,9 +236,9 @@ def test_infer_zero_notes(mock_mcp, mock_config_cls):
 # --- diff ---
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_diff",
+    "agent_brain.cli.commands.schema.mcp_schema_diff",
     new_callable=AsyncMock,
     return_value=DIFF_REPORT_WITH_DRIFT,
 )
@@ -257,9 +257,9 @@ def test_diff_renders_drift(mock_mcp, mock_config_cls):
     assert mock_mcp.call_args.kwargs["output_format"] == "json"
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_diff",
+    "agent_brain.cli.commands.schema.mcp_schema_diff",
     new_callable=AsyncMock,
     return_value=DIFF_REPORT_NO_DRIFT,
 )
@@ -273,9 +273,9 @@ def test_diff_no_drift(mock_mcp, mock_config_cls):
     assert "No drift detected" in result.output
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_diff",
+    "agent_brain.cli.commands.schema.mcp_schema_diff",
     new_callable=AsyncMock,
     return_value={"error": "No schema found for type 'person'"},
 )

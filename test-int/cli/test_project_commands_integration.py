@@ -5,7 +5,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app as cli_app
+from agent_brain.cli.main import app as cli_app
 
 WIDE_TERMINAL_ENV = {"COLUMNS": "240", "LINES": "60"}
 

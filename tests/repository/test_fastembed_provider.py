@@ -5,8 +5,8 @@ import sys
 
 import pytest
 
-from basic_memory.repository.fastembed_provider import FastEmbedEmbeddingProvider
-from basic_memory.repository.semantic_errors import SemanticDependenciesMissingError
+from agent_brain.repository.fastembed_provider import FastEmbedEmbeddingProvider
+from agent_brain.repository.semantic_errors import SemanticDependenciesMissingError
 
 
 class _StubVector:
@@ -92,7 +92,7 @@ async def test_fastembed_provider_missing_dependency_raises_actionable_error(mon
     with pytest.raises(SemanticDependenciesMissingError) as error:
         await provider.embed_query("test")
 
-    assert "pip install -U basic-memory" in str(error.value)
+    assert "pip install -U agent-brain" in str(error.value)
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,6 @@
 """Comprehensive test suite for kebab_filenames configuration.
 
-Tests the BASIC_MEMORY_KEBAB_FILENAMES configuration option which controls
+Tests the AGENT_BRAIN_KEBAB_FILENAMES configuration option which controls
 whether note filenames are converted to kebab-case (lowercase with hyphens).
 
 Feature added in PR #260 to handle forward slashes in filenames.
@@ -15,8 +15,8 @@ Key behaviors tested:
 """
 
 import pytest
-from basic_memory.mcp.tools import write_note
-from basic_memory.config import ConfigManager
+from agent_brain.mcp.tools import write_note
+from agent_brain.config import ConfigManager
 
 
 # =============================================================================

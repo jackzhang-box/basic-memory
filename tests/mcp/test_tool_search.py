@@ -4,13 +4,13 @@ import pytest
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from basic_memory.mcp.tools import write_note
-from basic_memory.mcp.tools.search import (
+from agent_brain.mcp.tools import write_note
+from agent_brain.mcp.tools.search import (
     search_notes,
     _format_search_error_response,
     _format_search_markdown,
 )
-from basic_memory.schemas.search import SearchResponse
+from agent_brain.schemas.search import SearchResponse
 
 
 @pytest.mark.asyncio
@@ -336,26 +336,26 @@ class TestSearchErrorFormatting:
         """Test formatting for semantic-search-disabled errors."""
         result = _format_search_error_response(
             "test-project",
-            "Semantic search is disabled. Set BASIC_MEMORY_SEMANTIC_SEARCH_ENABLED=true.",
+            "Semantic search is disabled. Set AGENT_BRAIN_SEMANTIC_SEARCH_ENABLED=true.",
             "semantic query",
             "vector",
         )
 
         assert "# Search Failed - Semantic Search Disabled" in result
-        assert "BASIC_MEMORY_SEMANTIC_SEARCH_ENABLED=true" in result
+        assert "AGENT_BRAIN_SEMANTIC_SEARCH_ENABLED=true" in result
         assert 'search_type="text"' in result
 
     def test_format_search_error_semantic_dependencies_missing(self):
         """Test formatting for missing semantic dependencies."""
         result = _format_search_error_response(
             "test-project",
-            "fastembed package is missing. Install/update basic-memory to include semantic dependencies: pip install -U basic-memory",
+            "fastembed package is missing. Install/update agent-brain to include semantic dependencies: pip install -U agent-brain",
             "semantic query",
             "hybrid",
         )
 
         assert "# Search Failed - Semantic Dependencies Missing" in result
-        assert "pip install -U basic-memory" in result
+        assert "pip install -U agent-brain" in result
 
     def test_format_search_error_generic(self):
         """Test formatting for generic errors."""
@@ -374,8 +374,8 @@ class TestSearchToolErrorHandling:
         """Test exception handling in search_notes."""
         import importlib
 
-        search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-        clients_mod = importlib.import_module("basic_memory.mcp.clients")
+        search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+        clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
         class StubProject:
             name = "test-project"
@@ -412,8 +412,8 @@ class TestSearchToolErrorHandling:
         """Test search_notes with permission error."""
         import importlib
 
-        search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-        clients_mod = importlib.import_module("basic_memory.mcp.clients")
+        search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+        clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
         class StubProject:
             name = "test-project"
@@ -452,8 +452,8 @@ async def test_search_notes_sets_retrieval_mode_for_semantic_types(monkeypatch, 
     """Vector/hybrid search types should populate retrieval_mode in API payload."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         project_url = "http://test"
@@ -506,8 +506,8 @@ async def test_search_notes_passes_metadata_filters(monkeypatch):
     """metadata_filters param propagates to the search query."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -557,8 +557,8 @@ async def test_search_notes_filter_only_metadata(monkeypatch):
     """search_notes with metadata_filters only (no query) sends correct payload."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -600,8 +600,8 @@ async def test_search_notes_filter_only_tags(monkeypatch):
     """search_notes with tags only (no query) sends correct payload."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -640,7 +640,7 @@ async def test_search_notes_no_criteria_returns_error(monkeypatch):
     """search_notes with no args at all returns a helpful error string."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
 
     class StubProject:
         name = "test-project"
@@ -663,8 +663,8 @@ async def test_search_notes_invalid_search_type_returns_error(monkeypatch):
     """Invalid search_type values should return an error message listing valid options."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -707,8 +707,8 @@ async def test_search_notes_passes_min_similarity(monkeypatch):
     """min_similarity param propagates to the SearchQuery payload."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -754,8 +754,8 @@ async def test_search_notes_defaults_to_hybrid_when_semantic_enabled(monkeypatch
     import importlib
     from dataclasses import dataclass
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -816,8 +816,8 @@ async def test_search_notes_defaults_to_fts_when_semantic_disabled(monkeypatch):
     import importlib
     from dataclasses import dataclass
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -878,8 +878,8 @@ async def test_search_notes_explicit_text_stays_fts_when_semantic_enabled(monkey
     import importlib
     from dataclasses import dataclass
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -938,8 +938,8 @@ async def test_search_notes_defaults_to_hybrid_when_container_not_initialized(mo
     """CLI fallback config should still default omitted search_type to hybrid."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1004,8 +1004,8 @@ async def test_search_notes_defaults_to_fts_when_container_not_initialized_and_s
     """CLI fallback config should default omitted search_type to FTS when semantic is disabled."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1073,8 +1073,8 @@ async def test_search_notes_defaults_entity_types_to_entity(monkeypatch):
     """
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1117,8 +1117,8 @@ async def test_search_notes_explicit_entity_types_overrides_default(monkeypatch)
     """Explicit entity_types parameter overrides the default ['entity'] filter."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1165,8 +1165,8 @@ async def test_search_notes_note_types_lowercased(monkeypatch):
     """note_types values are lowercased so 'Chapter' matches stored 'chapter'."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1213,8 +1213,8 @@ async def test_search_notes_tag_prefix_converts_to_tags_filter(monkeypatch):
     """query='tag:security' should be converted to a tags filter with no text query."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1254,8 +1254,8 @@ async def test_search_notes_tag_prefix_merges_with_explicit_tags(monkeypatch):
     """query='tag:security' with tags=['oauth'] should merge both tag values."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1295,8 +1295,8 @@ async def test_search_notes_multiple_tag_prefixes(monkeypatch):
     """query='tag:coffee AND tag:brewing' should extract both tags."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1336,8 +1336,8 @@ async def test_search_notes_tag_prefix_with_remaining_text(monkeypatch):
     """query='authentication tag:security' should keep text and extract tag."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1382,7 +1382,7 @@ async def test_search_notes_tag_prefix_with_remaining_text(monkeypatch):
 
 def test_format_search_markdown_with_results():
     """_format_search_markdown returns readable markdown for non-empty results."""
-    from basic_memory.schemas.search import SearchResult, SearchItemType
+    from agent_brain.schemas.search import SearchResult, SearchItemType
 
     result = SearchResponse(
         results=[
@@ -1433,10 +1433,10 @@ async def test_search_notes_text_format_returns_string(monkeypatch):
     """search_notes with output_format='text' returns a formatted markdown string."""
     import importlib
 
-    from basic_memory.schemas.search import SearchResult, SearchItemType
+    from agent_brain.schemas.search import SearchResult, SearchItemType
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1495,8 +1495,8 @@ async def test_search_notes_metadata_filters_aliases_note_type(monkeypatch):
     """metadata_filters={'note_type': 'note'} is aliased to {'type': 'note'}."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1540,8 +1540,8 @@ async def test_search_notes_metadata_filters_preserves_non_aliased_keys(monkeypa
     """metadata_filters with non-aliased keys pass through unchanged."""
     import importlib
 
-    search_mod = importlib.import_module("basic_memory.mcp.tools.search")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    search_mod = importlib.import_module("agent_brain.mcp.tools.search")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     class StubProject:
         name = "test-project"
@@ -1585,7 +1585,7 @@ def test_default_search_type_uses_config_value():
     import sys
     from unittest.mock import MagicMock, patch
 
-    search_module = sys.modules["basic_memory.mcp.tools.search"]
+    search_module = sys.modules["agent_brain.mcp.tools.search"]
 
     mock_config = MagicMock()
     mock_config.default_search_type = "vector"
@@ -1602,7 +1602,7 @@ def test_default_search_type_falls_back_to_hybrid_when_semantic_enabled():
     import sys
     from unittest.mock import MagicMock, patch
 
-    search_module = sys.modules["basic_memory.mcp.tools.search"]
+    search_module = sys.modules["agent_brain.mcp.tools.search"]
 
     mock_config = MagicMock()
     mock_config.default_search_type = None
@@ -1619,7 +1619,7 @@ def test_default_search_type_falls_back_to_text_when_semantic_disabled():
     import sys
     from unittest.mock import MagicMock, patch
 
-    search_module = sys.modules["basic_memory.mcp.tools.search"]
+    search_module = sys.modules["agent_brain.mcp.tools.search"]
 
     mock_config = MagicMock()
     mock_config.default_search_type = None

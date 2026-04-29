@@ -1,6 +1,6 @@
-"""Tests for basic_memory.schema.inference -- schema inference from usage patterns."""
+"""Tests for agent_brain.schema.inference -- schema inference from usage patterns."""
 
-from basic_memory.schema.inference import (
+from agent_brain.schema.inference import (
     NoteData,
     ObservationData,
     RelationData,

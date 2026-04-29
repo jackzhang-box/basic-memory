@@ -2,7 +2,7 @@
 
 import pytest
 
-from basic_memory.mcp.tools import write_note
+from agent_brain.mcp.tools import write_note
 
 
 @pytest.mark.asyncio

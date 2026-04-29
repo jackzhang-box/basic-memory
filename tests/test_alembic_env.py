@@ -40,7 +40,7 @@ class FakeCoroutine:
 def load_alembic_env_module(monkeypatch, tmp_path):
     """Import env.py with a fake Alembic context and isolated HOME."""
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path / "basic-memory"))
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path / "agent-brain"))
 
     from alembic import context as alembic_context
 
@@ -51,7 +51,7 @@ def load_alembic_env_module(monkeypatch, tmp_path):
     monkeypatch.setattr(alembic_context, "run_migrations", lambda: None, raising=False)
     monkeypatch.setattr(alembic_context, "is_offline_mode", lambda: True, raising=False)
 
-    env_path = Path(__file__).resolve().parents[1] / "src/basic_memory/alembic/env.py"
+    env_path = Path(__file__).resolve().parents[1] / "src/agent_brain/alembic/env.py"
     module_name = f"test_alembic_env_{uuid.uuid4().hex}"
     spec = importlib.util.spec_from_file_location(module_name, env_path)
     assert spec is not None

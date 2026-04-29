@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from fastmcp import Client
 
-from basic_memory.mcp.clients.knowledge import KnowledgeClient
+from agent_brain.mcp.clients.knowledge import KnowledgeClient
 
 
 def _json_content(tool_result) -> dict | list:

@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from basic_memory.mcp.tools.schema import schema_validate, schema_infer, schema_diff
-from basic_memory.mcp.tools.write_note import write_note
+from agent_brain.mcp.tools.schema import schema_validate, schema_infer, schema_diff
+from agent_brain.mcp.tools.write_note import write_note
 
 
 # --- Helpers ---
@@ -518,7 +518,7 @@ async def test_schema_validate_error_returns_guidance(app, test_project):
     """When SchemaClient.validate raises, the tool returns a troubleshooting string."""
     mock_validate = AsyncMock(side_effect=RuntimeError("connection lost"))
 
-    with patch("basic_memory.mcp.clients.schema.SchemaClient.validate", mock_validate):
+    with patch("agent_brain.mcp.clients.schema.SchemaClient.validate", mock_validate):
         result = await schema_validate(
             note_type="person",
             project=test_project.name,
@@ -534,7 +534,7 @@ async def test_schema_infer_error_returns_guidance(app, test_project):
     """When SchemaClient.infer raises, the tool returns a troubleshooting string."""
     mock_infer = AsyncMock(side_effect=RuntimeError("db unavailable"))
 
-    with patch("basic_memory.mcp.clients.schema.SchemaClient.infer", mock_infer):
+    with patch("agent_brain.mcp.clients.schema.SchemaClient.infer", mock_infer):
         result = await schema_infer(
             note_type="person",
             project=test_project.name,
@@ -550,7 +550,7 @@ async def test_schema_diff_error_returns_guidance(app, test_project):
     """When SchemaClient.diff raises, the tool returns a troubleshooting string."""
     mock_diff = AsyncMock(side_effect=RuntimeError("network error"))
 
-    with patch("basic_memory.mcp.clients.schema.SchemaClient.diff", mock_diff):
+    with patch("agent_brain.mcp.clients.schema.SchemaClient.diff", mock_diff):
         result = await schema_diff(
             note_type="person",
             project=test_project.name,

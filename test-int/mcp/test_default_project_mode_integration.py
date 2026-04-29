@@ -13,14 +13,14 @@ import pytest
 from fastmcp import Client
 from unittest.mock import patch
 
-from basic_memory.config import ConfigManager, BasicMemoryConfig
+from agent_brain.config import ConfigManager, AgentBrainConfig
 
 
 @pytest.mark.asyncio
 async def test_default_project_write_note(mcp_server, app, test_project):
     """Test that write_note uses default project when no project specified."""
 
-    mock_config = BasicMemoryConfig(
+    mock_config = AgentBrainConfig(
         default_project=test_project.name,
         projects={test_project.name: test_project.path},
     )
@@ -53,7 +53,7 @@ async def test_explicit_project_overrides_default(
     """Test that explicit project parameter overrides default_project."""
 
     engine, session_maker = engine_factory
-    from basic_memory.repository.project_repository import ProjectRepository
+    from agent_brain.repository.project_repository import ProjectRepository
 
     project_repository = ProjectRepository(session_maker)
 
@@ -67,7 +67,7 @@ async def test_explicit_project_overrides_default(
         }
     )
 
-    mock_config = BasicMemoryConfig(
+    mock_config = AgentBrainConfig(
         default_project=test_project.name,
         projects={test_project.name: test_project.path, other_project.name: other_project.path},
     )
@@ -96,7 +96,7 @@ async def test_explicit_project_overrides_default(
 async def test_no_config_default_falls_back_to_db(mcp_server, app, test_project):
     """When ConfigManager has no default_project, tools fall back to the database is_default flag."""
 
-    mock_config = BasicMemoryConfig(
+    mock_config = AgentBrainConfig(
         default_project=None,  # No config default
         projects={test_project.name: test_project.path},
     )
@@ -128,7 +128,7 @@ async def test_cli_constraint_overrides_default_project(
     """Test that CLI --project constraint overrides default_project."""
 
     engine, session_maker = engine_factory
-    from basic_memory.repository.project_repository import ProjectRepository
+    from agent_brain.repository.project_repository import ProjectRepository
 
     project_repository = ProjectRepository(session_maker)
 
@@ -142,9 +142,9 @@ async def test_cli_constraint_overrides_default_project(
         }
     )
 
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = other_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = other_project.name
 
-    mock_config = BasicMemoryConfig(
+    mock_config = AgentBrainConfig(
         default_project=test_project.name,
         projects={test_project.name: test_project.path, other_project.name: other_project.path},
     )
@@ -169,15 +169,15 @@ async def test_cli_constraint_overrides_default_project(
                 assert f"[Session: Using project '{other_project.name}']" in response_text
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
 async def test_default_project_read_note(mcp_server, app, test_project):
     """Test that read_note works with default_project."""
 
-    mock_config = BasicMemoryConfig(
+    mock_config = AgentBrainConfig(
         default_project=test_project.name,
         projects={test_project.name: test_project.path},
     )
@@ -211,7 +211,7 @@ async def test_default_project_read_note(mcp_server, app, test_project):
 async def test_default_project_edit_note(mcp_server, app, test_project):
     """Test that edit_note works with default_project."""
 
-    mock_config = BasicMemoryConfig(
+    mock_config = AgentBrainConfig(
         default_project=test_project.name,
         projects={test_project.name: test_project.path},
     )
@@ -250,7 +250,7 @@ async def test_project_resolution_hierarchy(
     """Test the complete three-tier project resolution hierarchy."""
 
     engine, session_maker = engine_factory
-    from basic_memory.repository.project_repository import ProjectRepository
+    from agent_brain.repository.project_repository import ProjectRepository
 
     project_repository = ProjectRepository(session_maker)
 
@@ -274,7 +274,7 @@ async def test_project_resolution_hierarchy(
         }
     )
 
-    mock_config = BasicMemoryConfig(
+    mock_config = AgentBrainConfig(
         default_project=default_project.name,
         projects={
             default_project.name: Path(default_project.path).as_posix(),
@@ -284,7 +284,7 @@ async def test_project_resolution_hierarchy(
     )
 
     # Test 1: CLI constraint (highest priority)
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = cli_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = cli_project.name
 
     try:
         with patch.object(ConfigManager, "config", mock_config):
@@ -302,7 +302,7 @@ async def test_project_resolution_hierarchy(
                 assert f"project: {cli_project.name}" in response_text
 
     finally:
-        del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
     # Test 2: Explicit project (medium priority)
     with patch.object(ConfigManager, "config", mock_config):

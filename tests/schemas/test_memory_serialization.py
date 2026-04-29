@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 
-from basic_memory.schemas.memory import (
+from agent_brain.schemas.memory import (
     EntitySummary,
     RelationSummary,
     ObservationSummary,

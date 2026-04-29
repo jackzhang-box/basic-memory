@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.basicmachines-co/basic-memory",
+  "name": "io.github.basicmachines-co/agent-brain",
   "description": "Local-first knowledge management with bi-directional LLM sync via Markdown files.",
   "repository": {
-    "url": "https://github.com/basicmachines-co/basic-memory.git",
+    "url": "https://github.com/basicmachines-co/agent-brain.git",
     "source": "github"
   },
   "version": "0.20.3",
   "packages": [
     {
       "registryType": "pypi",
-      "identifier": "basic-memory",
+      "identifier": "agent-brain",
       "version": "0.20.3",
       "runtimeHint": "uvx",
       "runtimeArguments": [
-        {"type": "positional", "value": "basic-memory"},
+        {"type": "positional", "value": "agent-brain"},
         {"type": "positional", "value": "mcp"}
       ],
       "transport": {

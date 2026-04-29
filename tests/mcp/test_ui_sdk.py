@@ -1,20 +1,20 @@
 """Tests for MCP UI SDK helpers and tools.
 
 Covers:
-- basic_memory.mcp.ui.sdk (build_embedded_ui_resource, _ensure_sdk, MissingMCPUIServerError)
-- basic_memory.mcp.tools.ui_sdk (_text_block, search_notes_ui, read_note_ui)
+- agent_brain.mcp.ui.sdk (build_embedded_ui_resource, _ensure_sdk, MissingMCPUIServerError)
+- agent_brain.mcp.tools.ui_sdk (_text_block, search_notes_ui, read_note_ui)
 """
 
 from unittest.mock import MagicMock
 
 import pytest
 
-from basic_memory.mcp.ui.sdk import (
+from agent_brain.mcp.ui.sdk import (
     MissingMCPUIServerError,
     _ensure_sdk,
     build_embedded_ui_resource,
 )
-from basic_memory.mcp.tools.ui_sdk import _text_block
+from agent_brain.mcp.tools.ui_sdk import _text_block
 
 
 class TestMissingMCPUIServerError:
@@ -33,7 +33,7 @@ class TestEnsureSdk:
 
     def test_raises_when_sdk_not_installed(self, monkeypatch):
         """When mcp_ui_server is not importable, _ensure_sdk raises."""
-        import basic_memory.mcp.ui.sdk as sdk_mod
+        import agent_brain.mcp.ui.sdk as sdk_mod
 
         monkeypatch.setattr(sdk_mod, "create_ui_resource", None)
         monkeypatch.setattr(sdk_mod, "UIMetadataKey", None)
@@ -43,7 +43,7 @@ class TestEnsureSdk:
 
     def test_returns_tuple_when_available(self, monkeypatch):
         """When SDK is available, returns (create_ui_resource, UIMetadataKey)."""
-        import basic_memory.mcp.ui.sdk as sdk_mod
+        import agent_brain.mcp.ui.sdk as sdk_mod
 
         mock_create = MagicMock()
         mock_keys = MagicMock()
@@ -60,7 +60,7 @@ class TestBuildEmbeddedUIResource:
 
     def test_calls_sdk_correctly(self, monkeypatch):
         """Builds a resource dict and passes it to create_ui_resource."""
-        import basic_memory.mcp.ui.sdk as sdk_mod
+        import agent_brain.mcp.ui.sdk as sdk_mod
 
         mock_keys = MagicMock()
         mock_keys.PREFERRED_FRAME_SIZE = "preferredFrameSize"
@@ -90,7 +90,7 @@ class TestBuildEmbeddedUIResource:
 
     def test_metadata_defaults_to_empty_dict(self, monkeypatch):
         """When metadata is None, passes empty dict."""
-        import basic_memory.mcp.ui.sdk as sdk_mod
+        import agent_brain.mcp.ui.sdk as sdk_mod
 
         mock_keys = MagicMock()
         mock_keys.PREFERRED_FRAME_SIZE = "preferredFrameSize"
@@ -113,7 +113,7 @@ class TestBuildEmbeddedUIResource:
 
     def test_raises_when_sdk_missing(self, monkeypatch):
         """Raises MissingMCPUIServerError when SDK is not installed."""
-        import basic_memory.mcp.ui.sdk as sdk_mod
+        import agent_brain.mcp.ui.sdk as sdk_mod
 
         monkeypatch.setattr(sdk_mod, "create_ui_resource", None)
         monkeypatch.setattr(sdk_mod, "UIMetadataKey", None)

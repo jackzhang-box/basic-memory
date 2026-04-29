@@ -1,11 +1,11 @@
-"""Tests for basic_memory.schema.resolver -- schema resolution order."""
+"""Tests for agent_brain.schema.resolver -- schema resolution order."""
 
 from unittest.mock import AsyncMock
 
 import pytest
 
-from basic_memory.schema.parser import SchemaDefinition
-from basic_memory.schema.resolver import resolve_schema
+from agent_brain.schema.parser import SchemaDefinition
+from agent_brain.schema.resolver import resolve_schema
 
 
 @pytest.fixture

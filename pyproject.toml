@@ -1,5 +1,5 @@
 [project]
-name = "basic-memory"
+name = "agent-brain"
 dynamic = ["version"]
 description = "Local-first knowledge management combining Zettelkasten with knowledge graphs"
 readme = "README.md"
@@ -49,13 +49,14 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/basicmachines-co/basic-memory"
-Repository = "https://github.com/basicmachines-co/basic-memory"
-Documentation = "https://github.com/basicmachines-co/basic-memory#readme"
+Homepage = "https://github.com/basicmachines-co/agent-brain"
+Repository = "https://github.com/basicmachines-co/agent-brain"
+Documentation = "https://github.com/basicmachines-co/agent-brain#readme"
 
 [project.scripts]
-basic-memory = "basic_memory.cli.main:app"
-bm = "basic_memory.cli.main:app"
+agent-brain = "agent_brain.cli.main:app"
+ab = "agent_brain.cli.main:app"
+bm = "agent_brain.cli.main:app"
 
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
@@ -63,7 +64,7 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests"]
-addopts = "--cov=basic_memory --cov-report term-missing"
+addopts = "--cov=agent_brain --cov-report term-missing"
 testpaths = ["tests", "test-int"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
@@ -125,7 +126,7 @@ pythonVersion = "3.12"
 [tool.coverage.run]
 concurrency = ["thread", "gevent"]
 parallel = true
-source = ["basic_memory"]
+source = ["agent_brain"]
 
 [tool.coverage.report]
 exclude_lines = [

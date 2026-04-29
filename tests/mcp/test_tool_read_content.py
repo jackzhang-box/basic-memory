@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from mcp.server.fastmcp.exceptions import ToolError
 
-from basic_memory.mcp.tools import read_content, write_note
+from agent_brain.mcp.tools import read_content, write_note
 
 
 @pytest.mark.asyncio

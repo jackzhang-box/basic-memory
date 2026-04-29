@@ -1,0 +1,46 @@
+"""Runtime mode resolution for Agent Brain.
+
+This module centralizes runtime mode detection, ensuring local/test
+determination happens in one place rather than scattered across modules.
+
+Composition roots (containers) read ConfigManager and use this module
+to resolve the runtime mode, then pass the result downstream.
+"""
+
+import os
+from enum import Enum, auto
+
+
+class RuntimeMode(Enum):
+    """Runtime modes for Agent Brain."""
+
+    LOCAL = auto()  # Local standalone mode (default)
+    TEST = auto()  # Test environment
+
+    @property
+    def is_local(self) -> bool:
+        return self == RuntimeMode.LOCAL
+
+    @property
+    def is_test(self) -> bool:
+        return self == RuntimeMode.TEST
+
+
+def resolve_runtime_mode(
+    is_test_env: bool,
+) -> RuntimeMode:
+    """Resolve the runtime mode from configuration flags.
+
+    This is the single source of truth for mode resolution.
+    Composition roots call this with config values they've read.
+
+    Args:
+        is_test_env: Whether running in test environment
+
+    Returns:
+        The resolved RuntimeMode
+    """
+    if is_test_env:
+        return RuntimeMode.TEST
+
+    return RuntimeMode.LOCAL

@@ -5,16 +5,16 @@ This test verifies issue #452 - Imported conversations not indexed correctly.
 
 import pytest
 
-from basic_memory.config import ProjectConfig
-from basic_memory.importers.claude_conversations_importer import ClaudeConversationsImporter
-from basic_memory.markdown import EntityParser
-from basic_memory.markdown.markdown_processor import MarkdownProcessor
-from basic_memory.repository import EntityRepository
-from basic_memory.services import EntityService
-from basic_memory.services.file_service import FileService
-from basic_memory.services.search_service import SearchService
-from basic_memory.schemas.search import SearchQuery
-from basic_memory.sync.sync_service import SyncService
+from agent_brain.config import ProjectConfig
+from agent_brain.importers.claude_conversations_importer import ClaudeConversationsImporter
+from agent_brain.markdown import EntityParser
+from agent_brain.markdown.markdown_processor import MarkdownProcessor
+from agent_brain.repository import EntityRepository
+from agent_brain.services import EntityService
+from agent_brain.services.file_service import FileService
+from agent_brain.services.search_service import SearchService
+from agent_brain.schemas.search import SearchQuery
+from agent_brain.sync.sync_service import SyncService
 
 
 @pytest.mark.asyncio

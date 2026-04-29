@@ -3,7 +3,7 @@
 Test script to verify cascade delete behavior on production SQLite database.
 
 This script tests whether foreign key constraints with CASCADE DELETE are properly
-configured in the production database at ~/.basic-memory/memory.db.
+configured in the production database at ~/.agent-brain/memory.db.
 
 Usage: python test_production_cascade_delete.py
 """
@@ -24,9 +24,9 @@ class ProductionCascadeTest:
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize test with database path."""
         if db_path is None:
-            # Default to standard Basic Memory location
+            # Default to standard Agent Brain location
             home_dir = Path.home()
-            self.db_path = home_dir / ".basic-memory" / "memory.db"
+            self.db_path = home_dir / ".agent-brain" / "memory.db"
         else:
             self.db_path = db_path
 
@@ -40,7 +40,7 @@ class ProductionCascadeTest:
         """Setup database connection."""
         if not self.db_path.exists():
             print(f"❌ Production database not found at: {self.db_path}")
-            print("Please ensure Basic Memory has been initialized and the database exists.")
+            print("Please ensure Agent Brain has been initialized and the database exists.")
             sys.exit(1)
 
         print(f"📁 Using database: {self.db_path}")
@@ -330,7 +330,7 @@ async def main():
 
     parser = argparse.ArgumentParser(description="Test cascade delete on production database")
     parser.add_argument(
-        "--db-path", type=Path, help="Path to database file (default: ~/.basic-memory/memory.db)"
+        "--db-path", type=Path, help="Path to database file (default: ~/.agent-brain/memory.db)"
     )
     parser.add_argument("--no-backup", action="store_true", help="Skip creating backup (dangerous)")
 

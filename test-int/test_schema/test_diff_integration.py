@@ -2,9 +2,9 @@
 
 import pytest
 
-from basic_memory.schema.parser import parse_schema_note
-from basic_memory.schema.diff import diff_schema
-from basic_memory.schema.inference import NoteData
+from agent_brain.schema.parser import parse_schema_note
+from agent_brain.schema.diff import diff_schema
+from agent_brain.schema.inference import NoteData
 
 from test_schema.helpers import (
     parse_frontmatter,

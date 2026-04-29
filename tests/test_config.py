@@ -4,8 +4,8 @@ import tempfile
 import pytest
 from datetime import datetime
 
-from basic_memory.config import (
-    BasicMemoryConfig,
+from agent_brain.config import (
+    AgentBrainConfig,
     ConfigManager,
     ProjectEntry,
     ProjectMode,
@@ -13,122 +13,122 @@ from basic_memory.config import (
 from pathlib import Path
 
 
-class TestBasicMemoryConfig:
-    """Test BasicMemoryConfig behavior with BASIC_MEMORY_HOME environment variable."""
+class TestAgentBrainConfig:
+    """Test AgentBrainConfig behavior with AGENT_BRAIN_HOME environment variable."""
 
-    def test_default_behavior_without_basic_memory_home(self, config_home, monkeypatch):
-        """Test that config uses default path when BASIC_MEMORY_HOME is not set."""
-        # Ensure BASIC_MEMORY_HOME is not set
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+    def test_default_behavior_without_agent_brain_home(self, config_home, monkeypatch):
+        """Test that config uses default path when AGENT_BRAIN_HOME is not set."""
+        # Ensure AGENT_BRAIN_HOME is not set
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
 
-        # Should use the default path (home/basic-memory)
-        expected_path = config_home / "basic-memory"
+        # Should use the default path (home/agent-brain)
+        expected_path = config_home / "agent-brain"
         assert Path(config.projects["main"].path) == expected_path
         assert config.default_project == "main"
 
-    def test_respects_basic_memory_home_environment_variable(self, config_home, monkeypatch):
-        """Test that config respects BASIC_MEMORY_HOME environment variable."""
+    def test_respects_agent_brain_home_environment_variable(self, config_home, monkeypatch):
+        """Test that config respects AGENT_BRAIN_HOME environment variable."""
         custom_path = config_home / "app" / "data"
-        monkeypatch.setenv("BASIC_MEMORY_HOME", str(custom_path))
+        monkeypatch.setenv("AGENT_BRAIN_HOME", str(custom_path))
 
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
 
         # Should use the custom path from environment variable
         assert Path(config.projects["main"].path) == custom_path
 
-    def test_model_post_init_respects_basic_memory_home_creates_main(
+    def test_model_post_init_respects_agent_brain_home_creates_main(
         self, config_home, monkeypatch
     ):
-        """Test that model_post_init creates main project with BASIC_MEMORY_HOME when missing and no other projects."""
+        """Test that model_post_init creates main project with AGENT_BRAIN_HOME when missing and no other projects."""
         custom_path = config_home / "custom" / "memory" / "path"
-        monkeypatch.setenv("BASIC_MEMORY_HOME", str(custom_path))
+        monkeypatch.setenv("AGENT_BRAIN_HOME", str(custom_path))
 
         # Create config without main project
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
 
-        # model_post_init should have added main project with BASIC_MEMORY_HOME
+        # model_post_init should have added main project with AGENT_BRAIN_HOME
         assert "main" in config.projects
         assert Path(config.projects["main"].path) == custom_path
 
-    def test_model_post_init_respects_basic_memory_home_sets_non_main_default(
+    def test_model_post_init_respects_agent_brain_home_sets_non_main_default(
         self, config_home, monkeypatch
     ):
-        """Test that model_post_init does not create main project with BASIC_MEMORY_HOME when another project exists."""
+        """Test that model_post_init does not create main project with AGENT_BRAIN_HOME when another project exists."""
         custom_path = config_home / "custom" / "memory" / "path"
-        monkeypatch.setenv("BASIC_MEMORY_HOME", str(custom_path))
+        monkeypatch.setenv("AGENT_BRAIN_HOME", str(custom_path))
 
         # Create config without main project
         other_path = config_home / "some" / "path"
-        config = BasicMemoryConfig(projects={"other": {"path": str(other_path)}})
+        config = AgentBrainConfig(projects={"other": {"path": str(other_path)}})
 
-        # model_post_init should not add main project with BASIC_MEMORY_HOME
+        # model_post_init should not add main project with AGENT_BRAIN_HOME
         assert "main" not in config.projects
         assert Path(config.projects["other"].path) == other_path
         assert config.default_project == "other"
 
-    def test_model_post_init_fallback_without_basic_memory_home(self, config_home, monkeypatch):
-        """Test that model_post_init can set a non-main default when BASIC_MEMORY_HOME is not set."""
-        # Ensure BASIC_MEMORY_HOME is not set
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+    def test_model_post_init_fallback_without_agent_brain_home(self, config_home, monkeypatch):
+        """Test that model_post_init can set a non-main default when AGENT_BRAIN_HOME is not set."""
+        # Ensure AGENT_BRAIN_HOME is not set
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
         # Create config without main project
         other_path = config_home / "some" / "path"
-        config = BasicMemoryConfig(projects={"other": {"path": str(other_path)}})
+        config = AgentBrainConfig(projects={"other": {"path": str(other_path)}})
 
         # model_post_init should not add main project, but "other" should now be the default
         assert "main" not in config.projects
         assert Path(config.projects["other"].path) == other_path
         assert config.default_project == "other"
 
-    def test_basic_memory_home_with_relative_path(self, config_home, monkeypatch):
-        """Test that BASIC_MEMORY_HOME works with relative paths."""
+    def test_agent_brain_home_with_relative_path(self, config_home, monkeypatch):
+        """Test that AGENT_BRAIN_HOME works with relative paths."""
         relative_path = "relative/memory/path"
-        monkeypatch.setenv("BASIC_MEMORY_HOME", relative_path)
+        monkeypatch.setenv("AGENT_BRAIN_HOME", relative_path)
 
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
 
         # Should normalize to platform-native path format
         assert Path(config.projects["main"].path) == Path(relative_path)
 
-    def test_basic_memory_home_overrides_existing_main_project(self, config_home, monkeypatch):
-        """Test that BASIC_MEMORY_HOME is not used when a map is passed in the constructor."""
+    def test_agent_brain_home_overrides_existing_main_project(self, config_home, monkeypatch):
+        """Test that AGENT_BRAIN_HOME is not used when a map is passed in the constructor."""
         custom_path = str(config_home / "override" / "memory" / "path")
-        monkeypatch.setenv("BASIC_MEMORY_HOME", custom_path)
+        monkeypatch.setenv("AGENT_BRAIN_HOME", custom_path)
 
         # Try to create config with a different main project path
         original_path = str(config_home / "original" / "path")
-        config = BasicMemoryConfig(projects={"main": {"path": original_path}})
+        config = AgentBrainConfig(projects={"main": {"path": original_path}})
 
-        # The default_factory should override with BASIC_MEMORY_HOME value
+        # The default_factory should override with AGENT_BRAIN_HOME value
         # Note: This tests the current behavior where default_factory takes precedence
         assert config.projects["main"].path == original_path
 
     def test_app_database_path_uses_custom_config_dir(self, tmp_path, monkeypatch):
-        """Default SQLite DB should live under BASIC_MEMORY_CONFIG_DIR when set."""
+        """Default SQLite DB should live under AGENT_BRAIN_CONFIG_DIR when set."""
         custom_config_dir = tmp_path / "instance-a" / "state"
-        monkeypatch.setenv("BASIC_MEMORY_CONFIG_DIR", str(custom_config_dir))
+        monkeypatch.setenv("AGENT_BRAIN_CONFIG_DIR", str(custom_config_dir))
 
-        config = BasicMemoryConfig(projects={"main": {"path": str(tmp_path / "project")}})
+        config = AgentBrainConfig(projects={"main": {"path": str(tmp_path / "project")}})
 
         assert config.data_dir_path == custom_config_dir
         assert config.app_database_path == custom_config_dir / "memory.db"
         assert config.app_database_path.exists()
 
     def test_app_database_path_defaults_to_home_data_dir(self, config_home, monkeypatch):
-        """Without BASIC_MEMORY_CONFIG_DIR, default DB stays at ~/.basic-memory/memory.db."""
-        monkeypatch.delenv("BASIC_MEMORY_CONFIG_DIR", raising=False)
-        config = BasicMemoryConfig()
+        """Without AGENT_BRAIN_CONFIG_DIR, default DB stays at ~/.agent-brain/memory.db."""
+        monkeypatch.delenv("AGENT_BRAIN_CONFIG_DIR", raising=False)
+        config = AgentBrainConfig()
 
-        assert config.data_dir_path == config_home / ".basic-memory"
-        assert config.app_database_path == config_home / ".basic-memory" / "memory.db"
+        assert config.data_dir_path == config_home / ".agent-brain"
+        assert config.app_database_path == config_home / ".agent-brain" / "memory.db"
 
     def test_explicit_default_project_preserved(self, config_home, monkeypatch):
         """Test that a valid explicit default_project is not overwritten by model_post_init."""
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
-        config = BasicMemoryConfig(
+        config = AgentBrainConfig(
             projects={
                 "alpha": {"path": str(config_home / "alpha")},
                 "beta": {"path": str(config_home / "beta")},
@@ -140,9 +140,9 @@ class TestBasicMemoryConfig:
 
     def test_invalid_default_project_corrected(self, config_home, monkeypatch):
         """Test that an invalid default_project is corrected to the first project."""
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
-        config = BasicMemoryConfig(
+        config = AgentBrainConfig(
             projects={
                 "alpha": {"path": str(config_home / "alpha")},
                 "beta": {"path": str(config_home / "beta")},
@@ -154,11 +154,11 @@ class TestBasicMemoryConfig:
 
     def test_no_default_project_key_uses_first_project(self, config_home, monkeypatch):
         """Test that config without default_project key sets it to the first project."""
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
         # Simulate loading a config file that has no default_project key —
         # the field default (None) kicks in, and model_post_init resolves it
-        config = BasicMemoryConfig(
+        config = AgentBrainConfig(
             projects={
                 "research": {"path": str(config_home / "research")},
                 "notes": {"path": str(config_home / "notes")},
@@ -169,9 +169,9 @@ class TestBasicMemoryConfig:
 
     def test_empty_string_default_project_corrected(self, config_home, monkeypatch):
         """Test that an empty-string default_project is corrected to the first project."""
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
-        config = BasicMemoryConfig(
+        config = AgentBrainConfig(
             projects={
                 "alpha": {"path": str(config_home / "alpha")},
             },
@@ -183,9 +183,9 @@ class TestBasicMemoryConfig:
 
     def test_single_project_default_always_matches(self, config_home, monkeypatch):
         """Test that a config with one project always resolves default_project to it."""
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
-        config = BasicMemoryConfig(
+        config = AgentBrainConfig(
             projects={"only": {"path": str(config_home / "only")}},
         )
 
@@ -194,12 +194,12 @@ class TestBasicMemoryConfig:
     def test_stale_default_project_loaded_from_file(self, config_home, monkeypatch):
         """Test that a config file with a stale default_project is corrected on load."""
         import json
-        import basic_memory.config
+        import agent_brain.config
 
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
         config_manager = ConfigManager()
-        config_manager.config_dir = config_home / ".basic-memory"
+        config_manager.config_dir = config_home / ".agent-brain"
         config_manager.config_file = config_manager.config_dir / "config.json"
         config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -212,9 +212,9 @@ class TestBasicMemoryConfig:
             "default_project": "deleted-project",
         }
         config_manager.config_file.write_text(json.dumps(config_data, indent=2))
-        basic_memory.config._CONFIG_CACHE = None
-        basic_memory.config._CONFIG_MTIME = None
-        basic_memory.config._CONFIG_SIZE = None
+        agent_brain.config._CONFIG_CACHE = None
+        agent_brain.config._CONFIG_MTIME = None
+        agent_brain.config._CONFIG_SIZE = None
 
         loaded = config_manager.load_config()
         assert loaded.default_project == "research"
@@ -222,12 +222,12 @@ class TestBasicMemoryConfig:
     def test_config_file_without_default_project_key(self, config_home, monkeypatch):
         """Test that a config file with no default_project key resolves dynamically."""
         import json
-        import basic_memory.config
+        import agent_brain.config
 
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
         config_manager = ConfigManager()
-        config_manager.config_dir = config_home / ".basic-memory"
+        config_manager.config_dir = config_home / ".agent-brain"
         config_manager.config_file = config_manager.config_dir / "config.json"
         config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -239,9 +239,9 @@ class TestBasicMemoryConfig:
             },
         }
         config_manager.config_file.write_text(json.dumps(config_data, indent=2))
-        basic_memory.config._CONFIG_CACHE = None
-        basic_memory.config._CONFIG_MTIME = None
-        basic_memory.config._CONFIG_SIZE = None
+        agent_brain.config._CONFIG_CACHE = None
+        agent_brain.config._CONFIG_MTIME = None
+        agent_brain.config._CONFIG_SIZE = None
 
         loaded = config_manager.load_config()
         assert loaded.default_project == "work"
@@ -259,12 +259,12 @@ class TestConfigManager:
             # Create a test ConfigManager instance
             config_manager = ConfigManager()
             # Override config paths to use temp directory
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.yaml"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
             # Create initial config with test projects
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 default_project="main",
                 projects={
                     "main": {"path": str(temp_path / "main")},
@@ -337,39 +337,39 @@ class TestConfigManager:
 
     def test_disable_permalinks_flag_default(self):
         """Test that disable_permalinks flag defaults to False."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.disable_permalinks is False
 
     def test_disable_permalinks_flag_can_be_enabled(self):
         """Test that disable_permalinks flag can be set to True."""
-        config = BasicMemoryConfig(disable_permalinks=True)
+        config = AgentBrainConfig(disable_permalinks=True)
         assert config.disable_permalinks is True
 
     def test_ensure_frontmatter_on_sync_flag_default(self):
         """Test that ensure_frontmatter_on_sync defaults to True."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.ensure_frontmatter_on_sync is True
 
     def test_ensure_frontmatter_on_sync_flag_can_be_disabled(self):
         """Test that ensure_frontmatter_on_sync can be set to False."""
-        config = BasicMemoryConfig(ensure_frontmatter_on_sync=False)
+        config = AgentBrainConfig(ensure_frontmatter_on_sync=False)
         assert config.ensure_frontmatter_on_sync is False
 
     def test_permalinks_include_project_flag_default(self):
         """Test that permalinks_include_project defaults to True."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.permalinks_include_project is True
 
     def test_permalinks_include_project_flag_can_be_disabled(self):
         """Test that permalinks_include_project can be set to False."""
-        config = BasicMemoryConfig(permalinks_include_project=False)
+        config = AgentBrainConfig(permalinks_include_project=False)
         assert config.permalinks_include_project is False
 
     def test_config_manager_respects_custom_config_dir(self, monkeypatch):
-        """Test that ConfigManager respects BASIC_MEMORY_CONFIG_DIR environment variable."""
+        """Test that ConfigManager respects AGENT_BRAIN_CONFIG_DIR environment variable."""
         with tempfile.TemporaryDirectory() as temp_dir:
             custom_config_dir = Path(temp_dir) / "custom" / "config"
-            monkeypatch.setenv("BASIC_MEMORY_CONFIG_DIR", str(custom_config_dir))
+            monkeypatch.setenv("AGENT_BRAIN_CONFIG_DIR", str(custom_config_dir))
 
             config_manager = ConfigManager()
 
@@ -381,14 +381,14 @@ class TestConfigManager:
             assert config_manager.config_dir.exists()
 
     def test_config_manager_default_without_custom_config_dir(self, config_home, monkeypatch):
-        """Test that ConfigManager uses default location when BASIC_MEMORY_CONFIG_DIR is not set."""
-        monkeypatch.delenv("BASIC_MEMORY_CONFIG_DIR", raising=False)
+        """Test that ConfigManager uses default location when AGENT_BRAIN_CONFIG_DIR is not set."""
+        monkeypatch.delenv("AGENT_BRAIN_CONFIG_DIR", raising=False)
 
         config_manager = ConfigManager()
 
         # Should use default location
-        assert config_manager.config_dir == config_home / ".basic-memory"
-        assert config_manager.config_file == config_home / ".basic-memory" / "config.json"
+        assert config_manager.config_dir == config_home / ".agent-brain"
+        assert config_manager.config_file == config_home / ".agent-brain" / "config.json"
 
     def test_remove_project_with_exact_name_match(self, temp_config_manager):
         """Test remove_project when project name matches config key exactly."""
@@ -470,13 +470,13 @@ class TestConfigManager:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
             # Create config with git sync fields on a project entry
             now = datetime.now()
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={
                     "main": {"path": str(temp_path / "main")},
                     "research": {
@@ -504,12 +504,12 @@ class TestConfigManager:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
             # Create initial config without git remote fields
-            initial_config = BasicMemoryConfig(projects={"main": {"path": str(temp_path / "main")}})
+            initial_config = AgentBrainConfig(projects={"main": {"path": str(temp_path / "main")}})
             config_manager.save_config(initial_config)
 
             # Load, modify, and save
@@ -533,7 +533,7 @@ class TestConfigManager:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -549,11 +549,11 @@ class TestConfigManager:
             config_manager.config_file.write_text(json.dumps(old_config_data, indent=2))
 
             # Clear the config cache to ensure we load from the temp file
-            import basic_memory.config
+            import agent_brain.config
 
-            basic_memory.config._CONFIG_CACHE = None
-            basic_memory.config._CONFIG_MTIME = None
-            basic_memory.config._CONFIG_SIZE = None
+            agent_brain.config._CONFIG_CACHE = None
+            agent_brain.config._CONFIG_MTIME = None
+            agent_brain.config._CONFIG_SIZE = None
 
             # Should load successfully with migration to ProjectEntry
             config = config_manager.load_config()
@@ -567,7 +567,7 @@ class TestConfigManager:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -591,11 +591,11 @@ class TestConfigManager:
             }
             config_manager.config_file.write_text(json.dumps(old_config_data, indent=2))
 
-            import basic_memory.config
+            import agent_brain.config
 
-            basic_memory.config._CONFIG_CACHE = None
-            basic_memory.config._CONFIG_MTIME = None
-            basic_memory.config._CONFIG_SIZE = None
+            agent_brain.config._CONFIG_CACHE = None
+            agent_brain.config._CONFIG_MTIME = None
+            agent_brain.config._CONFIG_SIZE = None
 
             config = config_manager.load_config()
 
@@ -609,7 +609,7 @@ class TestConfigManager:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -623,14 +623,14 @@ class TestConfigManager:
             }
             config_manager.config_file.write_text(json.dumps(legacy_config, indent=2))
 
-            import basic_memory.config
+            import agent_brain.config
 
-            basic_memory.config._CONFIG_CACHE = None
-            basic_memory.config._CONFIG_MTIME = None
-            basic_memory.config._CONFIG_SIZE = None
+            agent_brain.config._CONFIG_CACHE = None
+            agent_brain.config._CONFIG_MTIME = None
+            agent_brain.config._CONFIG_SIZE = None
 
             loaded = config_manager.load_config()
-            assert isinstance(loaded, BasicMemoryConfig)
+            assert isinstance(loaded, AgentBrainConfig)
 
             raw = json.loads(config_manager.config_file.read_text(encoding="utf-8"))
             assert "cloud_mode" not in raw
@@ -641,7 +641,7 @@ class TestConfigManager:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -655,11 +655,11 @@ class TestConfigManager:
             config_manager.config_file.write_text(json.dumps(old_config_data, indent=2))
             original_content = config_manager.config_file.read_text()
 
-            import basic_memory.config
+            import agent_brain.config
 
-            basic_memory.config._CONFIG_CACHE = None
-            basic_memory.config._CONFIG_MTIME = None
-            basic_memory.config._CONFIG_SIZE = None
+            agent_brain.config._CONFIG_CACHE = None
+            agent_brain.config._CONFIG_MTIME = None
+            agent_brain.config._CONFIG_SIZE = None
 
             config_manager.load_config()
 
@@ -674,7 +674,7 @@ class TestConfigManager:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -688,11 +688,11 @@ class TestConfigManager:
             }
             config_manager.config_file.write_text(json.dumps(current_config_data, indent=2))
 
-            import basic_memory.config
+            import agent_brain.config
 
-            basic_memory.config._CONFIG_CACHE = None
-            basic_memory.config._CONFIG_MTIME = None
-            basic_memory.config._CONFIG_SIZE = None
+            agent_brain.config._CONFIG_CACHE = None
+            agent_brain.config._CONFIG_MTIME = None
+            agent_brain.config._CONFIG_SIZE = None
 
             config_manager.load_config()
 
@@ -712,7 +712,7 @@ class TestPlatformNativePathSeparators:
 
             # Set up ConfigManager with temp directory
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -721,7 +721,7 @@ class TestPlatformNativePathSeparators:
             project_path.mkdir(parents=True, exist_ok=True)
 
             # Add project via ConfigManager
-            config = BasicMemoryConfig(projects={})
+            config = AgentBrainConfig(projects={})
             config.projects["test-project"] = ProjectEntry(path=str(project_path))
             config_manager.save_config(config)
 
@@ -753,12 +753,12 @@ class TestPlatformNativePathSeparators:
 
             # Set up ConfigManager
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
             # Initialize with empty projects
-            initial_config = BasicMemoryConfig(projects={})
+            initial_config = AgentBrainConfig(projects={})
             config_manager.save_config(initial_config)
 
             # Add project
@@ -786,11 +786,11 @@ class TestPlatformNativePathSeparators:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
-            initial_config = BasicMemoryConfig(projects={})
+            initial_config = AgentBrainConfig(projects={})
             config_manager.save_config(initial_config)
 
             # Use a path that does not exist — ConfigManager should not create it
@@ -810,10 +810,10 @@ class TestPlatformNativePathSeparators:
         """Test that model_post_init uses platform-native separators."""
         import platform
 
-        monkeypatch.delenv("BASIC_MEMORY_HOME", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_HOME", raising=False)
 
         # Create config without projects (triggers model_post_init to add main)
-        config = BasicMemoryConfig(projects={})
+        config = AgentBrainConfig(projects={})
 
         # Verify main project path uses platform-native separators
         main_path = config.projects["main"].path
@@ -833,92 +833,92 @@ class TestSemanticSearchConfig:
         self, monkeypatch
     ):
         """Semantic search defaults on when fastembed and sqlite_vec are importable."""
-        import basic_memory.config as config_module
+        import agent_brain.config as config_module
 
-        monkeypatch.delenv("BASIC_MEMORY_SEMANTIC_SEARCH_ENABLED", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_SEMANTIC_SEARCH_ENABLED", raising=False)
         monkeypatch.setattr(
             config_module.importlib.util,
             "find_spec",
             lambda name: object() if name in {"fastembed", "sqlite_vec"} else None,
         )
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.semantic_search_enabled is True
 
     def test_semantic_search_enabled_defaults_to_false_when_any_semantic_module_is_unavailable(
         self, monkeypatch
     ):
         """Semantic search defaults off when required semantic modules are missing."""
-        import basic_memory.config as config_module
+        import agent_brain.config as config_module
 
-        monkeypatch.delenv("BASIC_MEMORY_SEMANTIC_SEARCH_ENABLED", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_SEMANTIC_SEARCH_ENABLED", raising=False)
         monkeypatch.setattr(
             config_module.importlib.util,
             "find_spec",
             lambda name: object() if name == "fastembed" else None,
         )
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.semantic_search_enabled is False
 
     def test_semantic_search_enabled_env_var_overrides_dependency_default(self, monkeypatch):
         """Environment overrides should win over dependency-based defaults."""
-        import basic_memory.config as config_module
+        import agent_brain.config as config_module
 
         monkeypatch.setattr(config_module.importlib.util, "find_spec", lambda name: None)
 
-        monkeypatch.setenv("BASIC_MEMORY_SEMANTIC_SEARCH_ENABLED", "true")
-        enabled = BasicMemoryConfig()
+        monkeypatch.setenv("AGENT_BRAIN_SEMANTIC_SEARCH_ENABLED", "true")
+        enabled = AgentBrainConfig()
         assert enabled.semantic_search_enabled is True
 
-        monkeypatch.setenv("BASIC_MEMORY_SEMANTIC_SEARCH_ENABLED", "false")
-        disabled = BasicMemoryConfig()
+        monkeypatch.setenv("AGENT_BRAIN_SEMANTIC_SEARCH_ENABLED", "false")
+        disabled = AgentBrainConfig()
         assert disabled.semantic_search_enabled is False
 
     def test_semantic_embedding_dimensions_defaults_to_none(self):
         """Dimensions should default to None, letting the provider choose."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.semantic_embedding_dimensions is None
 
     def test_semantic_embedding_dimensions_can_be_set(self):
         """Explicit dimensions should be stored on the config object."""
-        config = BasicMemoryConfig(semantic_embedding_dimensions=1536)
+        config = AgentBrainConfig(semantic_embedding_dimensions=1536)
         assert config.semantic_embedding_dimensions == 1536
 
     def test_semantic_search_enabled_description_mentions_both_backends(self):
         """Description should not say 'SQLite only' anymore."""
-        field_info = BasicMemoryConfig.model_fields["semantic_search_enabled"]
+        field_info = AgentBrainConfig.model_fields["semantic_search_enabled"]
         assert "SQLite only" not in (field_info.description or "")
 
     def test_semantic_min_similarity_defaults_to_055(self):
         """Threshold defaults to 0.55 to filter irrelevant vector results."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.semantic_min_similarity == 0.55
 
     def test_semantic_min_similarity_bounds_validation(self):
         """Threshold must be between 0.0 and 1.0."""
-        config = BasicMemoryConfig(semantic_min_similarity=0.55)
+        config = AgentBrainConfig(semantic_min_similarity=0.55)
         assert config.semantic_min_similarity == 0.55
 
         with pytest.raises(Exception):
-            BasicMemoryConfig(semantic_min_similarity=-0.1)
+            AgentBrainConfig(semantic_min_similarity=-0.1)
 
         with pytest.raises(Exception):
-            BasicMemoryConfig(semantic_min_similarity=1.1)
+            AgentBrainConfig(semantic_min_similarity=1.1)
 
     def test_default_search_type_defaults_to_none(self):
         """default_search_type should be None by default (auto-detect)."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.default_search_type is None
 
     def test_default_search_type_accepts_valid_values(self):
         """default_search_type accepts text, vector, hybrid."""
         for search_type in ("text", "vector", "hybrid"):
-            config = BasicMemoryConfig(default_search_type=search_type)
+            config = AgentBrainConfig(default_search_type=search_type)
             assert config.default_search_type == search_type
 
     def test_default_search_type_rejects_invalid_values(self):
         """default_search_type rejects unknown values."""
         with pytest.raises(Exception):
-            BasicMemoryConfig(default_search_type="invalid")
+            AgentBrainConfig(default_search_type="invalid")
 
 
 class TestFormattingConfig:
@@ -926,32 +926,32 @@ class TestFormattingConfig:
 
     def test_format_on_save_defaults_to_false(self):
         """Test that format_on_save is disabled by default."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.format_on_save is False
 
     def test_format_on_save_can_be_enabled(self):
         """Test that format_on_save can be set to True."""
-        config = BasicMemoryConfig(format_on_save=True)
+        config = AgentBrainConfig(format_on_save=True)
         assert config.format_on_save is True
 
     def test_formatter_command_defaults_to_none(self):
         """Test that formatter_command defaults to None (uses built-in mdformat)."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.formatter_command is None
 
     def test_formatter_command_can_be_set(self):
         """Test that formatter_command can be configured."""
-        config = BasicMemoryConfig(formatter_command="prettier --write {file}")
+        config = AgentBrainConfig(formatter_command="prettier --write {file}")
         assert config.formatter_command == "prettier --write {file}"
 
     def test_formatters_defaults_to_empty_dict(self):
         """Test that formatters defaults to empty dict."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.formatters == {}
 
     def test_formatters_can_be_configured(self):
         """Test that per-extension formatters can be configured."""
-        config = BasicMemoryConfig(
+        config = AgentBrainConfig(
             formatters={
                 "md": "prettier --write {file}",
                 "json": "jq . {file} > {file}.tmp && mv {file}.tmp {file}",
@@ -962,12 +962,12 @@ class TestFormattingConfig:
 
     def test_formatter_timeout_defaults_to_5_seconds(self):
         """Test that formatter_timeout defaults to 5.0 seconds."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.formatter_timeout == 5.0
 
     def test_formatter_timeout_can_be_customized(self):
         """Test that formatter_timeout can be set to a different value."""
-        config = BasicMemoryConfig(formatter_timeout=10.0)
+        config = AgentBrainConfig(formatter_timeout=10.0)
         assert config.formatter_timeout == 10.0
 
     def test_formatter_timeout_must_be_positive(self):
@@ -975,18 +975,18 @@ class TestFormattingConfig:
         import pydantic
 
         with pytest.raises(pydantic.ValidationError):
-            BasicMemoryConfig(formatter_timeout=0)
+            AgentBrainConfig(formatter_timeout=0)
 
         with pytest.raises(pydantic.ValidationError):
-            BasicMemoryConfig(formatter_timeout=-1)
+            AgentBrainConfig(formatter_timeout=-1)
 
     def test_formatting_env_vars(self, monkeypatch):
         """Test that formatting config can be set via environment variables."""
-        monkeypatch.setenv("BASIC_MEMORY_FORMAT_ON_SAVE", "true")
-        monkeypatch.setenv("BASIC_MEMORY_FORMATTER_COMMAND", "prettier --write {file}")
-        monkeypatch.setenv("BASIC_MEMORY_FORMATTER_TIMEOUT", "10.0")
+        monkeypatch.setenv("AGENT_BRAIN_FORMAT_ON_SAVE", "true")
+        monkeypatch.setenv("AGENT_BRAIN_FORMATTER_COMMAND", "prettier --write {file}")
+        monkeypatch.setenv("AGENT_BRAIN_FORMATTER_TIMEOUT", "10.0")
 
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
 
         assert config.format_on_save is True
         assert config.formatter_command == "prettier --write {file}"
@@ -997,9 +997,9 @@ class TestFormattingConfig:
         import json
 
         formatters_json = json.dumps({"md": "prettier --write {file}", "json": "jq . {file}"})
-        monkeypatch.setenv("BASIC_MEMORY_FORMATTERS", formatters_json)
+        monkeypatch.setenv("AGENT_BRAIN_FORMATTERS", formatters_json)
 
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
 
         assert config.formatters == {"md": "prettier --write {file}", "json": "jq . {file}"}
 
@@ -1009,12 +1009,12 @@ class TestFormattingConfig:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
             # Create config with formatting settings
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={"main": {"path": str(temp_path / "main")}},
                 format_on_save=True,
                 formatter_command="prettier --write {file}",
@@ -1044,19 +1044,19 @@ class TestProjectMode:
 
     def test_get_project_mode_defaults_to_local(self):
         """Test that unknown projects default to LOCAL mode."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.get_project_mode("nonexistent") == ProjectMode.LOCAL
 
     def test_set_project_mode_git(self):
         """Test setting a project to git mode."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         config.projects["research"] = ProjectEntry(path="/tmp/research")
         config.set_project_mode("research", ProjectMode.GIT)
         assert config.get_project_mode("research") == ProjectMode.GIT
 
     def test_set_project_mode_local_resets_to_default(self):
         """Test that setting a project back to LOCAL resets the entry's mode."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         # Need a project entry to set mode on
         config.projects["research"] = ProjectEntry(path="/tmp/research")
         config.set_project_mode("research", ProjectMode.GIT)
@@ -1072,12 +1072,12 @@ class TestProjectMode:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
             # Create config with project mode
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={
                     "main": {"path": str(temp_path / "main")},
                     "research": {"path": str(temp_path / "research"), "mode": "git"},
@@ -1098,7 +1098,7 @@ class TestProjectMode:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1112,11 +1112,11 @@ class TestProjectMode:
             config_manager.config_file.write_text(json.dumps(old_config_data, indent=2))
 
             # Clear config cache
-            import basic_memory.config
+            import agent_brain.config
 
-            basic_memory.config._CONFIG_CACHE = None
-            basic_memory.config._CONFIG_MTIME = None
-            basic_memory.config._CONFIG_SIZE = None
+            agent_brain.config._CONFIG_CACHE = None
+            agent_brain.config._CONFIG_MTIME = None
+            agent_brain.config._CONFIG_SIZE = None
 
             # Should load successfully with migration
             config = config_manager.load_config()
@@ -1125,7 +1125,7 @@ class TestProjectMode:
 
     def test_project_list_includes_mode(self, config_home):
         """Test that project_list property includes mode information."""
-        config = BasicMemoryConfig(
+        config = AgentBrainConfig(
             projects={
                 "main": {"path": str(config_home / "main")},
                 "research": {"path": str(config_home / "research"), "mode": "git"},
@@ -1166,11 +1166,11 @@ class TestProjectMode:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={
                     "main": {"path": str(temp_path / "main")},
                     "research": {
@@ -1197,20 +1197,20 @@ class TestConfigCacheMtimeInvalidation:
 
     def test_cache_returns_same_config_when_file_unchanged(self, config_home):
         """Verify cache hit when config file mtime has not changed."""
-        import basic_memory.config
+        import agent_brain.config
 
-        basic_memory.config._CONFIG_CACHE = None
-        basic_memory.config._CONFIG_MTIME = None
-        basic_memory.config._CONFIG_SIZE = None
+        agent_brain.config._CONFIG_CACHE = None
+        agent_brain.config._CONFIG_MTIME = None
+        agent_brain.config._CONFIG_SIZE = None
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={"main": {"path": str(temp_path / "main")}},
                 default_project="main",
             )
@@ -1230,20 +1230,20 @@ class TestConfigCacheMtimeInvalidation:
         import os
         import time
 
-        import basic_memory.config
+        import agent_brain.config
 
-        basic_memory.config._CONFIG_CACHE = None
-        basic_memory.config._CONFIG_MTIME = None
-        basic_memory.config._CONFIG_SIZE = None
+        agent_brain.config._CONFIG_CACHE = None
+        agent_brain.config._CONFIG_MTIME = None
+        agent_brain.config._CONFIG_SIZE = None
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={"main": {"path": str(temp_path / "main")}},
                 default_project="main",
             )
@@ -1271,35 +1271,35 @@ class TestConfigCacheMtimeInvalidation:
 
     def test_save_config_resets_mtime(self, config_home):
         """Verify save_config clears both cache and mtime."""
-        import basic_memory.config
+        import agent_brain.config
 
-        basic_memory.config._CONFIG_CACHE = None
-        basic_memory.config._CONFIG_MTIME = None
-        basic_memory.config._CONFIG_SIZE = None
+        agent_brain.config._CONFIG_CACHE = None
+        agent_brain.config._CONFIG_MTIME = None
+        agent_brain.config._CONFIG_SIZE = None
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={"main": {"path": str(temp_path / "main")}},
             )
             config_manager.save_config(test_config)
 
             # Load to populate cache
             config_manager.load_config()
-            assert basic_memory.config._CONFIG_CACHE is not None
-            assert basic_memory.config._CONFIG_MTIME is not None
-            assert basic_memory.config._CONFIG_SIZE is not None
+            assert agent_brain.config._CONFIG_CACHE is not None
+            assert agent_brain.config._CONFIG_MTIME is not None
+            assert agent_brain.config._CONFIG_SIZE is not None
 
             # Save should clear all cache state
             config_manager.save_config(test_config)
-            assert basic_memory.config._CONFIG_CACHE is None
-            assert basic_memory.config._CONFIG_MTIME is None
-            assert basic_memory.config._CONFIG_SIZE is None
+            assert agent_brain.config._CONFIG_CACHE is None
+            assert agent_brain.config._CONFIG_MTIME is None
+            assert agent_brain.config._CONFIG_SIZE is None
 
 
 class TestLegacyCloudMigration:
@@ -1316,7 +1316,7 @@ class TestLegacyCloudMigration:
                 }
             }
         }
-        result = BasicMemoryConfig.migrate_legacy_projects(data)
+        result = AgentBrainConfig.migrate_legacy_projects(data)
         # Cloud mode is converted to local
         assert result["projects"]["specs"]["mode"] == "local"
         # local_sync_path is stripped
@@ -1333,7 +1333,7 @@ class TestLegacyCloudMigration:
                 }
             }
         }
-        result = BasicMemoryConfig.migrate_legacy_projects(data)
+        result = AgentBrainConfig.migrate_legacy_projects(data)
         assert result["projects"]["specs"]["path"] == "/Users/test/Documents/specs"
         assert result["projects"]["specs"]["mode"] == "local"
 
@@ -1347,7 +1347,7 @@ class TestLegacyCloudMigration:
                 }
             }
         }
-        result = BasicMemoryConfig.migrate_legacy_projects(data)
+        result = AgentBrainConfig.migrate_legacy_projects(data)
         assert result["projects"]["cloud-only"]["mode"] == "local"
 
     def test_migrate_handles_mixed_projects(self, tmp_path):
@@ -1364,7 +1364,7 @@ class TestLegacyCloudMigration:
                 },
             }
         }
-        result = BasicMemoryConfig.migrate_legacy_projects(data)
+        result = AgentBrainConfig.migrate_legacy_projects(data)
         assert result["projects"]["local-proj"]["path"] == local_path
         assert result["projects"]["local-proj"]["mode"] == "local"
         assert result["projects"]["cloud-only"]["mode"] == "local"
@@ -1378,17 +1378,17 @@ class TestAutoUpdateConfig:
 
     def test_auto_update_defaults(self):
         """Auto-update should default on with a daily check interval."""
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.auto_update is True
         assert config.update_check_interval == 86400
         assert config.auto_update_last_checked_at is None
 
     def test_auto_update_env_overrides(self, monkeypatch):
         """Environment variables should override auto-update defaults."""
-        monkeypatch.setenv("BASIC_MEMORY_AUTO_UPDATE", "false")
-        monkeypatch.setenv("BASIC_MEMORY_UPDATE_CHECK_INTERVAL", "3600")
+        monkeypatch.setenv("AGENT_BRAIN_AUTO_UPDATE", "false")
+        monkeypatch.setenv("AGENT_BRAIN_UPDATE_CHECK_INTERVAL", "3600")
 
-        config = BasicMemoryConfig()
+        config = AgentBrainConfig()
         assert config.auto_update is False
         assert config.update_check_interval == 3600
 
@@ -1398,12 +1398,12 @@ class TestAutoUpdateConfig:
             temp_path = Path(temp_dir)
 
             config_manager = ConfigManager()
-            config_manager.config_dir = temp_path / "basic-memory"
+            config_manager.config_dir = temp_path / "agent-brain"
             config_manager.config_file = config_manager.config_dir / "config.json"
             config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
             checked_at = datetime.now()
-            test_config = BasicMemoryConfig(
+            test_config = AgentBrainConfig(
                 projects={"main": {"path": str(temp_path / "main")}},
                 auto_update=False,
                 update_check_interval=7200,

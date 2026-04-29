@@ -1,10 +1,10 @@
-"""Integration tests for `basic-memory tool edit-note`."""
+"""Integration tests for `agent-brain tool edit-note`."""
 
 import json
 
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app as cli_app
+from agent_brain.cli.main import app as cli_app
 
 runner = CliRunner()
 

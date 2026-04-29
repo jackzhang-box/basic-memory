@@ -48,7 +48,7 @@ class TestCLIToolExit:
         Each command should complete within the timeout without requiring
         manual termination (Ctrl+C).
         """
-        full_command = [sys.executable, "-m", "basic_memory.cli.main"] + command
+        full_command = [sys.executable, "-m", "agent_brain.cli.main"] + command
 
         try:
             result = subprocess.run(
@@ -73,8 +73,8 @@ class TestCLIToolExit:
         """
         code = """
 import asyncio
-from basic_memory.config import ConfigManager
-from basic_memory.services.initialization import ensure_initialization
+from agent_brain.config import ConfigManager
+from agent_brain.services.initialization import ensure_initialization
 
 app_config = ConfigManager().config
 ensure_initialization(app_config)
@@ -84,8 +84,8 @@ print("OK")
             # Ensure the subprocess uses an isolated home directory so ConfigManager doesn't
             # touch the real user profile/AppData (which can be slow/flaky on CI Windows).
             env = dict(os.environ)
-            bm_home = tmp_path / "basic-memory-home"
-            env["BASIC_MEMORY_HOME"] = str(bm_home)
+            bm_home = tmp_path / "agent-brain-home"
+            env["AGENT_BRAIN_HOME"] = str(bm_home)
             env["HOME"] = str(tmp_path)
             env["USERPROFILE"] = str(tmp_path)
 

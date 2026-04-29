@@ -19,8 +19,8 @@ def _isolated_env(tmp_path: Path) -> dict[str, str]:
     env["HOME"] = str(tmp_path)
     if os.name == "nt":
         env["USERPROFILE"] = str(tmp_path)
-    env["BASIC_MEMORY_HOME"] = str(tmp_path / "basic-memory")
-    env["BASIC_MEMORY_CONFIG_DIR"] = str(tmp_path / ".basic-memory")
+    env["AGENT_BRAIN_HOME"] = str(tmp_path / "agent-brain")
+    env["AGENT_BRAIN_CONFIG_DIR"] = str(tmp_path / ".agent-brain")
     return env
 
 

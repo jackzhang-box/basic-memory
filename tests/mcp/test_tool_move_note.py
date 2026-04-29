@@ -2,9 +2,9 @@
 
 import pytest
 
-from basic_memory.mcp.tools.move_note import move_note, _format_move_error_response
-from basic_memory.mcp.tools.write_note import write_note
-from basic_memory.mcp.tools.read_note import read_note
+from agent_brain.mcp.tools.move_note import move_note, _format_move_error_response
+from agent_brain.mcp.tools.write_note import write_note
+from agent_brain.mcp.tools.read_note import read_note
 
 
 @pytest.mark.asyncio
@@ -12,7 +12,7 @@ async def test_detect_cross_project_move_attempt_is_defensive_on_api_error(monke
     """Cross-project detection should fail open (return None) if the projects API errors."""
     import importlib
 
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
 
     # Mock ProjectClient to raise an exception on list_projects
     class MockProjectClient:
@@ -24,7 +24,7 @@ async def test_detect_cross_project_move_attempt_is_defensive_on_api_error(monke
 
     monkeypatch.setattr(clients_mod, "ProjectClient", MockProjectClient)
 
-    move_note_module = importlib.import_module("basic_memory.mcp.tools.move_note")
+    move_note_module = importlib.import_module("agent_brain.mcp.tools.move_note")
 
     result = await move_note_module._detect_cross_project_move_attempt(
         client=None,

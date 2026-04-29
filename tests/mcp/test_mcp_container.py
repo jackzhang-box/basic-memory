@@ -2,12 +2,12 @@
 
 import pytest
 
-from basic_memory.mcp.container import (
+from agent_brain.mcp.container import (
     McpContainer,
     get_container,
     set_container,
 )
-from basic_memory.runtime import RuntimeMode
+from agent_brain.runtime import RuntimeMode
 
 
 class TestMcpContainer:
@@ -64,7 +64,7 @@ class TestContainerAccessors:
 
     def test_get_container_raises_when_not_set(self, monkeypatch):
         """get_container raises RuntimeError when container not initialized."""
-        import basic_memory.mcp.container as container_module
+        import agent_brain.mcp.container as container_module
 
         monkeypatch.setattr(container_module, "_container", None)
 
@@ -73,7 +73,7 @@ class TestContainerAccessors:
 
     def test_set_and_get_container(self, app_config, monkeypatch):
         """set_container allows get_container to return the container."""
-        import basic_memory.mcp.container as container_module
+        import agent_brain.mcp.container as container_module
 
         container = McpContainer(config=app_config, mode=RuntimeMode.LOCAL)
         monkeypatch.setattr(container_module, "_container", None)

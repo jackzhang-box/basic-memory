@@ -6,8 +6,8 @@ from textwrap import dedent
 
 import pytest
 
-from basic_memory.markdown.schemas import EntityMarkdown, EntityFrontmatter, Relation
-from basic_memory.markdown.entity_parser import parse
+from agent_brain.markdown.schemas import EntityMarkdown, EntityFrontmatter, Relation
+from agent_brain.markdown.entity_parser import parse
 
 
 @pytest.fixture

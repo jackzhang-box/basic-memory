@@ -1,4 +1,4 @@
-"""Tests for text/json output mode behavior on MCP tools used by openclaw-basic-memory."""
+"""Tests for text/json output mode behavior on MCP tools used by openclaw-agent-brain."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.mcp.clients.knowledge import KnowledgeClient
-from basic_memory.mcp.tools import (
+from agent_brain.mcp.clients.knowledge import KnowledgeClient
+from agent_brain.mcp.tools import (
     build_context,
     create_memory_project,
     delete_note,

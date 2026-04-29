@@ -3,7 +3,7 @@ Integration tests for MCP-UI Python SDK embedded resources.
 
 NOTE: UI tools are temporarily disabled (not registered with MCP server)
 while MCP client rendering is being sorted out. These tests are skipped
-until the tools are re-enabled in basic_memory.mcp.tools.__init__.
+until the tools are re-enabled in agent_brain.mcp.tools.__init__.
 """
 
 import pytest

@@ -5,9 +5,9 @@ import json
 import pytest
 from typer.testing import CliRunner
 
-from basic_memory.cli.app import app
-from basic_memory.cli.commands.import_claude_projects import import_projects  # noqa
-from basic_memory.config import get_project_config
+from agent_brain.cli.app import app
+from agent_brain.cli.commands.import_claude_projects import import_projects  # noqa
+from agent_brain.config import get_project_config
 
 # Set up CLI runner
 runner = CliRunner()

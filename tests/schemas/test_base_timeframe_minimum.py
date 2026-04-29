@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pytest
 from freezegun import freeze_time
 
-from basic_memory.schemas.base import parse_timeframe
+from agent_brain.schemas.base import parse_timeframe
 
 
 class TestTimeframeMinimum:

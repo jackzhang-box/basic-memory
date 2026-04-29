@@ -11,8 +11,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from basic_memory.api.v2.utils import to_search_results
-from basic_memory.repository.search_index_row import SearchIndexRow
+from agent_brain.api.v2.utils import to_search_results
+from agent_brain.repository.search_index_row import SearchIndexRow
 
 
 # --- Helpers ---

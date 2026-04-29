@@ -10,7 +10,7 @@ Runs identical query suites (lexical + paraphrase) against five configurations:
 
 Quality is measured via hit@1, recall@5, and MRR@10.  A comparison table
 is printed at the end, and JSON-lines artifacts are written when
-``BASIC_MEMORY_BENCHMARK_OUTPUT`` is set.
+``AGENT_BRAIN_BENCHMARK_OUTPUT`` is set.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import time
 
 import pytest
 
-from basic_memory.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
+from agent_brain.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
 
 from semantic.conftest import (
     ALL_COMBOS,
@@ -94,7 +94,7 @@ async def test_semantic_quality(
     skip_if_needed(combo)
 
     # Pick the right engine factory
-    from basic_memory.config import DatabaseBackend
+    from agent_brain.config import DatabaseBackend
 
     if combo.backend == DatabaseBackend.SQLITE:
         engine_factory_result = sqlite_engine_factory

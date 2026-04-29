@@ -4,11 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from basic_memory import db
-from basic_memory.models import NoteContent, Project
-from basic_memory.repository.entity_repository import EntityRepository
-from basic_memory.repository.note_content_repository import NoteContentRepository
-from basic_memory.repository.project_repository import ProjectRepository
+from agent_brain import db
+from agent_brain.models import NoteContent, Project
+from agent_brain.repository.entity_repository import EntityRepository
+from agent_brain.repository.note_content_repository import NoteContentRepository
+from agent_brain.repository.project_repository import ProjectRepository
 
 
 def build_note_content_payload(entity_id: int) -> dict:

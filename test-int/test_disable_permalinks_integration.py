@@ -2,27 +2,27 @@
 
 import pytest
 
-from basic_memory.markdown import EntityParser, MarkdownProcessor
-from basic_memory.repository import (
+from agent_brain.markdown import EntityParser, MarkdownProcessor
+from agent_brain.repository import (
     EntityRepository,
     ObservationRepository,
     RelationRepository,
     ProjectRepository,
 )
-from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
-from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
-from basic_memory.schemas import Entity as EntitySchema
-from basic_memory.services import FileService
-from basic_memory.services.entity_service import EntityService
-from basic_memory.services.link_resolver import LinkResolver
-from basic_memory.services.search_service import SearchService
-from basic_memory.sync.sync_service import SyncService
+from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
+from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
+from agent_brain.schemas import Entity as EntitySchema
+from agent_brain.services import FileService
+from agent_brain.services.entity_service import EntityService
+from agent_brain.services.link_resolver import LinkResolver
+from agent_brain.services.search_service import SearchService
+from agent_brain.sync.sync_service import SyncService
 
 
 @pytest.mark.asyncio
 async def test_disable_permalinks_create_entity(tmp_path, engine_factory, app_config, test_project):
     """Test that entities created with disable_permalinks=True don't have permalinks."""
-    from basic_memory.config import DatabaseBackend
+    from agent_brain.config import DatabaseBackend
 
     engine, session_maker = engine_factory
 
@@ -83,7 +83,7 @@ async def test_disable_permalinks_create_entity(tmp_path, engine_factory, app_co
 @pytest.mark.asyncio
 async def test_disable_permalinks_sync_workflow(tmp_path, engine_factory, app_config, test_project):
     """Test full sync workflow with disable_permalinks enabled."""
-    from basic_memory.config import DatabaseBackend
+    from agent_brain.config import DatabaseBackend
 
     engine, session_maker = engine_factory
 

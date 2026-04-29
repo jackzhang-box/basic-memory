@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 
-from basic_memory.mcp import tools
+from agent_brain.mcp import tools
 
 
 EXPECTED_TOOL_SIGNATURES: dict[str, list[str]] = {

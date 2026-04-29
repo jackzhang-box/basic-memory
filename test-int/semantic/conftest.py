@@ -19,25 +19,25 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import NullPool
 from testcontainers.postgres import PostgresContainer
 
-from basic_memory import db
-from basic_memory.config import BasicMemoryConfig, DatabaseBackend
-from basic_memory.db import DatabaseType, engine_session_factory
-from basic_memory.markdown import EntityParser
-from basic_memory.markdown.markdown_processor import MarkdownProcessor
-from basic_memory.models.base import Base
-from basic_memory.models.search import (
+from agent_brain import db
+from agent_brain.config import AgentBrainConfig, DatabaseBackend
+from agent_brain.db import DatabaseType, engine_session_factory
+from agent_brain.markdown import EntityParser
+from agent_brain.markdown.markdown_processor import MarkdownProcessor
+from agent_brain.models.base import Base
+from agent_brain.models.search import (
     CREATE_POSTGRES_SEARCH_INDEX_FTS,
     CREATE_POSTGRES_SEARCH_INDEX_METADATA,
     CREATE_POSTGRES_SEARCH_INDEX_PERMALINK,
     CREATE_POSTGRES_SEARCH_INDEX_TABLE,
     CREATE_SEARCH_INDEX,
 )
-from basic_memory.repository.embedding_provider import EmbeddingProvider
-from basic_memory.repository.entity_repository import EntityRepository
-from basic_memory.repository.project_repository import ProjectRepository
-from basic_memory.repository.search_repository import SearchRepository
-from basic_memory.services.file_service import FileService
-from basic_memory.services.search_service import SearchService
+from agent_brain.repository.embedding_provider import EmbeddingProvider
+from agent_brain.repository.entity_repository import EntityRepository
+from agent_brain.repository.project_repository import ProjectRepository
+from agent_brain.repository.search_repository import SearchRepository
+from agent_brain.services.file_service import FileService
+from agent_brain.services.search_service import SearchService
 
 # Load .env so OPENAI_API_KEY (and other keys) are available to providers
 load_dotenv()
@@ -95,7 +95,7 @@ def skip_if_needed(combo: SearchCombo) -> None:
         pytest.skip("Docker not available for Postgres testcontainer")
 
     if combo.provider_name == "fastembed" and not _fastembed_available():
-        pytest.skip("fastembed not installed (install/update basic-memory)")
+        pytest.skip("fastembed not installed (install/update agent-brain)")
 
     if combo.provider_name == "openai":
         if not _fastembed_available():
@@ -131,7 +131,7 @@ async def sqlite_engine_factory(tmp_path):
     db_path = tmp_path / "bench.db"
 
     # Explicit config forces SQLite backend regardless of user's local config
-    sqlite_config = BasicMemoryConfig(database_backend=DatabaseBackend.SQLITE)
+    sqlite_config = AgentBrainConfig(database_backend=DatabaseBackend.SQLITE)
     async with engine_session_factory(db_path, DatabaseType.FILESYSTEM, config=sqlite_config) as (
         engine,
         session_maker,
@@ -186,13 +186,13 @@ async def postgres_engine_factory(pgvector_container):
 
 
 def _create_fastembed_provider() -> EmbeddingProvider:
-    from basic_memory.repository.fastembed_provider import FastEmbedEmbeddingProvider
+    from agent_brain.repository.fastembed_provider import FastEmbedEmbeddingProvider
 
     return FastEmbedEmbeddingProvider(model_name="bge-small-en-v1.5", batch_size=64)
 
 
 def _create_openai_provider() -> EmbeddingProvider:
-    from basic_memory.repository.openai_provider import OpenAIEmbeddingProvider
+    from agent_brain.repository.openai_provider import OpenAIEmbeddingProvider
 
     return OpenAIEmbeddingProvider(model_name="text-embedding-3-small", dimensions=1536)
 
@@ -223,7 +223,7 @@ async def create_search_service(
 
     # Build app config
     semantic_enabled = combo.provider_name is not None
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
         projects={"bench-project": str(tmp_path)},
         default_project="bench-project",
@@ -233,7 +233,7 @@ async def create_search_service(
 
     # Create search repository (backend-specific)
     if combo.backend == DatabaseBackend.POSTGRES:
-        from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
+        from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
 
         search_repo: SearchRepository = PostgresSearchRepository(
             session_maker,
@@ -242,7 +242,7 @@ async def create_search_service(
             embedding_provider=embedding_provider,
         )
     else:
-        from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
+        from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
 
         repo = SQLiteSearchRepository(
             session_maker,

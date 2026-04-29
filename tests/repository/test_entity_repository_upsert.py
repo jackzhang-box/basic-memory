@@ -3,10 +3,10 @@
 import pytest
 from datetime import datetime, timezone
 
-from basic_memory.models.knowledge import Entity
-from basic_memory.repository.entity_repository import EntityRepository
-from basic_memory.repository.project_repository import ProjectRepository
-from basic_memory.services.exceptions import SyncFatalError
+from agent_brain.models.knowledge import Entity
+from agent_brain.repository.entity_repository import EntityRepository
+from agent_brain.repository.project_repository import ProjectRepository
+from agent_brain.services.exceptions import SyncFatalError
 
 
 @pytest.mark.asyncio

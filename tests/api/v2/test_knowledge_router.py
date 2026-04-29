@@ -5,10 +5,10 @@ import uuid
 import pytest
 from httpx import AsyncClient
 
-from basic_memory.models import Project
-from basic_memory.schemas import DeleteEntitiesResponse
-from basic_memory.schemas.response import DirectoryMoveResult, DirectoryDeleteResult
-from basic_memory.schemas.v2 import EntityResponseV2, EntityResolveResponse
+from agent_brain.models import Project
+from agent_brain.schemas import DeleteEntitiesResponse
+from agent_brain.schemas.response import DirectoryMoveResult, DirectoryDeleteResult
+from agent_brain.schemas.v2 import EntityResponseV2, EntityResolveResponse
 
 
 @pytest.mark.asyncio

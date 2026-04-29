@@ -2,8 +2,8 @@
 
 import pytest
 
-from basic_memory.file_utils import remove_frontmatter
-from basic_memory.schemas import Entity as EntitySchema
+from agent_brain.file_utils import remove_frontmatter
+from agent_brain.schemas import Entity as EntitySchema
 
 
 @pytest.mark.asyncio

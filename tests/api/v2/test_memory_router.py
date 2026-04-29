@@ -4,7 +4,7 @@ import pytest
 from httpx import AsyncClient
 from pathlib import Path
 
-from basic_memory.models import Project
+from agent_brain.models import Project
 
 
 async def create_test_entity(

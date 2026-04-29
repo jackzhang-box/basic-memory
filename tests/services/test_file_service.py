@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.services.exceptions import FileOperationError
-from basic_memory.services.file_service import FileService
+from agent_brain.services.exceptions import FileOperationError
+from agent_brain.services.file_service import FileService
 
 
 @pytest.mark.asyncio
@@ -76,7 +76,7 @@ async def test_write_atomic(tmp_path: Path, file_service: FileService, monkeypat
     test_path = tmp_path / "test.md"
     temp_path = test_path.with_suffix(".tmp")
 
-    from basic_memory import file_utils
+    from agent_brain import file_utils
 
     async def fake_write_file_atomic(*args, **kwargs):
         raise Exception("Write failed")

@@ -8,7 +8,7 @@ from io import StringIO
 
 from rich.console import Console
 
-from basic_memory.cli.auto_update import (
+from agent_brain.cli.auto_update import (
     AutoUpdateResult,
     AutoUpdateStatus,
     InstallSource,
@@ -18,20 +18,20 @@ from basic_memory.cli.auto_update import (
     maybe_run_periodic_auto_update,
     run_auto_update,
 )
-from basic_memory.config import BasicMemoryConfig
+from agent_brain.config import AgentBrainConfig
 
 
 class StubConfigManager:
     """Simple in-memory ConfigManager stub for updater tests."""
 
-    def __init__(self, config: BasicMemoryConfig):
+    def __init__(self, config: AgentBrainConfig):
         self._config = config
         self.save_calls = 0
 
-    def load_config(self) -> BasicMemoryConfig:
+    def load_config(self) -> AgentBrainConfig:
         return self._config
 
-    def save_config(self, config: BasicMemoryConfig) -> None:
+    def save_config(self, config: AgentBrainConfig) -> None:
         self._config = config
         self.save_calls += 1
 
@@ -42,8 +42,8 @@ def _capture_console() -> tuple[Console, StringIO]:
     return Console(file=buf, force_terminal=True), buf
 
 
-def _base_config(tmp_path) -> BasicMemoryConfig:
-    return BasicMemoryConfig(projects={"main": {"path": str(tmp_path / "main")}})
+def _base_config(tmp_path) -> AgentBrainConfig:
+    return AgentBrainConfig(projects={"main": {"path": str(tmp_path / "main")}})
 
 
 def _result(
@@ -67,11 +67,11 @@ def _result(
 
 def test_detect_install_source_variants():
     assert (
-        detect_install_source("/opt/homebrew/Cellar/basic-memory/0.18.0/bin/python")
+        detect_install_source("/opt/homebrew/Cellar/agent-brain/0.18.0/bin/python")
         == InstallSource.HOMEBREW
     )
     assert (
-        detect_install_source("/Users/me/.local/share/uv/tools/basic-memory/bin/python")
+        detect_install_source("/Users/me/.local/share/uv/tools/agent-brain/bin/python")
         == InstallSource.UV_TOOL
     )
     assert (
@@ -115,14 +115,14 @@ def test_force_bypasses_auto_update_disabled(monkeypatch, tmp_path):
     manager = StubConfigManager(config)
 
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update._check_pypi_update_available",
+        "agent_brain.cli.auto_update._check_pypi_update_available",
         lambda: (False, "0.0.0"),
     )
 
     result = run_auto_update(
         force=True,
         config_manager=manager,
-        executable="/Users/me/.local/share/uv/tools/basic-memory/bin/python",
+        executable="/Users/me/.local/share/uv/tools/agent-brain/bin/python",
     )
 
     assert result.status == AutoUpdateStatus.UP_TO_DATE
@@ -135,10 +135,10 @@ def test_check_homebrew_update_available_exit_code_1_means_outdated(monkeypatch)
 
     def _fake_run(command, **kwargs):
         return subprocess.CompletedProcess(
-            command, 1, stdout="basicmachines-co/basic-memory/basic-memory\n", stderr=""
+            command, 1, stdout="basicmachines-co/agent-brain/agent-brain\n", stderr=""
         )
 
-    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _fake_run)
+    monkeypatch.setattr("agent_brain.cli.auto_update._run_subprocess", _fake_run)
     is_outdated, _ = _check_homebrew_update_available(silent=False)
     assert is_outdated is True
 
@@ -149,7 +149,7 @@ def test_check_homebrew_update_available_exit_code_0_means_up_to_date(monkeypatc
     def _fake_run(command, **kwargs):
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
-    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _fake_run)
+    monkeypatch.setattr("agent_brain.cli.auto_update._run_subprocess", _fake_run)
     is_outdated, _ = _check_homebrew_update_available(silent=False)
     assert is_outdated is False
 
@@ -159,7 +159,7 @@ def test_homebrew_outdated_triggers_upgrade(monkeypatch, tmp_path):
     manager = StubConfigManager(config)
 
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update._check_homebrew_update_available",
+        "agent_brain.cli.auto_update._check_homebrew_update_available",
         lambda silent: (True, None),
     )
     calls: list[list[str]] = []
@@ -168,15 +168,15 @@ def test_homebrew_outdated_triggers_upgrade(monkeypatch, tmp_path):
         calls.append(command)
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
-    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _fake_run_subprocess)
+    monkeypatch.setattr("agent_brain.cli.auto_update._run_subprocess", _fake_run_subprocess)
 
     result = run_auto_update(
         config_manager=manager,
-        executable="/opt/homebrew/Cellar/basic-memory/0.18.0/bin/python",
+        executable="/opt/homebrew/Cellar/agent-brain/0.18.0/bin/python",
     )
 
     assert result.status == AutoUpdateStatus.UPDATED
-    assert calls == [["brew", "upgrade", "basic-memory"]]
+    assert calls == [["brew", "upgrade", "agent-brain"]]
 
 
 def test_uv_tool_pypi_check_triggers_upgrade(monkeypatch, tmp_path):
@@ -184,7 +184,7 @@ def test_uv_tool_pypi_check_triggers_upgrade(monkeypatch, tmp_path):
     manager = StubConfigManager(config)
 
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update._check_pypi_update_available",
+        "agent_brain.cli.auto_update._check_pypi_update_available",
         lambda: (True, "9.9.9"),
     )
     calls: list[list[str]] = []
@@ -193,23 +193,23 @@ def test_uv_tool_pypi_check_triggers_upgrade(monkeypatch, tmp_path):
         calls.append(command)
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
-    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _fake_run_subprocess)
+    monkeypatch.setattr("agent_brain.cli.auto_update._run_subprocess", _fake_run_subprocess)
 
     result = run_auto_update(
         config_manager=manager,
-        executable="/Users/me/.local/share/uv/tools/basic-memory/bin/python",
+        executable="/Users/me/.local/share/uv/tools/agent-brain/bin/python",
     )
 
     assert result.status == AutoUpdateStatus.UPDATED
     assert result.latest_version == "9.9.9"
-    assert calls == [["uv", "tool", "upgrade", "basic-memory"]]
+    assert calls == [["uv", "tool", "upgrade", "agent-brain"]]
 
 
 def test_unknown_manager_returns_manual_update_guidance(monkeypatch, tmp_path):
     config = _base_config(tmp_path)
     manager = StubConfigManager(config)
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update._check_pypi_update_available",
+        "agent_brain.cli.auto_update._check_pypi_update_available",
         lambda: (True, "9.9.9"),
     )
 
@@ -243,7 +243,7 @@ def test_mcp_silent_mode_suppresses_subprocess_output(monkeypatch, tmp_path):
     config = _base_config(tmp_path)
     manager = StubConfigManager(config)
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update._check_pypi_update_available",
+        "agent_brain.cli.auto_update._check_pypi_update_available",
         lambda: (True, "9.9.9"),
     )
 
@@ -253,11 +253,11 @@ def test_mcp_silent_mode_suppresses_subprocess_output(monkeypatch, tmp_path):
         captured_kwargs.append(kwargs)
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
-    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _fake_run_subprocess)
+    monkeypatch.setattr("agent_brain.cli.auto_update._run_subprocess", _fake_run_subprocess)
 
     result = run_auto_update(
         config_manager=manager,
-        executable="/Users/me/.local/share/uv/tools/basic-memory/bin/python",
+        executable="/Users/me/.local/share/uv/tools/agent-brain/bin/python",
         silent=True,
     )
 
@@ -271,18 +271,18 @@ def test_subprocess_oserror_is_non_fatal(monkeypatch, tmp_path):
     config = _base_config(tmp_path)
     manager = StubConfigManager(config)
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update._check_pypi_update_available",
+        "agent_brain.cli.auto_update._check_pypi_update_available",
         lambda: (True, "9.9.9"),
     )
 
     def _raise_oserror(command, **kwargs):
         raise FileNotFoundError(command[0])
 
-    monkeypatch.setattr("basic_memory.cli.auto_update._run_subprocess", _raise_oserror)
+    monkeypatch.setattr("agent_brain.cli.auto_update._run_subprocess", _raise_oserror)
 
     result = run_auto_update(
         config_manager=manager,
-        executable="/Users/me/.local/share/uv/tools/basic-memory/bin/python",
+        executable="/Users/me/.local/share/uv/tools/agent-brain/bin/python",
     )
 
     assert result.status == AutoUpdateStatus.FAILED
@@ -295,13 +295,13 @@ def test_mixed_timezone_timestamp_does_not_crash_interval_gate(monkeypatch, tmp_
     manager = StubConfigManager(config)
 
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update._check_pypi_update_available",
+        "agent_brain.cli.auto_update._check_pypi_update_available",
         lambda: (False, "0.0.0"),
     )
 
     result = run_auto_update(
         config_manager=manager,
-        executable="/Users/me/.local/share/uv/tools/basic-memory/bin/python",
+        executable="/Users/me/.local/share/uv/tools/agent-brain/bin/python",
     )
 
     assert result.status == AutoUpdateStatus.UP_TO_DATE
@@ -322,10 +322,10 @@ def test_maybe_run_periodic_auto_update_non_interactive_has_no_console_output():
 def test_maybe_run_periodic_auto_update_prints_updated(monkeypatch):
     console, buf = _capture_console()
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update.run_auto_update",
+        "agent_brain.cli.auto_update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.UPDATED,
-            message="Basic Memory was updated successfully.",
+            message="Agent Brain was updated successfully.",
         ),
     )
 
@@ -338,7 +338,7 @@ def test_maybe_run_periodic_auto_update_prints_updated(monkeypatch):
 def test_maybe_run_periodic_auto_update_prints_available(monkeypatch):
     console, buf = _capture_console()
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update.run_auto_update",
+        "agent_brain.cli.auto_update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.UPDATE_AVAILABLE,
             message="Update available (latest: 9.9.9).",
@@ -354,7 +354,7 @@ def test_maybe_run_periodic_auto_update_prints_available(monkeypatch):
 def test_maybe_run_periodic_auto_update_prints_failed_with_error(monkeypatch):
     console, buf = _capture_console()
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update.run_auto_update",
+        "agent_brain.cli.auto_update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.FAILED,
             message="Automatic update check failed.",
@@ -372,12 +372,12 @@ def test_maybe_run_periodic_auto_update_prints_failed_with_error(monkeypatch):
 
 def test_maybe_run_periodic_auto_update_uses_interactive_probe_when_not_overridden(monkeypatch):
     console, buf = _capture_console()
-    monkeypatch.setattr("basic_memory.cli.auto_update._is_interactive_session", lambda: True)
+    monkeypatch.setattr("agent_brain.cli.auto_update._is_interactive_session", lambda: True)
     monkeypatch.setattr(
-        "basic_memory.cli.auto_update.run_auto_update",
+        "agent_brain.cli.auto_update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.UP_TO_DATE,
-            message="Basic Memory is up to date.",
+            message="Agent Brain is up to date.",
         ),
     )
 
@@ -393,7 +393,7 @@ def test_is_interactive_session_handles_closed_stdio(monkeypatch):
         def isatty(self) -> bool:
             raise ValueError("I/O operation on closed file")
 
-    monkeypatch.setattr("basic_memory.cli.auto_update.sys.stdin", _BrokenStream())
-    monkeypatch.setattr("basic_memory.cli.auto_update.sys.stdout", _BrokenStream())
+    monkeypatch.setattr("agent_brain.cli.auto_update.sys.stdin", _BrokenStream())
+    monkeypatch.setattr("agent_brain.cli.auto_update.sys.stdout", _BrokenStream())
 
     assert _is_interactive_session() is False

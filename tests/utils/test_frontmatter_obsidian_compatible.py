@@ -2,7 +2,7 @@
 
 import frontmatter
 
-from basic_memory.file_utils import dump_frontmatter
+from agent_brain.file_utils import dump_frontmatter
 
 
 def test_tags_formatted_as_yaml_list():

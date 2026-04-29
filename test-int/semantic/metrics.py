@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
 
-from basic_memory.repository.search_index_row import SearchIndexRow
+from agent_brain.repository.search_index_row import SearchIndexRow
 
 
 # --- Relevance helpers ---
@@ -122,8 +122,8 @@ def format_comparison_table(all_metrics: list[QualityMetrics]) -> str:
 
 
 def write_benchmark_artifact(all_metrics: list[QualityMetrics]) -> None:
-    """Append JSON-lines benchmark artifact if BASIC_MEMORY_BENCHMARK_OUTPUT is set."""
-    output_path = os.getenv("BASIC_MEMORY_BENCHMARK_OUTPUT")
+    """Append JSON-lines benchmark artifact if AGENT_BRAIN_BENCHMARK_OUTPUT is set."""
+    output_path = os.getenv("AGENT_BRAIN_BENCHMARK_OUTPUT")
     if not output_path:
         return
 

@@ -3,8 +3,8 @@
 import pytest
 from datetime import datetime, timezone
 
-from basic_memory.models.knowledge import Entity, Observation
-from basic_memory.repository.entity_repository import EntityRepository
+from agent_brain.models.knowledge import Entity, Observation
+from agent_brain.repository.entity_repository import EntityRepository
 
 
 @pytest.mark.asyncio

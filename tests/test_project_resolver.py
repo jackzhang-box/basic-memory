@@ -2,7 +2,7 @@
 
 import pytest
 
-from basic_memory.project_resolver import (
+from agent_brain.project_resolver import (
     ProjectResolver,
     ResolvedProject,
     ResolutionMode,
@@ -14,7 +14,7 @@ class TestProjectResolver:
 
     def test_env_constraint_has_highest_priority(self, monkeypatch):
         """Environment constraint should win over explicit/default."""
-        monkeypatch.setenv("BASIC_MEMORY_MCP_PROJECT", "constrained-project")
+        monkeypatch.setenv("AGENT_BRAIN_MCP_PROJECT", "constrained-project")
         resolver = ProjectResolver.from_env(default_project="default-project")
 
         result = resolver.resolve(project="explicit-project")
@@ -85,8 +85,8 @@ class TestProjectResolver:
             resolver.require_project(error_message="Custom error message")
 
     def test_from_env_without_env_var(self, monkeypatch):
-        """from_env without BASIC_MEMORY_MCP_PROJECT set."""
-        monkeypatch.delenv("BASIC_MEMORY_MCP_PROJECT", raising=False)
+        """from_env without AGENT_BRAIN_MCP_PROJECT set."""
+        monkeypatch.delenv("AGENT_BRAIN_MCP_PROJECT", raising=False)
         resolver = ProjectResolver.from_env(default_project="test")
 
         assert resolver.constrained_project is None
@@ -94,8 +94,8 @@ class TestProjectResolver:
         assert result.mode == ResolutionMode.EXPLICIT
 
     def test_from_env_with_env_var(self, monkeypatch):
-        """from_env with BASIC_MEMORY_MCP_PROJECT set."""
-        monkeypatch.setenv("BASIC_MEMORY_MCP_PROJECT", "env-project")
+        """from_env with AGENT_BRAIN_MCP_PROJECT set."""
+        monkeypatch.setenv("AGENT_BRAIN_MCP_PROJECT", "env-project")
         resolver = ProjectResolver.from_env()
 
         assert resolver.constrained_project == "env-project"

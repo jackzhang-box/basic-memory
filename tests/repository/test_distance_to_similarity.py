@@ -2,8 +2,8 @@
 
 import pytest
 
-from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
-from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
+from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
+from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
 
 
 def test_sqlite_distance_to_similarity_formula():

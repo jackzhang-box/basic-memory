@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from basic_memory.schemas.memory import (
+from agent_brain.schemas.memory import (
     normalize_memory_url,
     validate_memory_url_path,
     memory_url,
@@ -17,7 +17,7 @@ class TestValidateMemoryUrlPath:
         """Test that valid paths pass validation."""
         valid_paths = [
             "notes/meeting",
-            "projects/basic-memory",
+            "projects/agent-brain",
             "research/findings-2025",
             "specs/search",
             "docs/api-spec",
@@ -181,7 +181,7 @@ class TestMemoryUrlPydanticValidation:
             "specs/search",
             "memory://specs/search",
             "notes/meeting-2025",
-            "projects/basic-memory/docs",
+            "projects/agent-brain/docs",
             "pattern/*",
         ]
 
@@ -223,7 +223,7 @@ class TestMemoryUrlPydanticValidation:
         """Test that whitespace is properly stripped."""
         urls_with_whitespace = [
             "  specs/search  ",
-            "\tprojects/basic-memory\t",
+            "\tprojects/agent-brain\t",
             "\nnotes/meeting\n",
         ]
 

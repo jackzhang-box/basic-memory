@@ -155,18 +155,18 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_USER: basic_memory_user
+          POSTGRES_USER: agent_brain_user
           POSTGRES_PASSWORD: dev_password
-          POSTGRES_DB: basic_memory_test
+          POSTGRES_DB: agent_brain_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U basic_memory_user -d basic_memory_test"
+          --health-cmd "pg_isready -U agent_brain_user -d agent_brain_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     env:
-      BASIC_MEMORY_TEST_POSTGRES_URL: postgresql://basic_memory_user:dev_password@127.0.0.1:5432/basic_memory_test
+      AGENT_BRAIN_TEST_POSTGRES_URL: postgresql://agent_brain_user:dev_password@127.0.0.1:5432/agent_brain_test
 
     steps:
       - uses: actions/checkout@v4
@@ -212,18 +212,18 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_USER: basic_memory_user
+          POSTGRES_USER: agent_brain_user
           POSTGRES_PASSWORD: dev_password
-          POSTGRES_DB: basic_memory_test
+          POSTGRES_DB: agent_brain_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U basic_memory_user -d basic_memory_test"
+          --health-cmd "pg_isready -U agent_brain_user -d agent_brain_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
     env:
-      BASIC_MEMORY_TEST_POSTGRES_URL: postgresql://basic_memory_user:dev_password@127.0.0.1:5432/basic_memory_test
+      AGENT_BRAIN_TEST_POSTGRES_URL: postgresql://agent_brain_user:dev_password@127.0.0.1:5432/agent_brain_test
 
     steps:
       - uses: actions/checkout@v4

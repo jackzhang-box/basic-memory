@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from basic_memory.config import DatabaseBackend
-from basic_memory.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
+from agent_brain.config import DatabaseBackend
+from agent_brain.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
 
 from semantic.conftest import (
     SearchCombo,
@@ -333,7 +333,7 @@ async def test_similarity_formula_analysis(sqlite_engine_factory, tmp_path):
         # Get raw vector distances by querying at the repository level
         query_embedding = await provider.embed_query(query_text.strip())
 
-        from basic_memory import db as bm_db
+        from agent_brain import db as bm_db
 
         async with bm_db.scoped_session(service.repository.session_maker) as session:
             await service.repository._prepare_vector_session(session)

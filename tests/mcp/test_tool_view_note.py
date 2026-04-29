@@ -4,7 +4,7 @@ from textwrap import dedent
 
 import pytest
 
-from basic_memory.mcp.tools import write_note, view_note
+from agent_brain.mcp.tools import write_note, view_note
 
 
 @pytest.mark.asyncio

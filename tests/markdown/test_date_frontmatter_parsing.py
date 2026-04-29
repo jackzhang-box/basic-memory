@@ -1,6 +1,6 @@
 """Test that YAML date parsing doesn't break frontmatter processing.
 
-This test reproduces GitHub issue #236 from basic-memory-cloud where date fields
+This test reproduces GitHub issue #236 from agent-brain-cloud where date fields
 in YAML frontmatter are automatically parsed as datetime.date objects by PyYAML,
 but later code expects strings and calls .strip() on them, causing AttributeError.
 """
@@ -9,7 +9,7 @@ from textwrap import dedent
 
 import pytest
 
-from basic_memory.markdown.entity_parser import EntityParser
+from agent_brain.markdown.entity_parser import EntityParser
 
 
 @pytest.fixture
@@ -142,7 +142,7 @@ async def test_parse_file_with_dates_in_tag_list(test_file_with_dates_in_tag_lis
 async def test_parse_file_with_list_frontmatter_fields(tmp_path):
     """Test that list values in expected-string frontmatter fields are coerced to strings.
 
-    Reproduces basic-memory-cloud#376 where a markdown file has YAML list values
+    Reproduces agent-brain-cloud#376 where a markdown file has YAML list values
     in frontmatter fields like 'title' or 'type' that downstream code expects
     to be strings, causing 'list' object has no attribute 'strip'.
     """
@@ -331,7 +331,7 @@ async def test_parse_file_with_datetime_objects(tmp_path):
 async def test_parse_file_with_reserved_frontmatter_field_content(tmp_path):
     """Test that a 'content' field in frontmatter doesn't break parsing.
 
-    Reproduces basic-memory-cloud#375 where frontmatter containing a field named
+    Reproduces agent-brain-cloud#375 where frontmatter containing a field named
     'content' causes frontmatter.Post.__init__() to receive multiple values for
     the 'content' positional argument.
     """

@@ -14,7 +14,7 @@ import os
 import pytest
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app as cli_app
+from agent_brain.cli.main import app as cli_app
 
 
 runner = CliRunner()
@@ -95,16 +95,16 @@ class TestMcpCommandRouting:
     def test_mcp_stdio_does_not_force_local(self, monkeypatch):
         """Stdio transport should not inject explicit local routing env vars."""
         # Ensure env is clean before test
-        monkeypatch.delenv("BASIC_MEMORY_FORCE_LOCAL", raising=False)
-        monkeypatch.delenv("BASIC_MEMORY_EXPLICIT_ROUTING", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_FORCE_LOCAL", raising=False)
+        monkeypatch.delenv("AGENT_BRAIN_EXPLICIT_ROUTING", raising=False)
 
         env_at_run = {}
 
-        import basic_memory.cli.commands.mcp as mcp_mod
+        import agent_brain.cli.commands.mcp as mcp_mod
 
         def mock_run(*args, **kwargs):
-            env_at_run["FORCE_LOCAL"] = os.environ.get("BASIC_MEMORY_FORCE_LOCAL")
-            env_at_run["EXPLICIT"] = os.environ.get("BASIC_MEMORY_EXPLICIT_ROUTING")
+            env_at_run["FORCE_LOCAL"] = os.environ.get("AGENT_BRAIN_FORCE_LOCAL")
+            env_at_run["EXPLICIT"] = os.environ.get("AGENT_BRAIN_EXPLICIT_ROUTING")
             raise SystemExit(0)
 
         monkeypatch.setattr(mcp_mod.mcp_server, "run", mock_run)
@@ -118,16 +118,16 @@ class TestMcpCommandRouting:
 
     def test_mcp_stdio_honors_external_env_override(self, monkeypatch):
         """Stdio transport should pass through externally-set routing env vars."""
-        monkeypatch.setenv("BASIC_MEMORY_FORCE_CLOUD", "true")
-        monkeypatch.setenv("BASIC_MEMORY_EXPLICIT_ROUTING", "true")
+        monkeypatch.setenv("AGENT_BRAIN_FORCE_CLOUD", "true")
+        monkeypatch.setenv("AGENT_BRAIN_EXPLICIT_ROUTING", "true")
 
         env_at_run = {}
 
-        import basic_memory.cli.commands.mcp as mcp_mod
+        import agent_brain.cli.commands.mcp as mcp_mod
 
         def mock_run(*args, **kwargs):
-            env_at_run["FORCE_CLOUD"] = os.environ.get("BASIC_MEMORY_FORCE_CLOUD")
-            env_at_run["EXPLICIT"] = os.environ.get("BASIC_MEMORY_EXPLICIT_ROUTING")
+            env_at_run["FORCE_CLOUD"] = os.environ.get("AGENT_BRAIN_FORCE_CLOUD")
+            env_at_run["EXPLICIT"] = os.environ.get("AGENT_BRAIN_EXPLICIT_ROUTING")
             raise SystemExit(0)
 
         monkeypatch.setattr(mcp_mod.mcp_server, "run", mock_run)
@@ -143,11 +143,11 @@ class TestMcpCommandRouting:
         """Streamable-HTTP transport should force local routing."""
         env_at_run = {}
 
-        import basic_memory.cli.commands.mcp as mcp_mod
+        import agent_brain.cli.commands.mcp as mcp_mod
 
         def mock_run(*args, **kwargs):
-            env_at_run["FORCE_LOCAL"] = os.environ.get("BASIC_MEMORY_FORCE_LOCAL")
-            env_at_run["EXPLICIT"] = os.environ.get("BASIC_MEMORY_EXPLICIT_ROUTING")
+            env_at_run["FORCE_LOCAL"] = os.environ.get("AGENT_BRAIN_FORCE_LOCAL")
+            env_at_run["EXPLICIT"] = os.environ.get("AGENT_BRAIN_EXPLICIT_ROUTING")
             raise SystemExit(0)
 
         monkeypatch.setattr(mcp_mod.mcp_server, "run", mock_run)
@@ -162,11 +162,11 @@ class TestMcpCommandRouting:
         """SSE transport should force local routing."""
         env_at_run = {}
 
-        import basic_memory.cli.commands.mcp as mcp_mod
+        import agent_brain.cli.commands.mcp as mcp_mod
 
         def mock_run(*args, **kwargs):
-            env_at_run["FORCE_LOCAL"] = os.environ.get("BASIC_MEMORY_FORCE_LOCAL")
-            env_at_run["EXPLICIT"] = os.environ.get("BASIC_MEMORY_EXPLICIT_ROUTING")
+            env_at_run["FORCE_LOCAL"] = os.environ.get("AGENT_BRAIN_FORCE_LOCAL")
+            env_at_run["EXPLICIT"] = os.environ.get("AGENT_BRAIN_EXPLICIT_ROUTING")
             raise SystemExit(0)
 
         monkeypatch.setattr(mcp_mod.mcp_server, "run", mock_run)

@@ -6,14 +6,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from basic_memory.config import BasicMemoryConfig
-from basic_memory.repository.embedding_provider_factory import (
+from agent_brain.config import AgentBrainConfig
+from agent_brain.repository.embedding_provider_factory import (
     create_embedding_provider,
     reset_embedding_provider_cache,
 )
-from basic_memory.repository.fastembed_provider import FastEmbedEmbeddingProvider
-from basic_memory.repository.openai_provider import OpenAIEmbeddingProvider
-from basic_memory.repository.semantic_errors import SemanticDependenciesMissingError
+from agent_brain.repository.fastembed_provider import FastEmbedEmbeddingProvider
+from agent_brain.repository.openai_provider import OpenAIEmbeddingProvider
+from agent_brain.repository.semantic_errors import SemanticDependenciesMissingError
 
 
 class _StubEmbeddingsApi:
@@ -102,7 +102,7 @@ async def test_openai_provider_missing_dependency_raises_actionable_error(monkey
     with pytest.raises(SemanticDependenciesMissingError) as error:
         await provider.embed_query("test")
 
-    assert "pip install -U basic-memory" in str(error.value)
+    assert "pip install -U agent-brain" in str(error.value)
 
 
 @pytest.mark.asyncio
@@ -122,9 +122,9 @@ async def test_openai_provider_missing_api_key_raises_error(monkeypatch):
 
 def test_embedding_provider_factory_selects_fastembed_by_default():
     """Factory should select fastembed when provider is configured as fastembed."""
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
@@ -135,9 +135,9 @@ def test_embedding_provider_factory_selects_fastembed_by_default():
 
 def test_embedding_provider_factory_selects_openai_and_applies_default_model():
     """Factory should map local default model to OpenAI default when provider is openai."""
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="openai",
@@ -150,9 +150,9 @@ def test_embedding_provider_factory_selects_openai_and_applies_default_model():
 
 def test_embedding_provider_factory_rejects_unknown_provider():
     """Factory should fail fast for unsupported provider names."""
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="unknown-provider",
@@ -163,9 +163,9 @@ def test_embedding_provider_factory_rejects_unknown_provider():
 
 def test_embedding_provider_factory_passes_custom_dimensions_to_fastembed():
     """Factory should forward semantic_embedding_dimensions to FastEmbed provider."""
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
@@ -178,9 +178,9 @@ def test_embedding_provider_factory_passes_custom_dimensions_to_fastembed():
 
 def test_embedding_provider_factory_passes_custom_dimensions_to_openai():
     """Factory should forward semantic_embedding_dimensions to OpenAI provider."""
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="openai",
@@ -193,9 +193,9 @@ def test_embedding_provider_factory_passes_custom_dimensions_to_openai():
 
 def test_embedding_provider_factory_uses_provider_defaults_when_dimensions_not_set():
     """Factory should use provider defaults (384/1536) when dimensions is None."""
-    fastembed_config = BasicMemoryConfig(
+    fastembed_config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
@@ -204,9 +204,9 @@ def test_embedding_provider_factory_uses_provider_defaults_when_dimensions_not_s
     assert isinstance(fastembed_provider, FastEmbedEmbeddingProvider)
     assert fastembed_provider.dimensions == 384
 
-    openai_config = BasicMemoryConfig(
+    openai_config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="openai",
@@ -218,9 +218,9 @@ def test_embedding_provider_factory_uses_provider_defaults_when_dimensions_not_s
 
 def test_embedding_provider_factory_forwards_fastembed_runtime_knobs():
     """Factory should forward FastEmbed runtime tuning config fields."""
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
@@ -237,17 +237,17 @@ def test_embedding_provider_factory_forwards_fastembed_runtime_knobs():
 
 def test_embedding_provider_factory_reuses_provider_for_same_cache_key():
     """Factory should reuse the same provider instance for identical config values."""
-    config_a = BasicMemoryConfig(
+    config_a = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
         semantic_embedding_threads=2,
     )
-    config_b = BasicMemoryConfig(
+    config_b = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
@@ -262,17 +262,17 @@ def test_embedding_provider_factory_reuses_provider_for_same_cache_key():
 
 def test_embedding_provider_factory_creates_new_provider_for_different_cache_key():
     """Factory should create distinct providers when cache key fields differ."""
-    config_a = BasicMemoryConfig(
+    config_a = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
         semantic_embedding_threads=2,
     )
-    config_b = BasicMemoryConfig(
+    config_b = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",
@@ -287,9 +287,9 @@ def test_embedding_provider_factory_creates_new_provider_for_different_cache_key
 
 def test_embedding_provider_factory_reset_clears_cache():
     """Cache reset helper should force provider recreation for the same config."""
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         semantic_search_enabled=True,
         semantic_embedding_provider="fastembed",

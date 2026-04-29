@@ -5,10 +5,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from sqlalchemy import select
 
-from basic_memory import db
-from basic_memory.mcp.tools import list_memory_projects, create_memory_project, delete_project
-from basic_memory.models.project import Project
-from basic_memory.schemas.project_info import ProjectItem, ProjectList
+from agent_brain import db
+from agent_brain.mcp.tools import list_memory_projects, create_memory_project, delete_project
+from agent_brain.models.project import Project
+from agent_brain.schemas.project_info import ProjectItem, ProjectList
 
 
 # --- Helpers ---
@@ -69,7 +69,7 @@ async def test_list_memory_projects_shows_display_name(app, client, test_project
     mock_list = _make_list([regular_project, mock_project], default="main")
 
     with patch(
-        "basic_memory.mcp.clients.project.ProjectClient.list_projects",
+        "agent_brain.mcp.clients.project.ProjectClient.list_projects",
         new_callable=AsyncMock,
         return_value=mock_list,
     ):
@@ -88,7 +88,7 @@ async def test_list_memory_projects_no_display_name_shows_name_only(app, client,
     mock_list = _make_list([project], default="my-project")
 
     with patch(
-        "basic_memory.mcp.clients.project.ProjectClient.list_projects",
+        "agent_brain.mcp.clients.project.ProjectClient.list_projects",
         new_callable=AsyncMock,
         return_value=mock_list,
     ):
@@ -99,7 +99,7 @@ async def test_list_memory_projects_no_display_name_shows_name_only(app, client,
 
 @pytest.mark.asyncio
 async def test_list_memory_projects_constrained_env(monkeypatch, app, test_project):
-    monkeypatch.setenv("BASIC_MEMORY_MCP_PROJECT", test_project.name)
+    monkeypatch.setenv("AGENT_BRAIN_MCP_PROJECT", test_project.name)
     result = await list_memory_projects()
     assert f"Project: {test_project.name}" in result
     assert "constrained to a single project" in result
@@ -134,11 +134,11 @@ async def test_create_and_delete_project_and_name_match_branch(
 @pytest.mark.asyncio
 async def test_list_memory_projects_json_output(app, test_project):
     """JSON output includes source fields for local projects."""
-    local_main = _make_project("main", "/home/user/basic-memory", is_default=True)
+    local_main = _make_project("main", "/home/user/agent-brain", is_default=True)
     local_list = _make_list([local_main], default="main")
 
     with patch(
-        "basic_memory.mcp.clients.project.ProjectClient.list_projects",
+        "agent_brain.mcp.clients.project.ProjectClient.list_projects",
         new_callable=AsyncMock,
         return_value=local_list,
     ):
@@ -154,5 +154,5 @@ async def test_list_memory_projects_json_output(app, test_project):
     # main: local only
     main_proj = by_name["main"]
     assert main_proj["source"] == "local"
-    assert main_proj["path"] == "/home/user/basic-memory"
+    assert main_proj["path"] == "/home/user/agent-brain"
     assert main_proj["is_default"] is True

@@ -4,10 +4,10 @@ from textwrap import dedent
 import pytest
 import yaml
 
-from basic_memory.config import BasicMemoryConfig
-from basic_memory.schemas import Entity as EntitySchema
-from basic_memory.services import FileService
-from basic_memory.services.entity_service import EntityService
+from agent_brain.config import AgentBrainConfig
+from agent_brain.schemas import Entity as EntitySchema
+from agent_brain.services import FileService
+from agent_brain.services.entity_service import EntityService
 
 
 @pytest.mark.asyncio
@@ -21,7 +21,7 @@ async def test_create_entity_with_permalinks_disabled(
 ):
     """Test that entities created with disable_permalinks=True don't have permalinks."""
     # Create entity service with permalinks disabled
-    app_config = BasicMemoryConfig(disable_permalinks=True)
+    app_config = AgentBrainConfig(disable_permalinks=True)
     entity_service = EntityService(
         entity_parser=entity_parser,
         entity_repository=entity_repository,
@@ -67,7 +67,7 @@ async def test_update_entity_with_permalinks_disabled(
 ):
     """Test that entities updated with disable_permalinks=True don't get permalinks added."""
     # First create with permalinks enabled
-    app_config_enabled = BasicMemoryConfig(disable_permalinks=False)
+    app_config_enabled = AgentBrainConfig(disable_permalinks=False)
     entity_service_enabled = EntityService(
         entity_parser=entity_parser,
         entity_repository=entity_repository,
@@ -91,7 +91,7 @@ async def test_update_entity_with_permalinks_disabled(
     original_permalink = entity.permalink
 
     # Now create service with permalinks disabled
-    app_config_disabled = BasicMemoryConfig(disable_permalinks=True)
+    app_config_disabled = AgentBrainConfig(disable_permalinks=True)
     entity_service_disabled = EntityService(
         entity_parser=entity_parser,
         entity_repository=entity_repository,
@@ -127,7 +127,7 @@ async def test_create_entity_with_content_frontmatter_permalinks_disabled(
 ):
     """Test that content frontmatter permalinks are ignored when disabled."""
     # Create entity service with permalinks disabled
-    app_config = BasicMemoryConfig(disable_permalinks=True)
+    app_config = AgentBrainConfig(disable_permalinks=True)
     entity_service = EntityService(
         entity_parser=entity_parser,
         entity_repository=entity_repository,
@@ -183,7 +183,7 @@ async def test_move_entity_with_permalinks_disabled(
 ):
     """Test that moving an entity with disable_permalinks=True doesn't update permalinks."""
     # First create with permalinks enabled
-    app_config = BasicMemoryConfig(disable_permalinks=False, update_permalinks_on_move=True)
+    app_config = AgentBrainConfig(disable_permalinks=False, update_permalinks_on_move=True)
     entity_service = EntityService(
         entity_parser=entity_parser,
         entity_repository=entity_repository,
@@ -206,7 +206,7 @@ async def test_move_entity_with_permalinks_disabled(
     original_permalink = entity.permalink
 
     # Now disable permalinks
-    app_config_disabled = BasicMemoryConfig(disable_permalinks=True, update_permalinks_on_move=True)
+    app_config_disabled = AgentBrainConfig(disable_permalinks=True, update_permalinks_on_move=True)
 
     # Move entity
     moved = await entity_service.move_entity(

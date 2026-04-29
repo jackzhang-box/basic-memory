@@ -1,4 +1,4 @@
-# Docker Compose configuration for Basic Memory with PostgreSQL
+# Docker Compose configuration for Agent Brain with PostgreSQL
 # Use this for local development and testing with Postgres backend
 #
 # Usage:
@@ -8,19 +8,19 @@
 services:
   postgres:
     image: postgres:17
-    container_name: basic-memory-postgres
+    container_name: agent-brain-postgres
     environment:
       # Local development/test credentials - NOT for production
       # These values are referenced by tests and justfile commands
-      POSTGRES_DB: basic_memory
-      POSTGRES_USER: basic_memory_user
+      POSTGRES_DB: agent_brain
+      POSTGRES_USER: agent_brain_user
       POSTGRES_PASSWORD: dev_password  # Simple password for local testing only
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U basic_memory_user -d basic_memory"]
+      test: ["CMD-SHELL", "pg_isready -U agent_brain_user -d agent_brain"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,10 +33,10 @@ volumes:
 
   # Named volume for persistent configuration
   # Database will be stored in Postgres, not in this volume
-  basic-memory-config:
+  agent-brain-config:
     driver: local
 
 # Network configuration (optional)
 # networks:
-#   basic-memory-net:
+#   agent-brain-net:
 #     driver: bridge

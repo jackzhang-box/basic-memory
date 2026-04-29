@@ -3,8 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
-from basic_memory.models import Project
-from basic_memory.schemas.directory import DirectoryNode
+from agent_brain.models import Project
+from agent_brain.schemas.directory import DirectoryNode
 
 
 @pytest.mark.asyncio

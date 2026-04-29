@@ -24,20 +24,20 @@ class _ContextState:
 
 @pytest.mark.asyncio
 async def test_returns_none_when_no_default_and_no_project(config_manager, monkeypatch):
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     cfg = config_manager.load_config()
     cfg.default_project = None
     config_manager.save_config(cfg)
 
-    monkeypatch.delenv("BASIC_MEMORY_MCP_PROJECT", raising=False)
+    monkeypatch.delenv("AGENT_BRAIN_MCP_PROJECT", raising=False)
 
     # Prevent API fallback from returning a project via stale dependency overrides
     async def _no_api_fallback():
         return None
 
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context._resolve_default_project_from_api",
+        "agent_brain.mcp.project_context._resolve_default_project_from_api",
         _no_api_fallback,
     )
     assert await resolve_project_parameter(project=None, allow_discovery=False) is None
@@ -45,7 +45,7 @@ async def test_returns_none_when_no_default_and_no_project(config_manager, monke
 
 @pytest.mark.asyncio
 async def test_allows_discovery_when_enabled(config_manager, monkeypatch):
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     cfg = config_manager.load_config()
     cfg.default_project = None
@@ -56,7 +56,7 @@ async def test_allows_discovery_when_enabled(config_manager, monkeypatch):
         return None
 
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context._resolve_default_project_from_api",
+        "agent_brain.mcp.project_context._resolve_default_project_from_api",
         _no_api_fallback,
     )
     assert await resolve_project_parameter(project=None, allow_discovery=True) is None
@@ -64,7 +64,7 @@ async def test_allows_discovery_when_enabled(config_manager, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_returns_project_when_specified(config_manager):
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     cfg = config_manager.load_config()
     config_manager.save_config(cfg)
@@ -74,23 +74,23 @@ async def test_returns_project_when_specified(config_manager):
 
 @pytest.mark.asyncio
 async def test_uses_env_var_priority(config_manager, monkeypatch):
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     cfg = config_manager.load_config()
     config_manager.save_config(cfg)
 
-    monkeypatch.setenv("BASIC_MEMORY_MCP_PROJECT", "env-project")
+    monkeypatch.setenv("AGENT_BRAIN_MCP_PROJECT", "env-project")
     assert await resolve_project_parameter(project="explicit-project") == "env-project"
 
 
 @pytest.mark.asyncio
 async def test_uses_explicit_project_when_no_env(config_manager, monkeypatch):
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     cfg = config_manager.load_config()
     config_manager.save_config(cfg)
 
-    monkeypatch.delenv("BASIC_MEMORY_MCP_PROJECT", raising=False)
+    monkeypatch.delenv("AGENT_BRAIN_MCP_PROJECT", raising=False)
     assert await resolve_project_parameter(project="explicit-project") == "explicit-project"
 
 
@@ -98,8 +98,8 @@ async def test_uses_explicit_project_when_no_env(config_manager, monkeypatch):
 async def test_canonicalizes_case_insensitive_project_reference(
     config_manager, config_home, monkeypatch
 ):
-    from basic_memory.config import ProjectEntry
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.config import ProjectEntry
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     cfg = config_manager.load_config()
     project_name = "Personal-Project"
@@ -108,7 +108,7 @@ async def test_canonicalizes_case_insensitive_project_reference(
     cfg.projects[project_name] = ProjectEntry(path=str(project_path))
     config_manager.save_config(cfg)
 
-    monkeypatch.delenv("BASIC_MEMORY_MCP_PROJECT", raising=False)
+    monkeypatch.delenv("AGENT_BRAIN_MCP_PROJECT", raising=False)
 
     assert await resolve_project_parameter(project="personal-project") == project_name
     assert await resolve_project_parameter(project="PERSONAL-PROJECT") == project_name
@@ -116,8 +116,8 @@ async def test_canonicalizes_case_insensitive_project_reference(
 
 @pytest.mark.asyncio
 async def test_uses_default_project(config_manager, config_home, monkeypatch):
-    from basic_memory.mcp.project_context import resolve_project_parameter
-    from basic_memory.config import ProjectEntry
+    from agent_brain.mcp.project_context import resolve_project_parameter
+    from agent_brain.config import ProjectEntry
 
     cfg = config_manager.load_config()
     (config_home / "default-project").mkdir(parents=True, exist_ok=True)
@@ -125,26 +125,26 @@ async def test_uses_default_project(config_manager, config_home, monkeypatch):
     cfg.default_project = "default-project"
     config_manager.save_config(cfg)
 
-    monkeypatch.delenv("BASIC_MEMORY_MCP_PROJECT", raising=False)
+    monkeypatch.delenv("AGENT_BRAIN_MCP_PROJECT", raising=False)
     assert await resolve_project_parameter(project=None) == "default-project"
 
 
 @pytest.mark.asyncio
 async def test_returns_none_when_no_default(config_manager, monkeypatch):
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     cfg = config_manager.load_config()
     cfg.default_project = None
     config_manager.save_config(cfg)
 
-    monkeypatch.delenv("BASIC_MEMORY_MCP_PROJECT", raising=False)
+    monkeypatch.delenv("AGENT_BRAIN_MCP_PROJECT", raising=False)
 
     # Prevent API fallback from returning a project via stale dependency overrides
     async def _no_api_fallback():
         return None
 
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context._resolve_default_project_from_api",
+        "agent_brain.mcp.project_context._resolve_default_project_from_api",
         _no_api_fallback,
     )
     assert await resolve_project_parameter(project=None) is None
@@ -152,8 +152,8 @@ async def test_returns_none_when_no_default(config_manager, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_env_constraint_overrides_default(config_manager, config_home, monkeypatch):
-    from basic_memory.mcp.project_context import resolve_project_parameter
-    from basic_memory.config import ProjectEntry
+    from agent_brain.mcp.project_context import resolve_project_parameter
+    from agent_brain.config import ProjectEntry
 
     cfg = config_manager.load_config()
     (config_home / "default-project").mkdir(parents=True, exist_ok=True)
@@ -161,7 +161,7 @@ async def test_env_constraint_overrides_default(config_manager, config_home, mon
     cfg.default_project = "default-project"
     config_manager.save_config(cfg)
 
-    monkeypatch.setenv("BASIC_MEMORY_MCP_PROJECT", "env-project")
+    monkeypatch.setenv("AGENT_BRAIN_MCP_PROJECT", "env-project")
     assert await resolve_project_parameter(project=None) == "env-project"
 
 
@@ -169,8 +169,8 @@ async def test_env_constraint_overrides_default(config_manager, config_home, mon
 async def test_resolve_project_parameter_uses_cached_active_project_before_api_default_lookup(
     config_manager, monkeypatch
 ):
-    from basic_memory.mcp.project_context import resolve_project_parameter
-    from basic_memory.schemas.project_info import ProjectItem
+    from agent_brain.mcp.project_context import resolve_project_parameter
+    from agent_brain.schemas.project_info import ProjectItem
 
     config = config_manager.load_config()
     config.default_project = None
@@ -190,7 +190,7 @@ async def test_resolve_project_parameter_uses_cached_active_project_before_api_d
         raise AssertionError("Default project API lookup should not run when project is cached")
 
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context._resolve_default_project_from_api",
+        "agent_brain.mcp.project_context._resolve_default_project_from_api",
         fail_if_called,
     )
 
@@ -202,7 +202,7 @@ async def test_resolve_project_parameter_uses_cached_active_project_before_api_d
 async def test_resolve_project_parameter_caches_api_default_project_name(
     config_manager, monkeypatch
 ):
-    from basic_memory.mcp.project_context import resolve_project_parameter
+    from agent_brain.mcp.project_context import resolve_project_parameter
 
     config = config_manager.load_config()
     config.default_project = None
@@ -216,7 +216,7 @@ async def test_resolve_project_parameter_caches_api_default_project_name(
         return "api-default"
 
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context._resolve_default_project_from_api",
+        "agent_brain.mcp.project_context._resolve_default_project_from_api",
         fake_default_lookup,
     )
 
@@ -230,8 +230,8 @@ async def test_resolve_project_parameter_caches_api_default_project_name(
 
 @pytest.mark.asyncio
 async def test_get_active_project_uses_cached_project_before_resolution(monkeypatch):
-    from basic_memory.mcp.project_context import get_active_project
-    from basic_memory.schemas.project_info import ProjectItem
+    from agent_brain.mcp.project_context import get_active_project
+    from agent_brain.schemas.project_info import ProjectItem
 
     context = _ContextState()
     cached_project = ProjectItem(
@@ -247,7 +247,7 @@ async def test_get_active_project_uses_cached_project_before_resolution(monkeypa
         raise AssertionError("Project resolution should not run when cache matches")
 
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context.resolve_project_parameter",
+        "agent_brain.mcp.project_context.resolve_project_parameter",
         fail_if_called,
     )
 
@@ -257,8 +257,8 @@ async def test_get_active_project_uses_cached_project_before_resolution(monkeypa
 
 @pytest.mark.asyncio
 async def test_get_active_project_uses_cached_project_for_explicit_permalink(monkeypatch):
-    from basic_memory.mcp.project_context import get_active_project
-    from basic_memory.schemas.project_info import ProjectItem
+    from agent_brain.mcp.project_context import get_active_project
+    from agent_brain.schemas.project_info import ProjectItem
 
     context = _ContextState()
     cached_project = ProjectItem(
@@ -276,7 +276,7 @@ async def test_get_active_project_uses_cached_project_for_explicit_permalink(mon
         )
 
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context.resolve_project_parameter",
+        "agent_brain.mcp.project_context.resolve_project_parameter",
         fail_if_called,
     )
 
@@ -288,8 +288,8 @@ async def test_get_active_project_uses_cached_project_for_explicit_permalink(mon
 async def test_resolve_project_and_path_uses_cached_project_for_memory_url_prefix(
     config_manager, monkeypatch
 ):
-    from basic_memory.mcp.project_context import resolve_project_and_path
-    from basic_memory.schemas.project_info import ProjectItem
+    from agent_brain.mcp.project_context import resolve_project_and_path
+    from agent_brain.schemas.project_info import ProjectItem
 
     config = config_manager.load_config()
     config.permalinks_include_project = False
@@ -311,9 +311,9 @@ async def test_resolve_project_and_path_uses_cached_project_for_memory_url_prefi
     async def fake_resolve_project_parameter(project=None, **kwargs):
         return cached_project.name if project else cached_project.name
 
-    monkeypatch.setattr("basic_memory.mcp.tools.utils.call_post", fail_if_called)
+    monkeypatch.setattr("agent_brain.mcp.tools.utils.call_post", fail_if_called)
     monkeypatch.setattr(
-        "basic_memory.mcp.project_context.resolve_project_parameter",
+        "agent_brain.mcp.project_context.resolve_project_parameter",
         fake_resolve_project_parameter,
     )
 
@@ -332,7 +332,7 @@ class TestDetectProjectFromUrlPrefix:
     """Test detect_project_from_url_prefix for URL-based project detection."""
 
     def test_detects_project_from_memory_url(self, config_manager):
-        from basic_memory.mcp.project_context import detect_project_from_url_prefix
+        from agent_brain.mcp.project_context import detect_project_from_url_prefix
 
         config = config_manager.load_config()
         # The config has "test-project" from the conftest fixture
@@ -340,36 +340,36 @@ class TestDetectProjectFromUrlPrefix:
         assert result == "test-project"
 
     def test_detects_project_from_plain_path(self, config_manager):
-        from basic_memory.mcp.project_context import detect_project_from_url_prefix
+        from agent_brain.mcp.project_context import detect_project_from_url_prefix
 
         config = config_manager.load_config()
         result = detect_project_from_url_prefix("test-project/some-note", config)
         assert result == "test-project"
 
     def test_returns_none_for_unknown_prefix(self, config_manager):
-        from basic_memory.mcp.project_context import detect_project_from_url_prefix
+        from agent_brain.mcp.project_context import detect_project_from_url_prefix
 
         config = config_manager.load_config()
         result = detect_project_from_url_prefix("memory://unknown-project/note", config)
         assert result is None
 
     def test_returns_none_for_no_slash(self, config_manager):
-        from basic_memory.mcp.project_context import detect_project_from_url_prefix
+        from agent_brain.mcp.project_context import detect_project_from_url_prefix
 
         config = config_manager.load_config()
         result = detect_project_from_url_prefix("memory://single-segment", config)
         assert result is None
 
     def test_returns_none_for_wildcard_prefix(self, config_manager):
-        from basic_memory.mcp.project_context import detect_project_from_url_prefix
+        from agent_brain.mcp.project_context import detect_project_from_url_prefix
 
         config = config_manager.load_config()
         result = detect_project_from_url_prefix("memory://*/notes", config)
         assert result is None
 
     def test_matches_case_insensitive_via_permalink(self, config_manager):
-        from basic_memory.mcp.project_context import detect_project_from_url_prefix
-        from basic_memory.config import ProjectEntry
+        from agent_brain.mcp.project_context import detect_project_from_url_prefix
+        from agent_brain.config import ProjectEntry
 
         config = config_manager.load_config()
         (config_manager.config_dir.parent / "My Research").mkdir(parents=True, exist_ok=True)
@@ -388,8 +388,8 @@ class TestGetProjectClientRoutingOrder:
     @pytest.mark.asyncio
     async def test_local_flag_skips_cloud_routing(self, config_manager, monkeypatch):
         """--local flag should force local routing."""
-        from basic_memory.mcp.project_context import get_project_client
-        from basic_memory.config import ProjectEntry, ProjectMode
+        from agent_brain.mcp.project_context import get_project_client
+        from agent_brain.config import ProjectEntry, ProjectMode
 
         config = config_manager.load_config()
         config.projects["git-proj"] = ProjectEntry(
@@ -399,7 +399,7 @@ class TestGetProjectClientRoutingOrder:
         config_manager.save_config(config)
 
         # Set explicit local routing
-        monkeypatch.setenv("BASIC_MEMORY_FORCE_LOCAL", "true")
+        monkeypatch.setenv("AGENT_BRAIN_FORCE_LOCAL", "true")
 
         # Will fail at project validation (no API running), which proves routing worked
         with pytest.raises(Exception) as exc_info:
@@ -419,9 +419,9 @@ class TestGetProjectClientRoutingOrder:
         """
         from contextlib import asynccontextmanager
 
-        from basic_memory.mcp import async_client
-        from basic_memory.mcp.project_context import get_project_client
-        from basic_memory.config import ProjectEntry, ProjectMode
+        from agent_brain.mcp import async_client
+        from agent_brain.mcp.project_context import get_project_client
+        from agent_brain.config import ProjectEntry, ProjectMode
 
         config = config_manager.load_config()
         config.projects["git-proj"] = ProjectEntry(
@@ -434,7 +434,7 @@ class TestGetProjectClientRoutingOrder:
         @asynccontextmanager
         async def fake_factory():
             from httpx import ASGITransport, AsyncClient
-            from basic_memory.api.app import app as fastapi_app
+            from agent_brain.api.app import app as fastapi_app
 
             async with AsyncClient(
                 transport=ASGITransport(app=fastapi_app),

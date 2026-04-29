@@ -14,13 +14,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app as cli_app
-from basic_memory.mcp.clients.project import ProjectClient
-from basic_memory.schemas.project_info import ProjectList
-from basic_memory.schemas.sync_report import SyncReportResponse
+from agent_brain.cli.main import app as cli_app
+from agent_brain.mcp.clients.project import ProjectClient
+from agent_brain.schemas.project_info import ProjectList
+from agent_brain.schemas.sync_report import SyncReportResponse
 
 # Importing registers subcommands on the shared app instance.
-import basic_memory.cli.commands.project as project_cmd  # noqa: F401
+import agent_brain.cli.commands.project as project_cmd  # noqa: F401
 
 runner = CliRunner()
 
@@ -146,9 +146,9 @@ _MOCK_PROJECT_ITEM.name = "test-project"
 _MOCK_PROJECT_ITEM.external_id = "11111111-1111-1111-1111-111111111111"
 
 
-@patch("basic_memory.cli.commands.status.ConfigManager")
-@patch("basic_memory.cli.commands.status.get_active_project", new_callable=AsyncMock)
-@patch("basic_memory.cli.commands.status.get_client")
+@patch("agent_brain.cli.commands.status.ConfigManager")
+@patch("agent_brain.cli.commands.status.get_active_project", new_callable=AsyncMock)
+@patch("agent_brain.cli.commands.status.get_client")
 def test_status_json_outputs_sync_report(mock_get_client, mock_get_active, mock_config_cls):
     """bm status --json outputs a valid JSON sync report with changes."""
     mock_config_cls.return_value = _mock_config_manager()
@@ -175,9 +175,9 @@ def test_status_json_outputs_sync_report(mock_get_client, mock_get_active, mock_
     assert "moves" in data
 
 
-@patch("basic_memory.cli.commands.status.ConfigManager")
-@patch("basic_memory.cli.commands.status.get_active_project", new_callable=AsyncMock)
-@patch("basic_memory.cli.commands.status.get_client")
+@patch("agent_brain.cli.commands.status.ConfigManager")
+@patch("agent_brain.cli.commands.status.get_active_project", new_callable=AsyncMock)
+@patch("agent_brain.cli.commands.status.get_client")
 def test_status_json_no_changes(mock_get_client, mock_get_active, mock_config_cls):
     """bm status --json with empty report outputs total: 0."""
     mock_config_cls.return_value = _mock_config_manager()
@@ -202,9 +202,9 @@ def test_status_json_no_changes(mock_get_client, mock_get_active, mock_config_cl
     assert data["modified"] == []
 
 
-@patch("basic_memory.cli.commands.status.ConfigManager")
-@patch("basic_memory.cli.commands.status.get_active_project", new_callable=AsyncMock)
-@patch("basic_memory.cli.commands.status.get_client")
+@patch("agent_brain.cli.commands.status.ConfigManager")
+@patch("agent_brain.cli.commands.status.get_active_project", new_callable=AsyncMock)
+@patch("agent_brain.cli.commands.status.get_client")
 def test_status_json_with_skipped_files(mock_get_client, mock_get_active, mock_config_cls):
     """bm status --json serializes skipped_files with datetime fields."""
     mock_config_cls.return_value = _mock_config_manager()
@@ -235,9 +235,9 @@ def test_status_json_with_skipped_files(mock_get_client, mock_get_active, mock_c
 # ---------------------------------------------------------------------------
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_validate",
+    "agent_brain.cli.commands.schema.mcp_schema_validate",
     new_callable=AsyncMock,
     return_value=VALIDATE_REPORT,
 )
@@ -254,9 +254,9 @@ def test_schema_validate_json(mock_mcp, mock_config_cls):
     assert len(data["results"]) == 2
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_validate",
+    "agent_brain.cli.commands.schema.mcp_schema_validate",
     new_callable=AsyncMock,
     return_value={"error": "No schema found for type 'person'"},
 )
@@ -271,9 +271,9 @@ def test_schema_validate_json_error(mock_mcp, mock_config_cls):
     assert "error" in data
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_validate",
+    "agent_brain.cli.commands.schema.mcp_schema_validate",
     new_callable=AsyncMock,
     return_value=VALIDATE_REPORT,
 )
@@ -294,9 +294,9 @@ def test_schema_validate_json_strict_exit(mock_mcp, mock_config_cls):
 # ---------------------------------------------------------------------------
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_infer",
+    "agent_brain.cli.commands.schema.mcp_schema_infer",
     new_callable=AsyncMock,
     return_value=INFER_REPORT,
 )
@@ -318,9 +318,9 @@ def test_schema_infer_json(mock_mcp, mock_config_cls):
 # ---------------------------------------------------------------------------
 
 
-@patch("basic_memory.cli.commands.schema.ConfigManager")
+@patch("agent_brain.cli.commands.schema.ConfigManager")
 @patch(
-    "basic_memory.cli.commands.schema.mcp_schema_diff",
+    "agent_brain.cli.commands.schema.mcp_schema_diff",
     new_callable=AsyncMock,
     return_value=DIFF_REPORT_WITH_DRIFT,
 )
@@ -347,13 +347,13 @@ def write_config(tmp_path, monkeypatch):
     """Write config.json under a temporary HOME and return the file path."""
 
     def _write(config_data: dict):
-        from basic_memory import config as config_module
+        from agent_brain import config as config_module
 
         config_module._CONFIG_CACHE = None
         config_module._CONFIG_MTIME = None
         config_module._CONFIG_SIZE = None
 
-        config_dir = tmp_path / ".basic-memory"
+        config_dir = tmp_path / ".agent-brain"
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file = config_dir / "config.json"
         config_file.write_text(json.dumps(config_data, indent=2))
