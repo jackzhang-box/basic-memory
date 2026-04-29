@@ -1,6 +1,6 @@
 # Note Format Reference
 
-Every document in Basic Memory is a plain Markdown file. Files are the source of truth — changes to files automatically update the knowledge graph in the database. You maintain complete ownership, files work with git, and knowledge persists independently of any AI conversation.
+Every document in Agent Brain is a plain Markdown file. Files are the source of truth — changes to files automatically update the knowledge graph in the database. You maintain complete ownership, files work with git, and knowledge persists independently of any AI conversation.
 
 ## Document Structure
 
@@ -58,7 +58,7 @@ Here `status` and `source` are custom fields stored in `entity_metadata`.
 
 ### Frontmatter Value Handling
 
-YAML automatically converts some values to native types. Basic Memory normalizes them:
+YAML automatically converts some values to native types. Agent Brain normalizes them:
 
 - Date strings (`2025-10-24`) → kept as ISO format strings
 - Numbers (`1.0`) → converted to strings
@@ -160,7 +160,7 @@ This creates two relations: `links_to [[Core Design]]` and `links_to [[Utility F
 
 ### Forward References
 
-Relations can link to entities that don't exist yet. Basic Memory resolves them when the target is created.
+Relations can link to entities that don't exist yet. Agent Brain resolves them when the target is created.
 
 ## Permalinks and memory:// URLs
 
@@ -258,7 +258,7 @@ Good for one-off structured notes or prototyping a schema before extracting it.
 
 ```yaml
 ---
-title: Basic Memory
+title: Agent Brain
 schema: SoftwareProject
 ---
 ```
@@ -289,7 +289,7 @@ The system looks up a schema note where `entity: Person`. If found, it applies. 
 
 ### Schema Notes
 
-A schema is itself a Basic Memory note with `type: schema`. It lives anywhere (though `schema/` is the conventional directory).
+A schema is itself a Agent Brain note with `type: schema`. It lives anywhere (though `schema/` is the conventional directory).
 
 ```yaml
 # schema/Person.md
@@ -334,7 +334,7 @@ Schema notes are regular notes — they show up in search, can have observations
 ### Validation Output
 
 ```
-$ bm schema validate people/ada-lovelace.md
+$ ab schema validate people/ada-lovelace.md
 
 ⚠ Person schema validation:
   - Missing required field: name (expected [name] observation)
@@ -352,7 +352,7 @@ $ bm schema validate people/ada-lovelace.md
 Generate schemas from existing notes by analyzing observation and relation frequency:
 
 ```
-$ bm schema infer Person
+$ ab schema infer Person
 
 Analyzing 30 notes with type: Person...
 
@@ -385,7 +385,7 @@ Frequency thresholds:
 Track how usage patterns shift over time:
 
 ```
-$ bm schema diff Person
+$ ab schema diff Person
 
 Schema drift detected:
 
