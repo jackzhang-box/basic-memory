@@ -12,9 +12,9 @@ from dataclasses import dataclass
 
 import pytest
 
-from basic_memory.config import BasicMemoryConfig
-from basic_memory.models.project import Project
-from basic_memory.sync.watch_service import WatchService
+from agent_brain.config import AgentBrainConfig
+from agent_brain.models.project import Project
+from agent_brain.sync.watch_service import WatchService
 
 
 @dataclass
@@ -35,7 +35,7 @@ class _Repo:
 
 @pytest.mark.asyncio
 async def test_schedule_restart_uses_config_interval(monkeypatch):
-    config = BasicMemoryConfig(watch_project_reload_interval=2)
+    config = AgentBrainConfig(watch_project_reload_interval=2)
     repo = _Repo()
     watch_service = WatchService(config, repo, quiet=True)
 
@@ -56,7 +56,7 @@ async def test_schedule_restart_uses_config_interval(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_watch_projects_cycle_handles_empty_project_list(monkeypatch):
-    config = BasicMemoryConfig()
+    config = AgentBrainConfig()
     repo = _Repo()
     watch_service = WatchService(config, repo, quiet=True)
 
@@ -72,7 +72,7 @@ async def test_watch_projects_cycle_handles_empty_project_list(monkeypatch):
             yield None
         return
 
-    monkeypatch.setattr("basic_memory.sync.watch_service.awatch", awatch_stub)
+    monkeypatch.setattr("agent_brain.sync.watch_service.awatch", awatch_stub)
 
     await watch_service._watch_projects_cycle([], stop_event)
 
@@ -85,7 +85,7 @@ async def test_watch_projects_cycle_handles_empty_project_list(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_run_handles_no_projects(monkeypatch):
-    config = BasicMemoryConfig()
+    config = AgentBrainConfig()
     repo = _Repo(projects_return=[])
     watch_service = WatchService(config, repo, quiet=True)
 
@@ -110,7 +110,7 @@ async def test_run_handles_no_projects(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_run_reloads_projects_each_cycle(monkeypatch, tmp_path):
-    config = BasicMemoryConfig(watch_project_reload_interval=1)
+    config = AgentBrainConfig(watch_project_reload_interval=1)
     repo = _Repo(
         projects_side_effect=[
             [Project(id=1, name="project1", path=str(tmp_path / "p1"), permalink="project1")],
@@ -145,7 +145,7 @@ async def test_run_reloads_projects_each_cycle(monkeypatch, tmp_path):
 
 @pytest.mark.asyncio
 async def test_run_continues_after_cycle_error(monkeypatch, tmp_path):
-    config = BasicMemoryConfig()
+    config = AgentBrainConfig()
     repo = _Repo(
         projects_return=[Project(id=1, name="test", path=str(tmp_path / "test"), permalink="test")]
     )
@@ -180,7 +180,7 @@ async def test_run_continues_after_cycle_error(monkeypatch, tmp_path):
 
 @pytest.mark.asyncio
 async def test_timer_task_cancelled_properly(monkeypatch, tmp_path):
-    config = BasicMemoryConfig()
+    config = AgentBrainConfig()
     repo = _Repo(
         projects_return=[Project(id=1, name="test", path=str(tmp_path / "test"), permalink="test")]
     )
@@ -219,7 +219,7 @@ async def test_timer_task_cancelled_properly(monkeypatch, tmp_path):
 
 @pytest.mark.asyncio
 async def test_new_project_addition_scenario(monkeypatch, tmp_path):
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         projects={
             "existing": {"path": str(tmp_path / "existing"), "mode": "local"},
             "new": {"path": str(tmp_path / "new"), "mode": "local"},

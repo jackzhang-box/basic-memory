@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.services.project_service import ProjectService
+from agent_brain.services.project_service import ProjectService
 
 
 @pytest.mark.asyncio
@@ -37,7 +37,7 @@ async def test_remove_project_with_related_entities(project_service: ProjectServ
             assert project is not None
 
             # Step 2: Create related entities for this project
-            from basic_memory.repository.entity_repository import EntityRepository
+            from agent_brain.repository.entity_repository import EntityRepository
 
             entity_repo = EntityRepository(
                 project_service.repository.session_maker, project_id=project.id
@@ -58,7 +58,7 @@ async def test_remove_project_with_related_entities(project_service: ProjectServ
             assert entity is not None
 
             # Step 3: Create observations for the entity
-            from basic_memory.repository.observation_repository import ObservationRepository
+            from agent_brain.repository.observation_repository import ObservationRepository
 
             obs_repo = ObservationRepository(
                 project_service.repository.session_maker, project_id=project.id
@@ -73,7 +73,7 @@ async def test_remove_project_with_related_entities(project_service: ProjectServ
             assert observation is not None
 
             # Step 4: Create relations involving the entity
-            from basic_memory.repository.relation_repository import RelationRepository
+            from agent_brain.repository.relation_repository import RelationRepository
 
             rel_repo = RelationRepository(
                 project_service.repository.session_maker, project_id=project.id

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-from basic_memory.schema.inference import ObservationData, RelationData
+from agent_brain.schema.inference import ObservationData, RelationData
 
 
 # --- Fixture Paths ---

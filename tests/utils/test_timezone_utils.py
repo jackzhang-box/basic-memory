@@ -3,8 +3,8 @@
 from datetime import datetime, timezone
 
 
-from basic_memory.config import DatabaseBackend
-from basic_memory.utils import ensure_timezone_aware
+from agent_brain.config import DatabaseBackend
+from agent_brain.utils import ensure_timezone_aware
 
 
 class TestEnsureTimezoneAware:

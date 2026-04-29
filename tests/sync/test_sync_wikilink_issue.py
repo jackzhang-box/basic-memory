@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.sync.sync_service import SyncService
+from agent_brain.sync.sync_service import SyncService
 
 
 async def create_test_file(path: Path, content: str) -> None:

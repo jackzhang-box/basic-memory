@@ -9,7 +9,7 @@ startCommand:
     description: No configuration required. This MCP server runs using the default command.
   commandFunction: |-
     (config) => ({
-      command: 'basic-memory',
+      command: 'agent-brain',
       args: ['mcp']
     })
   exampleConfig: {}

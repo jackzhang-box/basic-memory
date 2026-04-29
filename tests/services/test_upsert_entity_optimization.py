@@ -15,14 +15,14 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from basic_memory.markdown.schemas import (
+from agent_brain.markdown.schemas import (
     EntityFrontmatter,
     EntityMarkdown,
     Observation as MarkdownObservation,
     Relation as MarkdownRelation,
 )
-from basic_memory.schemas import Entity as EntitySchema
-from basic_memory.services.entity_service import EntityService
+from agent_brain.schemas import Entity as EntitySchema
+from agent_brain.services.entity_service import EntityService
 
 
 # --- Helpers ---

@@ -1,0 +1,77 @@
+"""CLI composition root for Agent Brain.
+
+This container owns reading ConfigManager and environment variables for the
+CLI entrypoint. Downstream modules receive config/dependencies explicitly
+rather than reading globals.
+
+Design principles:
+- Only this module reads ConfigManager directly
+- Runtime mode (local/test) is resolved here
+- Different CLI commands may need different initialization
+"""
+
+from dataclasses import dataclass
+
+from agent_brain.config import AgentBrainConfig, ConfigManager
+from agent_brain.runtime import RuntimeMode, resolve_runtime_mode
+
+
+@dataclass
+class CliContainer:
+    """Composition root for the CLI entrypoint.
+
+    Holds resolved configuration and runtime context.
+    Created once at CLI startup, then used by subcommands.
+    """
+
+    config: AgentBrainConfig
+    mode: RuntimeMode
+
+    @classmethod
+    def create(cls) -> "CliContainer":
+        """Create container by reading ConfigManager.
+
+        This is the single point where CLI reads global config.
+        """
+        config = ConfigManager().config
+        mode = resolve_runtime_mode(
+            is_test_env=config.is_test_env,
+        )
+        return cls(config=config, mode=mode)
+
+
+
+# Module-level container instance (set by app callback)
+_container: CliContainer | None = None
+
+
+def get_container() -> CliContainer:
+    """Get the current CLI container.
+
+    Returns:
+        The CLI container
+
+    Raises:
+        RuntimeError: If container hasn't been initialized
+    """
+    if _container is None:
+        raise RuntimeError("CLI container not initialized. Call set_container() first.")
+    return _container
+
+
+def set_container(container: CliContainer) -> None:
+    """Set the CLI container (called by app callback)."""
+    global _container
+    _container = container
+
+
+def get_or_create_container() -> CliContainer:
+    """Get existing container or create new one.
+
+    This is useful for CLI commands that might be called before
+    the main app callback runs (e.g., eager options).
+    """
+    global _container
+    if _container is None:
+        _container = CliContainer.create()
+    return _container

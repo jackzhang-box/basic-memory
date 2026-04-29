@@ -4,7 +4,7 @@ from typing import List, Union
 
 import pytest
 
-from basic_memory.utils import parse_tags
+from agent_brain.utils import parse_tags
 
 
 @pytest.mark.parametrize(

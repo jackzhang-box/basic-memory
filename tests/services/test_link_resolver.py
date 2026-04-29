@@ -7,10 +7,10 @@ import pytest
 
 import pytest_asyncio
 
-from basic_memory.models.knowledge import Entity as EntityModel
-from basic_memory.repository import EntityRepository
-from basic_memory.schemas.base import Entity as EntitySchema
-from basic_memory.services.link_resolver import LinkResolver
+from agent_brain.models.knowledge import Entity as EntityModel
+from agent_brain.repository import EntityRepository
+from agent_brain.schemas.base import Entity as EntitySchema
+from agent_brain.services.link_resolver import LinkResolver
 
 
 @pytest_asyncio.fixture
@@ -374,7 +374,7 @@ async def test_cross_project_link_resolution(
     session_maker, entity_repository, search_service, tmp_path
 ):
     """Test resolving explicit cross-project links."""
-    from basic_memory.repository.project_repository import ProjectRepository
+    from agent_brain.repository.project_repository import ProjectRepository
 
     project_repo = ProjectRepository(session_maker)
     other_project = await project_repo.create(

@@ -6,12 +6,12 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import text
 
-from basic_memory import db
-from basic_memory.models import Entity
-from basic_memory.models.project import Project
-from basic_memory.repository.search_repository import SearchIndexRow
-from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
-from basic_memory.schemas.search import SearchItemType
+from agent_brain import db
+from agent_brain.models import Entity
+from agent_brain.models.project import Project
+from agent_brain.repository.search_repository import SearchIndexRow
+from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
+from agent_brain.schemas.search import SearchItemType
 
 
 def is_postgres_backend(search_repository):
@@ -83,7 +83,7 @@ async def second_entity(session_maker, second_project: Project):
 @pytest.mark.asyncio
 async def test_init_search_index(search_repository, app_config):
     """Test that search index can be initialized."""
-    from basic_memory.config import DatabaseBackend
+    from agent_brain.config import DatabaseBackend
 
     await search_repository.init_search_index()
 
@@ -488,7 +488,7 @@ class TestSearchTermPreparation:
 
     def test_simple_terms_get_prefix_wildcard(self, search_repository):
         """Simple alphanumeric terms should get prefix matching."""
-        from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
+        from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
 
         if isinstance(search_repository, PostgresSearchRepository):
             # Postgres tsquery uses :* for prefix matching
@@ -630,11 +630,11 @@ class TestSearchTermPreparation:
         if is_postgres_backend(search_repository):
             pytest.skip("This test is for SQLite FTS5-specific behavior")
 
-        # This reproduces the bug where "Basic Memory v0.13.0b2" becomes "Basic* AND Memory* AND v0.13.0b2*"
+        # This reproduces the bug where "Agent Brain v0.13.0b2" becomes "Basic* AND Memory* AND v0.13.0b2*"
         # which causes FTS5 syntax errors because v0.13.0b2* is not valid FTS5 syntax
-        result = search_repository._prepare_search_term("Basic Memory v0.13.0b2")
+        result = search_repository._prepare_search_term("Agent Brain v0.13.0b2")
         # Should be quoted because of dots in v0.13.0b2
-        assert result == '"Basic Memory v0.13.0b2"*'
+        assert result == '"Agent Brain v0.13.0b2"*'
 
     def test_mixed_special_characters_in_multi_word_queries(self, search_repository):
         """Multi-word queries with special characters in any word should be fully quoted."""
@@ -719,9 +719,9 @@ class TestSearchTermPreparation:
         search_row = SearchIndexRow(
             id=search_entity.id,
             type=SearchItemType.ENTITY.value,
-            title="Basic Memory v0.13.0b2 Release",
+            title="Agent Brain v0.13.0b2 Release",
             content_stems="basic memory version 0.13.0b2 beta release notes features",
-            content_snippet="Basic Memory v0.13.0b2 is a beta release with new features",
+            content_snippet="Agent Brain v0.13.0b2 is a beta release with new features",
             permalink=search_entity.permalink,
             file_path=search_entity.file_path,
             entity_id=search_entity.id,
@@ -734,9 +734,9 @@ class TestSearchTermPreparation:
         await search_repository.index_item(search_row)
 
         # This should not cause FTS5 syntax errors and should find the entity
-        results = await search_repository.search(search_text="Basic Memory v0.13.0b2")
+        results = await search_repository.search(search_text="Agent Brain v0.13.0b2")
         assert len(results) == 1
-        assert results[0].title == "Basic Memory v0.13.0b2 Release"
+        assert results[0].title == "Agent Brain v0.13.0b2 Release"
 
         # Test other version-like patterns
         results2 = await search_repository.search(search_text="v0.13.0b2")

@@ -7,12 +7,12 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from basic_memory.cli.app import app
-from basic_memory.mcp.clients.project import ProjectClient
-from basic_memory.schemas.project_info import ProjectList
+from agent_brain.cli.app import app
+from agent_brain.mcp.clients.project import ProjectClient
+from agent_brain.schemas.project_info import ProjectList
 
 # Importing registers project subcommands on the shared app instance.
-import basic_memory.cli.commands.project as project_cmd  # noqa: F401
+import agent_brain.cli.commands.project as project_cmd  # noqa: F401
 
 
 @pytest.fixture
@@ -25,13 +25,13 @@ def write_config(tmp_path, monkeypatch):
     """Write config.json under a temporary HOME and return the file path."""
 
     def _write(config_data: dict) -> Path:
-        from basic_memory import config as config_module
+        from agent_brain import config as config_module
 
         config_module._CONFIG_CACHE = None
         config_module._CONFIG_MTIME = None
         config_module._CONFIG_SIZE = None
 
-        config_dir = tmp_path / ".basic-memory"
+        config_dir = tmp_path / ".agent-brain"
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file = config_dir / "config.json"
         config_file.write_text(json.dumps(config_data, indent=2))

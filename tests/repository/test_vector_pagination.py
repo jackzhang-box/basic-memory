@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from basic_memory.repository.search_repository_base import SearchRepositoryBase
+from agent_brain.repository.search_repository_base import SearchRepositoryBase
 
 
 @dataclass
@@ -106,7 +106,7 @@ async def test_page1_scores_gte_page2_scores():
     async def run_page(offset, limit):
         with (
             patch(
-                "basic_memory.repository.search_repository_base.db.scoped_session",
+                "agent_brain.repository.search_repository_base.db.scoped_session",
                 fake_scoped_session,
             ),
             patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),

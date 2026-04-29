@@ -40,10 +40,10 @@ jobs:
           track_progress: true  # Enable visual progress tracking
           allowed_bots: '*'
           prompt: |
-            Review this Basic Memory PR against our team checklist:
+            Review this Agent Brain PR against our team checklist:
 
             ## Code Quality & Standards
-            - [ ] Follows Basic Memory's coding conventions in CLAUDE.md
+            - [ ] Follows Agent Brain's coding conventions in CLAUDE.md
             - [ ] Python 3.12+ type annotations and async patterns
             - [ ] SQLAlchemy 2.0 best practices
             - [ ] FastAPI and Typer conventions followed
@@ -58,7 +58,7 @@ jobs:
             - [ ] Documentation updated (README, docstrings)
             - [ ] CLAUDE.md updated if conventions change
 
-            ## Basic Memory Architecture
+            ## Agent Brain Architecture
             - [ ] MCP tools follow atomic, composable design
             - [ ] Database changes include Alembic migrations
             - [ ] Preserves local-first architecture principles

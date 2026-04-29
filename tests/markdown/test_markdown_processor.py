@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.markdown.markdown_processor import DirtyFileError, MarkdownProcessor
-from basic_memory.markdown.schemas import (
+from agent_brain.markdown.markdown_processor import DirtyFileError, MarkdownProcessor
+from agent_brain.markdown.schemas import (
     EntityFrontmatter,
     EntityMarkdown,
     Observation,

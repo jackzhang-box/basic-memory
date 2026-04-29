@@ -4,7 +4,7 @@ import json
 
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app as cli_app
+from agent_brain.cli.main import app as cli_app
 
 runner = CliRunner()
 

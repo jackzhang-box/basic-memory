@@ -7,14 +7,14 @@ from textwrap import dedent
 
 import pytest
 
-from basic_memory.config import ProjectConfig, BasicMemoryConfig
-from basic_memory.models import Entity
-from basic_memory.repository import EntityRepository
-from basic_memory.schemas.search import SearchQuery
-from basic_memory.services import EntityService, FileService
-from basic_memory.services.search_service import SearchService
-from basic_memory.sync.sync_service import SyncService
-from basic_memory.utils import generate_permalink
+from agent_brain.config import ProjectConfig, AgentBrainConfig
+from agent_brain.models import Entity
+from agent_brain.repository import EntityRepository
+from agent_brain.schemas.search import SearchQuery
+from agent_brain.services import EntityService, FileService
+from agent_brain.services.search_service import SearchService
+from agent_brain.sync.sync_service import SyncService
+from agent_brain.utils import generate_permalink
 
 
 async def create_test_file(path: Path, content: str = "test content") -> None:
@@ -118,7 +118,7 @@ async def test_resolve_relations_deletes_duplicate_unresolved_relation(
     When resolving a forward reference would create a duplicate (from_id, to_id, relation_type),
     the unresolved relation should be deleted since a resolved version already exists.
     """
-    from basic_memory.models import Relation
+    from agent_brain.models import Relation
 
     project_dir = project_config.home
 
@@ -1101,7 +1101,7 @@ async def test_sync_permalink_not_created_if_no_frontmatter(
     sync_service: SyncService,
     project_config: ProjectConfig,
     file_service: FileService,
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
 ):
     """Test that sync does not add frontmatter when ensure_frontmatter_on_sync is disabled."""
     app_config.ensure_frontmatter_on_sync = False
@@ -1124,7 +1124,7 @@ async def test_sync_frontmatter_created_if_missing_when_enabled(
     sync_service: SyncService,
     project_config: ProjectConfig,
     file_service: FileService,
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
 ):
     """Sync should add derived frontmatter when configured for missing-frontmatter files."""
     app_config.ensure_frontmatter_on_sync = True
@@ -1151,7 +1151,7 @@ async def test_sync_frontmatter_created_if_missing_overrides_disable_permalinks(
     sync_service: SyncService,
     project_config: ProjectConfig,
     file_service: FileService,
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
 ):
     """Missing-frontmatter sync path should write permalink even when disable_permalinks is true."""
     app_config.ensure_frontmatter_on_sync = True
@@ -1173,7 +1173,7 @@ async def test_sync_frontmatter_created_if_missing_overrides_disable_permalinks(
 
 
 @pytest.fixture
-def test_config_update_permamlinks_on_move(app_config) -> BasicMemoryConfig:
+def test_config_update_permamlinks_on_move(app_config) -> AgentBrainConfig:
     """Test configuration using in-memory DB."""
     app_config.update_permalinks_on_move = True
     return app_config
@@ -1181,7 +1181,7 @@ def test_config_update_permamlinks_on_move(app_config) -> BasicMemoryConfig:
 
 @pytest.mark.asyncio
 async def test_sync_permalink_updated_on_move(
-    test_config_update_permamlinks_on_move: BasicMemoryConfig,
+    test_config_update_permamlinks_on_move: AgentBrainConfig,
     project_config: ProjectConfig,
     sync_service: SyncService,
     file_service: FileService,
@@ -1552,7 +1552,7 @@ async def test_scan_directory_respects_ignore_patterns(
     (project_dir / ".gitignore").write_text("*.ignored\n.hidden/\n")
 
     # Reload ignore patterns using project's .gitignore
-    from basic_memory.ignore_utils import load_gitignore_patterns
+    from agent_brain.ignore_utils import load_gitignore_patterns
 
     sync_service._ignore_patterns = load_gitignore_patterns(project_dir)
 
@@ -1607,7 +1607,7 @@ async def test_scan_directory_empty_directory(
     """Test streaming scan on empty directory (ignoring hidden files)."""
     project_dir = project_config.home
 
-    # Directory exists but has no user files (may have .basic-memory config dir)
+    # Directory exists but has no user files (may have .agent-brain config dir)
     assert project_dir.exists()
 
     # Don't create any user files - just scan empty directory
@@ -1768,7 +1768,7 @@ async def test_sync_file_continues_on_semantic_dependency_error(
     """
     from unittest.mock import AsyncMock
 
-    from basic_memory.repository.semantic_errors import SemanticDependenciesMissingError
+    from agent_brain.repository.semantic_errors import SemanticDependenciesMissingError
 
     project_dir = project_config.home
     content = """---

@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from basic_memory.mcp.clients import (
+from agent_brain.mcp.clients import (
     KnowledgeClient,
     SearchClient,
     MemoryClient,
@@ -27,7 +27,7 @@ class TestKnowledgeClient:
     @pytest.mark.asyncio
     async def test_create_entity(self, monkeypatch):
         """Test create_entity calls correct endpoint."""
-        from basic_memory.mcp.clients import knowledge as knowledge_mod
+        from agent_brain.mcp.clients import knowledge as knowledge_mod
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -56,7 +56,7 @@ class TestKnowledgeClient:
     @pytest.mark.asyncio
     async def test_resolve_entity(self, monkeypatch):
         """Test resolve_entity returns external_id."""
-        from basic_memory.mcp.clients import knowledge as knowledge_mod
+        from agent_brain.mcp.clients import knowledge as knowledge_mod
 
         mock_response = MagicMock()
         mock_response.json.return_value = {"external_id": "entity-uuid-123"}
@@ -87,7 +87,7 @@ class TestSearchClient:
     @pytest.mark.asyncio
     async def test_search(self, monkeypatch):
         """Test search calls correct endpoint."""
-        from basic_memory.mcp.clients import search as search_mod
+        from agent_brain.mcp.clients import search as search_mod
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -124,7 +124,7 @@ class TestMemoryClient:
     @pytest.mark.asyncio
     async def test_build_context(self, monkeypatch):
         """Test build_context calls correct endpoint."""
-        from basic_memory.mcp.clients import memory as memory_mod
+        from agent_brain.mcp.clients import memory as memory_mod
         from datetime import datetime
 
         mock_response = MagicMock()
@@ -150,7 +150,7 @@ class TestMemoryClient:
     @pytest.mark.asyncio
     async def test_recent(self, monkeypatch):
         """Test recent calls correct endpoint."""
-        from basic_memory.mcp.clients import memory as memory_mod
+        from agent_brain.mcp.clients import memory as memory_mod
         from datetime import datetime
 
         mock_response = MagicMock()
@@ -180,7 +180,7 @@ class TestMemoryClient:
     @pytest.mark.asyncio
     async def test_recent_with_types(self, monkeypatch):
         """Test recent with types filter."""
-        from basic_memory.mcp.clients import memory as memory_mod
+        from agent_brain.mcp.clients import memory as memory_mod
         from datetime import datetime
 
         mock_response = MagicMock()
@@ -220,7 +220,7 @@ class TestDirectoryClient:
     @pytest.mark.asyncio
     async def test_list(self, monkeypatch):
         """Test list calls correct endpoint."""
-        from basic_memory.mcp.clients import directory as directory_mod
+        from agent_brain.mcp.clients import directory as directory_mod
 
         mock_response = MagicMock()
         mock_response.json.return_value = [{"name": "folder", "type": "directory"}]
@@ -252,7 +252,7 @@ class TestResourceClient:
     @pytest.mark.asyncio
     async def test_read(self, monkeypatch):
         """Test read calls correct endpoint."""
-        from basic_memory.mcp.clients import resource as resource_mod
+        from agent_brain.mcp.clients import resource as resource_mod
 
         mock_response = MagicMock()
         mock_response.text = "# Note content"
@@ -281,7 +281,7 @@ class TestProjectClient:
     @pytest.mark.asyncio
     async def test_list_projects(self, monkeypatch):
         """Test list_projects calls correct endpoint."""
-        from basic_memory.mcp.clients import project as project_mod
+        from agent_brain.mcp.clients import project as project_mod
 
         mock_response = MagicMock()
         mock_response.json.return_value = {

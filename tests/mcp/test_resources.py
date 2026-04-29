@@ -1,4 +1,4 @@
-from basic_memory.mcp.prompts.ai_assistant_guide import ai_assistant_guide
+from agent_brain.mcp.prompts.ai_assistant_guide import ai_assistant_guide
 
 
 import pytest

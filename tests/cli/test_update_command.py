@@ -2,8 +2,8 @@
 
 from typer.testing import CliRunner
 
-from basic_memory.cli.app import app
-from basic_memory.cli.auto_update import AutoUpdateResult, AutoUpdateStatus, InstallSource
+from agent_brain.cli.app import app
+from agent_brain.cli.auto_update import AutoUpdateResult, AutoUpdateStatus, InstallSource
 
 
 def _result(
@@ -29,10 +29,10 @@ def test_update_command_applies_upgrade(monkeypatch):
     runner = CliRunner()
 
     monkeypatch.setattr(
-        "basic_memory.cli.commands.update.run_auto_update",
+        "agent_brain.cli.commands.update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.UPDATED,
-            message="Basic Memory was updated successfully.",
+            message="Agent Brain was updated successfully.",
         ),
     )
 
@@ -45,10 +45,10 @@ def test_update_command_check_only_shows_available(monkeypatch):
     runner = CliRunner()
 
     monkeypatch.setattr(
-        "basic_memory.cli.commands.update.run_auto_update",
+        "agent_brain.cli.commands.update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.UPDATE_AVAILABLE,
-            message="Update available (latest: 9.9.9). Run `uv tool upgrade basic-memory`.",
+            message="Update available (latest: 9.9.9). Run `uv tool upgrade agent-brain`.",
         ),
     )
 
@@ -61,10 +61,10 @@ def test_update_command_reports_up_to_date(monkeypatch):
     runner = CliRunner()
 
     monkeypatch.setattr(
-        "basic_memory.cli.commands.update.run_auto_update",
+        "agent_brain.cli.commands.update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.UP_TO_DATE,
-            message="Basic Memory is up to date.",
+            message="Agent Brain is up to date.",
         ),
     )
 
@@ -77,7 +77,7 @@ def test_update_command_failure_exits_nonzero(monkeypatch):
     runner = CliRunner()
 
     monkeypatch.setattr(
-        "basic_memory.cli.commands.update.run_auto_update",
+        "agent_brain.cli.commands.update.run_auto_update",
         lambda **kwargs: _result(
             AutoUpdateStatus.FAILED,
             message="Automatic update failed.",

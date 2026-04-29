@@ -2,7 +2,7 @@
 
 import pytest
 
-from basic_memory.schema.inference import infer_schema, NoteData
+from agent_brain.schema.inference import infer_schema, NoteData
 
 from test_schema.helpers import parse_observations, parse_relations, INFERENCE_DIR
 

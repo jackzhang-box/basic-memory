@@ -16,7 +16,7 @@ async def test_project_constraint_override_content_tools(mcp_server, app, test_p
     """Test that content tools use constrained project even when different project specified."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -43,8 +43,8 @@ async def test_project_constraint_override_content_tools(mcp_server, app, test_p
 
     finally:
         # Clean up environment variable
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
@@ -52,7 +52,7 @@ async def test_project_constraint_read_note_override(mcp_server, app, test_proje
     """Test that read_note also respects project constraint."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -84,8 +84,8 @@ async def test_project_constraint_read_note_override(mcp_server, app, test_proje
             # read_note returns the note content, not a summary with project info
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
@@ -93,7 +93,7 @@ async def test_project_constraint_search_notes_override(mcp_server, app, test_pr
     """Test that search_notes respects project constraint."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -125,8 +125,8 @@ async def test_project_constraint_search_notes_override(mcp_server, app, test_pr
             # search_notes returns search results, check if it found the note
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
@@ -134,7 +134,7 @@ async def test_list_projects_constrained_mode(mcp_server, app, test_project):
     """Test that list_memory_projects shows only constrained project."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -147,8 +147,8 @@ async def test_list_projects_constrained_mode(mcp_server, app, test_project):
             assert "MCP server is constrained to a single project" in response_text
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
@@ -156,7 +156,7 @@ async def test_create_project_disabled_in_constrained_mode(mcp_server, app, test
     """Test that create_memory_project is disabled when server is constrained."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -173,11 +173,11 @@ async def test_create_project_disabled_in_constrained_mode(mcp_server, app, test
             assert "Project creation disabled" in response_text
             assert f"constrained to project '{test_project.name}'" in response_text
             assert "Use the CLI to create projects:" in response_text
-            assert 'basic-memory project add "new-project" "/tmp/new-project"' in response_text
+            assert 'agent-brain project add "new-project" "/tmp/new-project"' in response_text
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
@@ -185,7 +185,7 @@ async def test_delete_project_disabled_in_constrained_mode(mcp_server, app, test
     """Test that delete_project is disabled when server is constrained."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -199,11 +199,11 @@ async def test_delete_project_disabled_in_constrained_mode(mcp_server, app, test
             assert "Project deletion disabled" in response_text
             assert f"constrained to project '{test_project.name}'" in response_text
             assert "Use the CLI to delete projects:" in response_text
-            assert 'basic-memory project remove "some-project"' in response_text
+            assert 'agent-brain project remove "some-project"' in response_text
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
@@ -211,8 +211,8 @@ async def test_normal_mode_without_constraint(mcp_server, app, test_project):
     """Test that tools work normally when no constraint is set."""
 
     # Ensure no constraint is set
-    if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-        del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+    if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+        del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
     async with Client(mcp_server) as client:
         # Test write_note works with explicit project
@@ -244,7 +244,7 @@ async def test_constraint_with_multiple_content_tools(mcp_server, app, test_proj
     """Test that constraint works across multiple different content tools."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -275,8 +275,8 @@ async def test_constraint_with_multiple_content_tools(mcp_server, app, test_proj
             assert "Multi Tool Test" in search_result.content[0].text  # pyright: ignore [reportAttributeAccessIssue]
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
 
 @pytest.mark.asyncio
@@ -284,7 +284,7 @@ async def test_constraint_environment_cleanup(mcp_server, app, test_project):
     """Test that removing constraint restores normal behavior."""
 
     # Set constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     async with Client(mcp_server) as client:
         # Verify constraint is active
@@ -292,7 +292,7 @@ async def test_constraint_environment_cleanup(mcp_server, app, test_project):
         assert "MCP server is constrained to a single project" in constrained_result.content[0].text  # pyright: ignore [reportAttributeAccessIssue]
 
         # Remove constraint
-        del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        del os.environ["AGENT_BRAIN_MCP_PROJECT"]
 
         # Verify normal behavior is restored
         normal_result = await client.call_tool("list_memory_projects", {})
@@ -306,7 +306,7 @@ async def test_constraint_with_invalid_project_override(mcp_server, app, test_pr
     """Test constraint behavior when trying to override with invalid project names."""
 
     # Set up project constraint
-    os.environ["BASIC_MEMORY_MCP_PROJECT"] = test_project.name
+    os.environ["AGENT_BRAIN_MCP_PROJECT"] = test_project.name
 
     try:
         async with Client(mcp_server) as client:
@@ -336,5 +336,5 @@ async def test_constraint_with_invalid_project_override(mcp_server, app, test_pr
                 assert "# Created note" in response_text or "# Updated note" in response_text
 
     finally:
-        if "BASIC_MEMORY_MCP_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_MCP_PROJECT"]
+        if "AGENT_BRAIN_MCP_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_MCP_PROJECT"]

@@ -9,9 +9,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from basic_memory.config import BasicMemoryConfig, DatabaseBackend
-from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
-from basic_memory.repository.semantic_errors import (
+from agent_brain.config import AgentBrainConfig, DatabaseBackend
+from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
+from agent_brain.repository.semantic_errors import (
     SemanticDependenciesMissingError,
     SemanticSearchDisabledError,
 )
@@ -40,7 +40,7 @@ def _make_repo(
 ) -> PostgresSearchRepository:
     """Build a PostgresSearchRepository with a no-op session maker."""
     session_maker = MagicMock()
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
         projects={"test-project": "/tmp/test"},
         default_project="test-project",
@@ -109,7 +109,7 @@ class TestConstructorAutoProvider:
 
     def test_auto_creates_embedding_provider_when_enabled(self):
         session_maker = MagicMock()
-        app_config = BasicMemoryConfig(
+        app_config = AgentBrainConfig(
             env="test",
             projects={"test-project": "/tmp/test"},
             default_project="test-project",
@@ -118,7 +118,7 @@ class TestConstructorAutoProvider:
         )
         stub = StubEmbeddingProvider()
         with patch(
-            "basic_memory.repository.postgres_search_repository.create_embedding_provider",
+            "agent_brain.repository.postgres_search_repository.create_embedding_provider",
             return_value=stub,
         ) as mock_factory:
             repo = PostgresSearchRepository(session_maker, project_id=1, app_config=app_config)

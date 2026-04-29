@@ -10,8 +10,8 @@ from textwrap import dedent
 import pytest
 from fastmcp import Client
 
-from basic_memory.config import ConfigManager
-from basic_memory.schemas.project_info import ProjectItem
+from agent_brain.config import ConfigManager
+from agent_brain.schemas.project_info import ProjectItem
 from pathlib import Path
 
 
@@ -432,7 +432,7 @@ async def test_write_note_project_path_validation(mcp_server, app, test_project)
     2. Not Path(self.name) which was the bug
 
     This test verifies the fix works correctly even though in the test environment
-    the project name and path happen to be the same. The fix in src/basic_memory/schemas/project_info.py:186
+    the project name and path happen to be the same. The fix in src/agent_brain/schemas/project_info.py:186
     ensures .expanduser() is called, which is critical for paths with ~ like "~/Documents/Test BiSync".
     """
 

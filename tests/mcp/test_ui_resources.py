@@ -5,12 +5,12 @@ We call the underlying () to exercise the template loading logic.
 
 NOTE: UI resources are temporarily disabled (not registered with MCP server)
 while MCP client rendering is being sorted out. These tests are skipped
-until the resources are re-enabled in basic_memory.mcp.resources.__init__.
+until the resources are re-enabled in agent_brain.mcp.resources.__init__.
 """
 
 import pytest
 
-from basic_memory.mcp.resources.ui import (
+from agent_brain.mcp.resources.ui import (
     search_results_ui,
     note_preview_ui,
     search_results_ui_vanilla,
@@ -29,14 +29,14 @@ class TestVariantResources:
 
     def test_search_results_ui(self, monkeypatch):
         """search_results_ui loads the variant-specific template."""
-        monkeypatch.setenv("BASIC_MEMORY_MCP_UI_VARIANT", "vanilla")
+        monkeypatch.setenv("AGENT_BRAIN_MCP_UI_VARIANT", "vanilla")
         html = search_results_ui()
         assert isinstance(html, str)
         assert len(html) > 0
 
     def test_note_preview_ui(self, monkeypatch):
         """note_preview_ui loads the variant-specific template."""
-        monkeypatch.setenv("BASIC_MEMORY_MCP_UI_VARIANT", "vanilla")
+        monkeypatch.setenv("AGENT_BRAIN_MCP_UI_VARIANT", "vanilla")
         html = note_preview_ui()
         assert isinstance(html, str)
         assert len(html) > 0

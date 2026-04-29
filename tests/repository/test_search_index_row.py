@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from basic_memory.repository.search_index_row import SearchIndexRow
+from agent_brain.repository.search_index_row import SearchIndexRow
 
 
 def test_content_display_limit_is_4000():

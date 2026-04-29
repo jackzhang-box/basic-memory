@@ -6,10 +6,10 @@ from unittest.mock import MagicMock
 import pytest
 from sqlalchemy import text
 
-from basic_memory import db
-from basic_memory.repository.search_index_row import SearchIndexRow
-from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
-from basic_memory.schemas.search import SearchItemType, SearchRetrievalMode
+from agent_brain import db
+from agent_brain.repository.search_index_row import SearchIndexRow
+from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
+from agent_brain.schemas.search import SearchItemType, SearchRetrievalMode
 
 
 class StubEmbeddingProvider:

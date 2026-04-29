@@ -21,42 +21,42 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 from testcontainers.postgres import PostgresContainer
 
-from basic_memory import db
-from basic_memory.config import (
+from agent_brain import db
+from agent_brain.config import (
     ProjectConfig,
     ProjectEntry,
-    BasicMemoryConfig,
+    AgentBrainConfig,
     ConfigManager,
     DatabaseBackend,
 )
-from basic_memory.db import DatabaseType
-from basic_memory.markdown import EntityParser
-from basic_memory.markdown.markdown_processor import MarkdownProcessor
-from basic_memory.models import Base
-from basic_memory.models.knowledge import Entity
-from basic_memory.models.project import Project
-from basic_memory.repository.entity_repository import EntityRepository
-from basic_memory.repository.observation_repository import ObservationRepository
-from basic_memory.repository.project_repository import ProjectRepository
-from basic_memory.repository.relation_repository import RelationRepository
-from basic_memory.schemas.base import Entity as EntitySchema
-from basic_memory.services import (
+from agent_brain.db import DatabaseType
+from agent_brain.markdown import EntityParser
+from agent_brain.markdown.markdown_processor import MarkdownProcessor
+from agent_brain.models import Base
+from agent_brain.models.knowledge import Entity
+from agent_brain.models.project import Project
+from agent_brain.repository.entity_repository import EntityRepository
+from agent_brain.repository.observation_repository import ObservationRepository
+from agent_brain.repository.project_repository import ProjectRepository
+from agent_brain.repository.relation_repository import RelationRepository
+from agent_brain.schemas.base import Entity as EntitySchema
+from agent_brain.services import (
     EntityService,
     ProjectService,
 )
-from basic_memory.services.directory_service import DirectoryService
-from basic_memory.services.file_service import FileService
-from basic_memory.services.link_resolver import LinkResolver
-from basic_memory.services.search_service import SearchService
-from basic_memory.sync.sync_service import SyncService
-from basic_memory.sync.watch_service import WatchService
+from agent_brain.services.directory_service import DirectoryService
+from agent_brain.services.file_service import FileService
+from agent_brain.services.link_resolver import LinkResolver
+from agent_brain.services.search_service import SearchService
+from agent_brain.sync.sync_service import SyncService
+from agent_brain.sync.watch_service import WatchService
 
 
 # =============================================================================
 # Database Backend Selection (env var approach)
 # =============================================================================
 # By default, tests run against SQLite.
-# Set BASIC_MEMORY_TEST_POSTGRES=1 to run against Postgres (uses testcontainers).
+# Set AGENT_BRAIN_TEST_POSTGRES=1 to run against Postgres (uses testcontainers).
 # This allows running sqlite/postgres tests in parallel in CI.
 
 
@@ -65,9 +65,9 @@ def db_backend():
     """Determine database backend from environment variable.
 
     Default: sqlite
-    Set BASIC_MEMORY_TEST_POSTGRES=1 to use postgres
+    Set AGENT_BRAIN_TEST_POSTGRES=1 to use postgres
     """
-    if os.environ.get("BASIC_MEMORY_TEST_POSTGRES", "").lower() in ("1", "true", "yes"):
+    if os.environ.get("AGENT_BRAIN_TEST_POSTGRES", "").lower() in ("1", "true", "yes"):
         return "postgres"
     return "sqlite"
 
@@ -97,7 +97,7 @@ POSTGRES_EPHEMERAL_TABLES = [
 
 def _configured_postgres_sync_url() -> str | None:
     """Prefer an externally managed Postgres server when CI provides one."""
-    configured_url = os.environ.get("BASIC_MEMORY_TEST_POSTGRES_URL") or os.environ.get(
+    configured_url = os.environ.get("AGENT_BRAIN_TEST_POSTGRES_URL") or os.environ.get(
         "POSTGRES_TEST_URL"
     )
     if not configured_url:
@@ -147,7 +147,7 @@ def _resolve_postgres_sync_url(postgres_container) -> str:
 
 async def _reset_postgres_test_schema(engine: AsyncEngine, async_url: str) -> None:
     """Restore the shared Postgres schema to a clean baseline before each test."""
-    from basic_memory.models.search import (
+    from agent_brain.models.search import (
         CREATE_POSTGRES_SEARCH_INDEX_FTS,
         CREATE_POSTGRES_SEARCH_INDEX_METADATA,
         CREATE_POSTGRES_SEARCH_INDEX_PERMALINK,
@@ -206,13 +206,13 @@ def config_home(tmp_path, monkeypatch) -> Path:
     # On Windows, also set USERPROFILE
     if os.name == "nt":
         monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    # Set BASIC_MEMORY_HOME to the test directory
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path / "basic-memory"))
+    # Set AGENT_BRAIN_HOME to the test directory
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path / "agent-brain"))
     return tmp_path
 
 
 @pytest.fixture(scope="function")
-def app_config(config_home, db_backend, postgres_container, monkeypatch) -> BasicMemoryConfig:
+def app_config(config_home, db_backend, postgres_container, monkeypatch) -> AgentBrainConfig:
     """Create test app configuration for the appropriate backend."""
     projects = {"test-project": ProjectEntry(path=str(config_home))}
 
@@ -228,7 +228,7 @@ def app_config(config_home, db_backend, postgres_container, monkeypatch) -> Basi
         backend = DatabaseBackend.SQLITE
         database_url = None
 
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
         projects=projects,
         default_project="test-project",
@@ -241,9 +241,9 @@ def app_config(config_home, db_backend, postgres_container, monkeypatch) -> Basi
 
 
 @pytest.fixture
-def config_manager(app_config: BasicMemoryConfig, config_home: Path, monkeypatch) -> ConfigManager:
+def config_manager(app_config: AgentBrainConfig, config_home: Path, monkeypatch) -> ConfigManager:
     # Invalidate config cache to ensure clean state for each test
-    from basic_memory import config as config_module
+    from agent_brain import config as config_module
 
     config_module._CONFIG_CACHE = None
     config_module._CONFIG_MTIME = None
@@ -252,7 +252,7 @@ def config_manager(app_config: BasicMemoryConfig, config_home: Path, monkeypatch
     # Create a new ConfigManager that uses the test home directory
     config_manager = ConfigManager()
     # Update its paths to use the test directory
-    config_manager.config_dir = config_home / ".basic-memory"
+    config_manager.config_dir = config_home / ".agent-brain"
     config_manager.config_file = config_manager.config_dir / "config.json"
     config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -277,7 +277,7 @@ def project_config(test_project):
 class TestConfig:
     config_home: Path
     project_config: ProjectConfig
-    app_config: BasicMemoryConfig
+    app_config: AgentBrainConfig
     config_manager: ConfigManager
 
 
@@ -298,7 +298,7 @@ async def engine_factory(
 
     Uses parameterized db_backend fixture to run tests against both backends.
     """
-    from basic_memory.models.search import (
+    from agent_brain.models.search import (
         CREATE_SEARCH_INDEX,
         CREATE_SQLITE_SEARCH_VECTOR_CHUNKS,
         CREATE_SQLITE_SEARCH_VECTOR_CHUNKS_PROJECT_ENTITY,
@@ -426,7 +426,7 @@ async def entity_service(
     entity_parser: EntityParser,
     file_service: FileService,
     link_resolver: LinkResolver,
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
 ) -> EntityService:
     """Create EntityService."""
     return EntityService(
@@ -468,7 +468,7 @@ def entity_parser(project_config):
 
 @pytest_asyncio.fixture
 async def sync_service(
-    app_config: BasicMemoryConfig,
+    app_config: AgentBrainConfig,
     entity_service: EntityService,
     entity_parser: EntityParser,
     project_repository: ProjectRepository,
@@ -499,10 +499,10 @@ async def directory_service(entity_repository, project_config) -> DirectoryServi
 
 
 @pytest_asyncio.fixture
-async def search_repository(session_maker, test_project: Project, app_config: BasicMemoryConfig):
+async def search_repository(session_maker, test_project: Project, app_config: AgentBrainConfig):
     """Create backend-appropriate SearchRepository instance with project context"""
-    from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
-    from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
+    from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
+    from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
 
     if app_config.database_backend == DatabaseBackend.POSTGRES:
         return PostgresSearchRepository(
@@ -672,7 +672,7 @@ async def test_graph(
 
 
 @pytest.fixture
-def watch_service(app_config: BasicMemoryConfig, project_repository, sync_service) -> WatchService:
+def watch_service(app_config: AgentBrainConfig, project_repository, sync_service) -> WatchService:
     """Create WatchService with injected sync_service factory.
 
     The sync_service_factory allows tests to use the fixture-provided sync_service

@@ -2,12 +2,12 @@
 
 import pytest
 
-from basic_memory.importers.base import Importer
-from basic_memory.markdown.entity_parser import EntityParser
-from basic_memory.markdown.markdown_processor import MarkdownProcessor
-from basic_memory.markdown.schemas import EntityFrontmatter, EntityMarkdown
-from basic_memory.schemas.importer import ImportResult
-from basic_memory.services.file_service import FileService
+from agent_brain.importers.base import Importer
+from agent_brain.markdown.entity_parser import EntityParser
+from agent_brain.markdown.markdown_processor import MarkdownProcessor
+from agent_brain.markdown.schemas import EntityFrontmatter, EntityMarkdown
+from agent_brain.schemas.importer import ImportResult
+from agent_brain.services.file_service import FileService
 
 
 # Create a concrete implementation of the abstract class for testing

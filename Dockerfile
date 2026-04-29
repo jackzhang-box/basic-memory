@@ -30,12 +30,12 @@ RUN uv python install 3.13
 RUN uv sync --locked --python 3.13
 
 # Create necessary directories and set ownership
-RUN mkdir -p /app/data/basic-memory /app/.basic-memory && \
+RUN mkdir -p /app/data/agent-brain /app/.agent-brain && \
     chown -R appuser:${GID} /app
 
 # Set default data directory and add venv to PATH
-ENV BASIC_MEMORY_HOME=/app/data/basic-memory \
-    BASIC_MEMORY_PROJECT_ROOT=/app/data \
+ENV AGENT_BRAIN_HOME=/app/data/agent-brain \
+    AGENT_BRAIN_PROJECT_ROOT=/app/data \
     PATH="/app/.venv/bin:$PATH"
 
 # Switch to the non-root user
@@ -46,7 +46,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD basic-memory --version || exit 1
+    CMD agent-brain --version || exit 1
 
-# Use the basic-memory entrypoint to run the MCP server with default SSE transport
-CMD ["basic-memory", "mcp", "--transport", "sse", "--host", "0.0.0.0", "--port", "8000"]
+# Use the agent-brain entrypoint to run the MCP server with default SSE transport
+CMD ["agent-brain", "mcp", "--transport", "sse", "--host", "0.0.0.0", "--port", "8000"]

@@ -2,8 +2,8 @@
 
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app
-import basic_memory
+from agent_brain.cli.main import app
+import agent_brain
 
 
 def test_version_command():
@@ -12,4 +12,4 @@ def test_version_command():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert basic_memory.__version__ in result.stdout
+    assert agent_brain.__version__ in result.stdout

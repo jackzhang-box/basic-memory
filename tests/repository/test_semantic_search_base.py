@@ -8,14 +8,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from basic_memory.repository.search_repository_base import (
+from agent_brain.repository.search_repository_base import (
     MAX_VECTOR_CHUNK_CHARS,
     SearchRepositoryBase,
     _PreparedEntityVectorSync,
 )
-from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
-from basic_memory.repository.semantic_errors import SemanticSearchDisabledError
-from basic_memory.schemas.search import SearchItemType, SearchRetrievalMode
+from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
+from agent_brain.repository.semantic_errors import SemanticSearchDisabledError
+from agent_brain.schemas.search import SearchItemType, SearchRetrievalMode
 
 
 # --- Helpers ---

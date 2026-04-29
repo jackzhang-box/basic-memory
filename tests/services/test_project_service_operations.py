@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.services.project_service import ProjectService
+from agent_brain.services.project_service import ProjectService
 
 
 @pytest.mark.asyncio

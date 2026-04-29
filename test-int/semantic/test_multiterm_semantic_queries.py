@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from basic_memory.config import DatabaseBackend
-from basic_memory.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
+from agent_brain.config import DatabaseBackend
+from agent_brain.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
 
 from semantic.conftest import (
     ALL_COMBOS,

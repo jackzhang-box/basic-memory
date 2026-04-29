@@ -7,9 +7,9 @@ import pytest_asyncio
 import sqlalchemy
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from basic_memory import db
-from basic_memory.models import Entity, Observation, Project
-from basic_memory.repository.observation_repository import ObservationRepository
+from agent_brain import db
+from agent_brain.models import Entity, Observation, Project
+from agent_brain.repository.observation_repository import ObservationRepository
 
 
 @pytest_asyncio.fixture(scope="function")

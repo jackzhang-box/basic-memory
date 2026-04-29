@@ -3,8 +3,8 @@
 import json
 import pytest
 
-from basic_memory.mcp.tools import write_note
-from basic_memory.schemas.search import SearchResponse, SearchResult, SearchItemType
+from agent_brain.mcp.tools import write_note
+from agent_brain.schemas.search import SearchResponse, SearchResult, SearchItemType
 
 
 @pytest.mark.asyncio
@@ -23,7 +23,7 @@ async def test_search_successful_results(client, test_project):
         content="# Test Document 2\n\nThis is test content for document 2",
     )
 
-    from basic_memory.mcp.tools.chatgpt_tools import search
+    from agent_brain.mcp.tools.chatgpt_tools import search
 
     result = await search("test content")
 
@@ -45,7 +45,7 @@ async def test_search_successful_results(client, test_project):
 @pytest.mark.asyncio
 async def test_search_with_error_response(monkeypatch, client, test_project):
     """Test search when underlying search_notes returns an error string."""
-    import basic_memory.mcp.tools.chatgpt_tools as chatgpt_tools
+    import agent_brain.mcp.tools.chatgpt_tools as chatgpt_tools
 
     error_message = "# Search Failed - Invalid Syntax\n\nThe search query contains errors..."
 
@@ -69,7 +69,7 @@ async def test_search_with_error_response(monkeypatch, client, test_project):
 @pytest.mark.asyncio
 async def test_search_uses_dynamic_default_search_type(monkeypatch, client, test_project):
     """ChatGPT adapter should not hardcode search_type so search_notes can pick defaults."""
-    import basic_memory.mcp.tools.chatgpt_tools as chatgpt_tools
+    import agent_brain.mcp.tools.chatgpt_tools as chatgpt_tools
 
     captured_kwargs: dict = {}
 
@@ -95,7 +95,7 @@ async def test_fetch_successful_document(client, test_project):
         content="# Test Document\n\nThis is the content of a test document.",
     )
 
-    from basic_memory.mcp.tools.chatgpt_tools import fetch
+    from agent_brain.mcp.tools.chatgpt_tools import fetch
 
     result = await fetch("docs/test-document")
 
@@ -114,7 +114,7 @@ async def test_fetch_successful_document(client, test_project):
 @pytest.mark.asyncio
 async def test_fetch_document_not_found(client, test_project):
     """Test fetch when document is not found."""
-    from basic_memory.mcp.tools.chatgpt_tools import fetch
+    from agent_brain.mcp.tools.chatgpt_tools import fetch
 
     result = await fetch("nonexistent-doc")
 
@@ -129,7 +129,7 @@ async def test_fetch_document_not_found(client, test_project):
 
 def test_format_search_results_for_chatgpt():
     """Test search results formatting."""
-    from basic_memory.mcp.tools.chatgpt_tools import _format_search_results_for_chatgpt
+    from agent_brain.mcp.tools.chatgpt_tools import _format_search_results_for_chatgpt
 
     mock_results = SearchResponse(
         results=[
@@ -167,7 +167,7 @@ def test_format_search_results_for_chatgpt():
 
 def test_format_document_for_chatgpt():
     """Test document formatting."""
-    from basic_memory.mcp.tools.chatgpt_tools import _format_document_for_chatgpt
+    from agent_brain.mcp.tools.chatgpt_tools import _format_document_for_chatgpt
 
     content = "# Test Document\n\nThis is test content."
     result = _format_document_for_chatgpt(content, "docs/test")
@@ -181,7 +181,7 @@ def test_format_document_for_chatgpt():
 
 def test_format_document_error_handling():
     """Test document formatting with error content."""
-    from basic_memory.mcp.tools.chatgpt_tools import _format_document_for_chatgpt
+    from agent_brain.mcp.tools.chatgpt_tools import _format_document_for_chatgpt
 
     error_content = '# Note Not Found: "missing-doc"\n\nDocument not found.'
     result = _format_document_for_chatgpt(error_content, "missing-doc", "Missing Doc")
@@ -194,7 +194,7 @@ def test_format_document_error_handling():
 
 def test_format_document_untitled_fallback_for_empty_identifier():
     """If identifier is empty and content has no H1, we still return a stable title."""
-    from basic_memory.mcp.tools.chatgpt_tools import _format_document_for_chatgpt
+    from agent_brain.mcp.tools.chatgpt_tools import _format_document_for_chatgpt
 
     result = _format_document_for_chatgpt("no title here", "")
     assert result["title"] == "Untitled Document"
@@ -203,7 +203,7 @@ def test_format_document_untitled_fallback_for_empty_identifier():
 @pytest.mark.asyncio
 async def test_search_internal_exception_returns_error_payload(monkeypatch, client, test_project):
     """search() should return a structured error payload if an unexpected exception occurs."""
-    import basic_memory.mcp.tools.chatgpt_tools as chatgpt_tools
+    import agent_brain.mcp.tools.chatgpt_tools as chatgpt_tools
 
     async def boom(*args, **kwargs):
         raise RuntimeError("boom")
@@ -220,7 +220,7 @@ async def test_search_internal_exception_returns_error_payload(monkeypatch, clie
 @pytest.mark.asyncio
 async def test_fetch_internal_exception_returns_error_payload(monkeypatch, client, test_project):
     """fetch() should return a structured error payload if an unexpected exception occurs."""
-    import basic_memory.mcp.tools.chatgpt_tools as chatgpt_tools
+    import agent_brain.mcp.tools.chatgpt_tools as chatgpt_tools
 
     async def boom(*args, **kwargs):
         raise RuntimeError("boom")

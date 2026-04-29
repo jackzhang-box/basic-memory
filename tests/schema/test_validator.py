@@ -1,8 +1,8 @@
-"""Tests for basic_memory.schema.validator -- note validation against schemas."""
+"""Tests for agent_brain.schema.validator -- note validation against schemas."""
 
-from basic_memory.schema.inference import ObservationData, RelationData
-from basic_memory.schema.parser import SchemaField, SchemaDefinition
-from basic_memory.schema.validator import validate_note
+from agent_brain.schema.inference import ObservationData, RelationData
+from agent_brain.schema.parser import SchemaField, SchemaDefinition
+from agent_brain.schema.validator import validate_note
 
 # Short aliases for test readability
 Obs = ObservationData

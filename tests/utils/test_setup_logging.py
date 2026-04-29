@@ -3,14 +3,14 @@
 import os
 import sys
 
-from basic_memory import utils
+from agent_brain import utils
 
 
 def test_setup_logging_uses_shared_log_file_off_windows(monkeypatch, tmp_path) -> None:
     """Non-Windows platforms should keep the shared log filename."""
     added_sinks: list[str] = []
 
-    monkeypatch.setenv("BASIC_MEMORY_ENV", "dev")
+    monkeypatch.setenv("AGENT_BRAIN_ENV", "dev")
     monkeypatch.setattr(utils.os, "name", "posix")
     monkeypatch.setattr(utils.Path, "home", lambda: tmp_path)
     monkeypatch.setattr(utils.logger, "remove", lambda *args, **kwargs: None)
@@ -22,14 +22,14 @@ def test_setup_logging_uses_shared_log_file_off_windows(monkeypatch, tmp_path) -
 
     utils.setup_logging(log_to_file=True)
 
-    assert added_sinks == [str(tmp_path / ".basic-memory" / "basic-memory.log")]
+    assert added_sinks == [str(tmp_path / ".agent-brain" / "agent-brain.log")]
 
 
 def test_setup_logging_uses_per_process_log_file_on_windows(monkeypatch, tmp_path) -> None:
     """Windows uses per-process logs so rotation never contends across processes."""
     added_sinks: list[str] = []
 
-    monkeypatch.setenv("BASIC_MEMORY_ENV", "dev")
+    monkeypatch.setenv("AGENT_BRAIN_ENV", "dev")
     monkeypatch.setattr(utils.os, "name", "nt")
     monkeypatch.setattr(utils.os, "getpid", lambda: 4242)
     monkeypatch.setattr(utils.Path, "home", lambda: tmp_path)
@@ -42,23 +42,23 @@ def test_setup_logging_uses_per_process_log_file_on_windows(monkeypatch, tmp_pat
 
     utils.setup_logging(log_to_file=True)
 
-    assert added_sinks == [str(tmp_path / ".basic-memory" / "basic-memory-4242.log")]
+    assert added_sinks == [str(tmp_path / ".agent-brain" / "agent-brain-4242.log")]
 
 
 def test_setup_logging_trims_stale_windows_pid_logs(monkeypatch, tmp_path) -> None:
     """Windows cleanup should bound stale PID-specific log files across runs."""
-    log_dir = tmp_path / ".basic-memory"
+    log_dir = tmp_path / ".agent-brain"
     log_dir.mkdir()
 
     stale_logs = []
     for index in range(6):
-        log_path = log_dir / f"basic-memory-{1000 + index}.log"
+        log_path = log_dir / f"agent-brain-{1000 + index}.log"
         log_path.write_text("old log", encoding="utf-8")
         mtime = 1_000 + index
         os.utime(log_path, (mtime, mtime))
         stale_logs.append(log_path)
 
-    monkeypatch.setenv("BASIC_MEMORY_ENV", "dev")
+    monkeypatch.setenv("AGENT_BRAIN_ENV", "dev")
     monkeypatch.setattr(utils.os, "name", "nt")
     monkeypatch.setattr(utils.os, "getpid", lambda: 4242)
     monkeypatch.setattr(utils.Path, "home", lambda: tmp_path)
@@ -67,12 +67,12 @@ def test_setup_logging_trims_stale_windows_pid_logs(monkeypatch, tmp_path) -> No
 
     utils.setup_logging(log_to_file=True)
 
-    remaining = sorted(path.name for path in log_dir.glob("basic-memory-*.log*"))
+    remaining = sorted(path.name for path in log_dir.glob("agent-brain-*.log*"))
     assert remaining == [
-        "basic-memory-1002.log",
-        "basic-memory-1003.log",
-        "basic-memory-1004.log",
-        "basic-memory-1005.log",
+        "agent-brain-1002.log",
+        "agent-brain-1003.log",
+        "agent-brain-1004.log",
+        "agent-brain-1005.log",
     ]
 
 
@@ -81,7 +81,7 @@ def test_setup_logging_test_env_uses_stderr_only(monkeypatch) -> None:
     added_sinks: list[object] = []
     configured_calls: list[dict] = []
 
-    monkeypatch.setenv("BASIC_MEMORY_ENV", "test")
+    monkeypatch.setenv("AGENT_BRAIN_ENV", "test")
     monkeypatch.setattr(utils.logger, "remove", lambda *args, **kwargs: None)
     monkeypatch.setattr(utils.logger, "add", lambda sink, **kwargs: added_sinks.append(sink))
     monkeypatch.setattr(
@@ -100,7 +100,7 @@ def test_setup_logging_log_to_stdout(monkeypatch) -> None:
     """stdout logging should attach a stderr sink outside test mode."""
     added_sinks: list[object] = []
 
-    monkeypatch.setenv("BASIC_MEMORY_ENV", "dev")
+    monkeypatch.setenv("AGENT_BRAIN_ENV", "dev")
     monkeypatch.setattr(utils.logger, "remove", lambda *args, **kwargs: None)
     monkeypatch.setattr(utils.logger, "add", lambda sink, **kwargs: added_sinks.append(sink))
 
@@ -111,7 +111,7 @@ def test_setup_logging_log_to_stdout(monkeypatch) -> None:
 
 def test_setup_logging_suppresses_noisy_loggers(monkeypatch) -> None:
     """Third-party HTTP/file-watch loggers should be raised to WARNING."""
-    monkeypatch.setenv("BASIC_MEMORY_ENV", "dev")
+    monkeypatch.setenv("AGENT_BRAIN_ENV", "dev")
     monkeypatch.setattr(utils.logger, "remove", lambda *args, **kwargs: None)
     monkeypatch.setattr(utils.logger, "add", lambda *args, **kwargs: None)
 

@@ -22,7 +22,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true  # Show triage progress
           prompt: |
-            Analyze this new Basic Memory issue and perform triage:
+            Analyze this new Agent Brain issue and perform triage:
 
             **Issue Analysis:**
             1. **Type Classification:**

@@ -2,7 +2,7 @@
 
 import pytest
 
-from basic_memory.schemas.memory import memory_url, memory_url_path, normalize_memory_url
+from agent_brain.schemas.memory import memory_url, memory_url_path, normalize_memory_url
 
 
 def test_basic_permalink():

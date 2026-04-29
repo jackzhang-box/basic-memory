@@ -30,7 +30,7 @@ Test → MCP Client → MCP Server → HTTP Request (ASGITransport) → FastAPI 
 4. **Search Index Initialization**: Creates the FTS5 search index tables that
    the application requires for search functionality.
 
-5. **Global Configuration Override**: Modifies the global `basic_memory_app_config`
+5. **Global Configuration Override**: Modifies the global `agent_brain_app_config`
    so MCP tools use test project settings instead of user configuration.
 
 ## Usage
@@ -63,31 +63,31 @@ from testcontainers.postgres import PostgresContainer
 
 from httpx import AsyncClient, ASGITransport
 
-from basic_memory.config import (
-    BasicMemoryConfig,
+from agent_brain.config import (
+    AgentBrainConfig,
     ProjectConfig,
     ProjectEntry,
     ConfigManager,
     DatabaseBackend,
 )
-from basic_memory.db import engine_session_factory, DatabaseType
-from basic_memory.models import Project
-from basic_memory.models.base import Base
-from basic_memory.repository.project_repository import ProjectRepository
+from agent_brain.db import engine_session_factory, DatabaseType
+from agent_brain.models import Project
+from agent_brain.models.base import Base
+from agent_brain.repository.project_repository import ProjectRepository
 from fastapi import FastAPI
 
-from basic_memory.deps import get_project_config, get_engine_factory, get_app_config
+from agent_brain.deps import get_project_config, get_engine_factory, get_app_config
 
 
 # Import MCP tools so they're available for testing
-from basic_memory.mcp import tools  # noqa: F401
+from agent_brain.mcp import tools  # noqa: F401
 
 
 # =============================================================================
 # Database Backend Selection (env var approach)
 # =============================================================================
 # By default, integration tests run against SQLite.
-# Set BASIC_MEMORY_TEST_POSTGRES=1 to run against Postgres (uses testcontainers).
+# Set AGENT_BRAIN_TEST_POSTGRES=1 to run against Postgres (uses testcontainers).
 
 
 @pytest.fixture(scope="session")
@@ -95,9 +95,9 @@ def db_backend() -> Literal["sqlite", "postgres"]:
     """Determine database backend from environment variable.
 
     Default: sqlite
-    Set BASIC_MEMORY_TEST_POSTGRES=1 to use postgres
+    Set AGENT_BRAIN_TEST_POSTGRES=1 to use postgres
     """
-    if os.environ.get("BASIC_MEMORY_TEST_POSTGRES", "").lower() in ("1", "true", "yes"):
+    if os.environ.get("AGENT_BRAIN_TEST_POSTGRES", "").lower() in ("1", "true", "yes"):
         return "postgres"
     return "sqlite"
 
@@ -127,7 +127,7 @@ POSTGRES_EPHEMERAL_TABLES = [
 
 def _configured_postgres_sync_url() -> str | None:
     """Prefer an externally managed Postgres server when CI provides one."""
-    configured_url = os.environ.get("BASIC_MEMORY_TEST_POSTGRES_URL") or os.environ.get(
+    configured_url = os.environ.get("AGENT_BRAIN_TEST_POSTGRES_URL") or os.environ.get(
         "POSTGRES_TEST_URL"
     )
     if not configured_url:
@@ -156,7 +156,7 @@ def _resolve_postgres_sync_url(postgres_container) -> str:
 
 async def _reset_postgres_integration_schema(engine) -> None:
     """Restore the shared Postgres integration schema to a clean baseline."""
-    from basic_memory.models.search import (
+    from agent_brain.models.search import (
         CREATE_POSTGRES_SEARCH_INDEX_FTS,
         CREATE_POSTGRES_SEARCH_INDEX_METADATA,
         CREATE_POSTGRES_SEARCH_INDEX_PERMALINK,
@@ -191,8 +191,8 @@ async def engine_factory(
     tmp_path,
 ) -> AsyncGenerator[tuple, None]:
     """Create engine and session factory for the configured database backend."""
-    from basic_memory.models.search import CREATE_SEARCH_INDEX
-    from basic_memory import db
+    from agent_brain.models.search import CREATE_SEARCH_INDEX
+    from agent_brain import db
 
     if db_backend == "postgres":
         # Postgres mode using testcontainers
@@ -265,8 +265,8 @@ async def test_project(config_home, engine_factory) -> Project:
 @pytest.fixture
 def config_home(tmp_path, monkeypatch) -> Path:
     monkeypatch.setenv("HOME", str(tmp_path))
-    # Set BASIC_MEMORY_HOME to the test directory
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path / "basic-memory"))
+    # Set AGENT_BRAIN_HOME to the test directory
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path / "agent-brain"))
     return tmp_path
 
 
@@ -277,10 +277,10 @@ def app_config(
     postgres_container,
     tmp_path,
     monkeypatch,
-) -> BasicMemoryConfig:
+) -> AgentBrainConfig:
     """Create test app configuration."""
     # Disable cloud mode for CLI tests
-    monkeypatch.setenv("BASIC_MEMORY_CLOUD_MODE", "false")
+    monkeypatch.setenv("AGENT_BRAIN_CLOUD_MODE", "false")
 
     # Create a basic config with test-project like unit tests do
     projects = {"test-project": ProjectEntry(path=str(config_home))}
@@ -297,7 +297,7 @@ def app_config(
         database_backend = DatabaseBackend.SQLITE
         database_url = None
 
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
         projects=projects,
         default_project="test-project",
@@ -310,9 +310,9 @@ def app_config(
 
 
 @pytest.fixture
-def config_manager(app_config: BasicMemoryConfig, config_home) -> ConfigManager:
+def config_manager(app_config: AgentBrainConfig, config_home) -> ConfigManager:
     # Invalidate config cache to ensure clean state for each test
-    from basic_memory import config as config_module
+    from agent_brain import config as config_module
 
     config_module._CONFIG_CACHE = None
     config_module._CONFIG_MTIME = None
@@ -320,7 +320,7 @@ def config_manager(app_config: BasicMemoryConfig, config_home) -> ConfigManager:
 
     config_manager = ConfigManager()
     # Update its paths to use the test directory
-    config_manager.config_dir = config_home / ".basic-memory"
+    config_manager.config_dir = config_home / ".agent-brain"
     config_manager.config_file = config_manager.config_dir / "config.json"
     config_manager.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -349,7 +349,7 @@ def app(
 
     # Import the FastAPI app AFTER the config_manager has written the test config to disk
     # This ensures that when the app's lifespan manager runs, it reads the correct test config
-    from basic_memory.api.app import app as fastapi_app
+    from agent_brain.api.app import app as fastapi_app
 
     app = fastapi_app
     previous_overrides = dict(app.dependency_overrides)
@@ -370,13 +370,13 @@ async def search_service(engine_factory, test_project, app_config):
 
     Uses app_config fixture to determine database backend - no patching needed.
     """
-    from basic_memory.repository.entity_repository import EntityRepository
-    from basic_memory.services.file_service import FileService
-    from basic_memory.services.search_service import SearchService
-    from basic_memory.markdown.markdown_processor import MarkdownProcessor
-    from basic_memory.markdown import EntityParser
+    from agent_brain.repository.entity_repository import EntityRepository
+    from agent_brain.services.file_service import FileService
+    from agent_brain.services.search_service import SearchService
+    from agent_brain.markdown.markdown_processor import MarkdownProcessor
+    from agent_brain.markdown import EntityParser
 
-    from basic_memory.repository.search_repository import create_search_repository
+    from agent_brain.repository.search_repository import create_search_repository
 
     engine, session_maker = engine_factory
 
@@ -399,16 +399,16 @@ async def search_service(engine_factory, test_project, app_config):
 @pytest.fixture
 def mcp_server(config_manager, search_service):
     # Import mcp instance
-    from basic_memory.mcp.server import mcp as server
+    from agent_brain.mcp.server import mcp as server
 
     # Import mcp tools to register them
-    import basic_memory.mcp.tools  # noqa: F401
+    import agent_brain.mcp.tools  # noqa: F401
 
     # Import resources to register them
-    import basic_memory.mcp.resources  # noqa: F401
+    import agent_brain.mcp.resources  # noqa: F401
 
     # Import prompts to register them
-    import basic_memory.mcp.prompts  # noqa: F401
+    import agent_brain.mcp.prompts  # noqa: F401
 
     return server
 

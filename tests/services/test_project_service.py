@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.schemas import (
+from agent_brain.schemas import (
     ProjectInfoResponse,
     ProjectStatistics,
     ActivityMetrics,
     SystemStatus,
 )
-from basic_memory.services.project_service import ProjectService
-from basic_memory.config import ConfigManager, DatabaseBackend
+from agent_brain.services.project_service import ProjectService
+from agent_brain.config import ConfigManager, DatabaseBackend
 
 
 def test_projects_property(project_service: ProjectService):
@@ -40,27 +40,27 @@ def test_default_project_property(project_service: ProjectService):
 def test_current_project_property(project_service: ProjectService):
     """Test the current_project property."""
     # Save original environment
-    original_env = os.environ.get("BASIC_MEMORY_PROJECT")
+    original_env = os.environ.get("AGENT_BRAIN_PROJECT")
 
     try:
         # Test with environment variable not set
-        if "BASIC_MEMORY_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_PROJECT"]
+        if "AGENT_BRAIN_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_PROJECT"]
 
         # Should return default_project when env var not set
         assert project_service.current_project == project_service.default_project
 
         # Now set the environment variable
-        os.environ["BASIC_MEMORY_PROJECT"] = "test-project"
+        os.environ["AGENT_BRAIN_PROJECT"] = "test-project"
 
         # Should return env var value
         assert project_service.current_project == "test-project"
     finally:
         # Restore original environment
         if original_env is not None:
-            os.environ["BASIC_MEMORY_PROJECT"] = original_env
-        elif "BASIC_MEMORY_PROJECT" in os.environ:
-            del os.environ["BASIC_MEMORY_PROJECT"]
+            os.environ["AGENT_BRAIN_PROJECT"] = original_env
+        elif "AGENT_BRAIN_PROJECT" in os.environ:
+            del os.environ["AGENT_BRAIN_PROJECT"]
 
     """Test the methods of ProjectService."""
 
@@ -513,7 +513,7 @@ async def test_synchronize_projects_normalizes_project_names(project_service: Pr
 
             # Add project with unnormalized name directly to config
             config = config_manager.load_config()
-            from basic_memory.config import ProjectEntry
+            from agent_brain.config import ProjectEntry
 
             config.projects[unnormalized_name] = ProjectEntry(path=test_project_path)
             config_manager.save_config(config)
@@ -706,7 +706,7 @@ async def test_synchronize_projects_handles_case_sensitivity_bug(project_service
         try:
             # Add project with uppercase name to config (simulating the bug scenario)
             config = config_manager.load_config()
-            from basic_memory.config import ProjectEntry
+            from agent_brain.config import ProjectEntry
 
             config.projects[config_name] = ProjectEntry(path=test_project_path)
             config_manager.save_config(config)
@@ -758,7 +758,7 @@ async def test_synchronize_projects_handles_case_sensitivity_bug(project_service
 async def test_add_project_with_project_root_sanitizes_paths(
     project_service: ProjectService, config_manager: ConfigManager, monkeypatch
 ):
-    """Test that BASIC_MEMORY_PROJECT_ROOT uses sanitized project name, ignoring user path.
+    """Test that AGENT_BRAIN_PROJECT_ROOT uses sanitized project name, ignoring user path.
 
     When project_root is set (cloud mode), the system should:
     1. Ignore the user's provided path completely
@@ -772,10 +772,10 @@ async def test_add_project_with_project_root_sanitizes_paths(
         project_root_path = Path(temp_dir) / "app" / "data"
         project_root_path.mkdir(parents=True, exist_ok=True)
 
-        monkeypatch.setenv("BASIC_MEMORY_PROJECT_ROOT", str(project_root_path))
+        monkeypatch.setenv("AGENT_BRAIN_PROJECT_ROOT", str(project_root_path))
 
         # Invalidate config cache so it picks up the new env var
-        from basic_memory import config as config_module
+        from agent_brain import config as config_module
 
         config_module._CONFIG_CACHE = None
         config_module._CONFIG_MTIME = None
@@ -831,7 +831,7 @@ async def test_add_project_with_project_root_sanitizes_paths(
 async def test_add_project_with_project_root_rejects_escape_attempts(
     project_service: ProjectService, config_manager: ConfigManager, monkeypatch
 ):
-    """Test that BASIC_MEMORY_PROJECT_ROOT rejects paths that try to escape the project root."""
+    """Test that AGENT_BRAIN_PROJECT_ROOT rejects paths that try to escape the project root."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Set up project root environment
         project_root_path = Path(temp_dir) / "app" / "data"
@@ -841,10 +841,10 @@ async def test_add_project_with_project_root_rejects_escape_attempts(
         outside_dir = Path(temp_dir) / "outside"
         outside_dir.mkdir(parents=True, exist_ok=True)
 
-        monkeypatch.setenv("BASIC_MEMORY_PROJECT_ROOT", str(project_root_path))
+        monkeypatch.setenv("AGENT_BRAIN_PROJECT_ROOT", str(project_root_path))
 
         # Invalidate config cache so it picks up the new env var
-        from basic_memory import config as config_module
+        from agent_brain import config as config_module
 
         config_module._CONFIG_CACHE = None
         config_module._CONFIG_MTIME = None
@@ -884,11 +884,11 @@ async def test_add_project_with_project_root_rejects_escape_attempts(
 async def test_add_project_without_project_root_allows_arbitrary_paths(
     project_service: ProjectService, config_manager: ConfigManager, monkeypatch
 ):
-    """Test that without BASIC_MEMORY_PROJECT_ROOT set, arbitrary paths are allowed."""
+    """Test that without AGENT_BRAIN_PROJECT_ROOT set, arbitrary paths are allowed."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Ensure project_root is not set
-        if "BASIC_MEMORY_PROJECT_ROOT" in os.environ:
-            monkeypatch.delenv("BASIC_MEMORY_PROJECT_ROOT")
+        if "AGENT_BRAIN_PROJECT_ROOT" in os.environ:
+            monkeypatch.delenv("AGENT_BRAIN_PROJECT_ROOT")
 
         # Create a test directory
         test_dir = Path(temp_dir) / "arbitrary-location"
@@ -919,7 +919,7 @@ async def test_add_project_without_project_root_allows_arbitrary_paths(
 async def test_add_project_with_project_root_normalizes_case(
     project_service: ProjectService, config_manager: ConfigManager, monkeypatch
 ):
-    """Test that BASIC_MEMORY_PROJECT_ROOT normalizes paths to lowercase.
+    """Test that AGENT_BRAIN_PROJECT_ROOT normalizes paths to lowercase.
 
     NOTE: This test is obsolete. After fixing the bisync duplicate project bug,
     project_root mode now ignores the user's path and uses the sanitized project name instead.
@@ -929,10 +929,10 @@ async def test_add_project_with_project_root_normalizes_case(
         project_root_path = Path(temp_dir) / "app" / "data"
         project_root_path.mkdir(parents=True, exist_ok=True)
 
-        monkeypatch.setenv("BASIC_MEMORY_PROJECT_ROOT", str(project_root_path))
+        monkeypatch.setenv("AGENT_BRAIN_PROJECT_ROOT", str(project_root_path))
 
         # Invalidate config cache so it picks up the new env var
-        from basic_memory import config as config_module
+        from agent_brain import config as config_module
 
         config_module._CONFIG_CACHE = None
         config_module._CONFIG_MTIME = None
@@ -975,7 +975,7 @@ async def test_add_project_with_project_root_normalizes_case(
 async def test_add_project_with_project_root_detects_case_collisions(
     project_service: ProjectService, config_manager: ConfigManager, monkeypatch
 ):
-    """Test that BASIC_MEMORY_PROJECT_ROOT detects case-insensitive path collisions.
+    """Test that AGENT_BRAIN_PROJECT_ROOT detects case-insensitive path collisions.
 
     NOTE: This test is obsolete. After fixing the bisync duplicate project bug,
     project_root mode now ignores the user's path and uses the sanitized project name instead.
@@ -985,10 +985,10 @@ async def test_add_project_with_project_root_detects_case_collisions(
         project_root_path = Path(temp_dir) / "app" / "data"
         project_root_path.mkdir(parents=True, exist_ok=True)
 
-        monkeypatch.setenv("BASIC_MEMORY_PROJECT_ROOT", str(project_root_path))
+        monkeypatch.setenv("AGENT_BRAIN_PROJECT_ROOT", str(project_root_path))
 
         # Invalidate config cache so it picks up the new env var
-        from basic_memory import config as config_module
+        from agent_brain import config as config_module
 
         config_module._CONFIG_CACHE = None
         config_module._CONFIG_MTIME = None
@@ -996,14 +996,14 @@ async def test_add_project_with_project_root_detects_case_collisions(
 
         # First, create a project with lowercase path
         first_project = "documents-project"
-        await project_service.add_project(first_project, "documents/basic-memory")
+        await project_service.add_project(first_project, "documents/agent-brain")
 
         # Verify it was created with normalized lowercase path (resolve to handle macOS /private/var)
         assert first_project in project_service.projects
         first_path = project_service.projects[first_project]
         assert (
             Path(first_path).resolve()
-            == (project_root_path / "documents" / "basic-memory").resolve()
+            == (project_root_path / "documents" / "agent-brain").resolve()
         )
 
         # Now try to create a project with the same path but different case
@@ -1012,7 +1012,7 @@ async def test_add_project_with_project_root_detects_case_collisions(
         second_project = "documents-project-2"
         try:
             # This should succeed because both get normalized to the same lowercase path
-            await project_service.add_project(second_project, "documents/basic-memory")
+            await project_service.add_project(second_project, "documents/agent-brain")
             # If we get here, both should have the exact same path
             second_path = project_service.projects[second_project]
             assert second_path == first_path
@@ -1155,16 +1155,16 @@ async def test_add_project_rejects_deeply_nested_path(project_service: ProjectSe
 async def test_add_project_nested_validation_with_project_root(
     project_service: ProjectService, config_manager: ConfigManager, monkeypatch
 ):
-    """Test that nested path validation works with BASIC_MEMORY_PROJECT_ROOT set."""
+    """Test that nested path validation works with AGENT_BRAIN_PROJECT_ROOT set."""
     # Use a completely separate temp directory to avoid fixture conflicts
     with tempfile.TemporaryDirectory() as temp_dir:
         project_root_path = Path(temp_dir) / "app" / "data"
         project_root_path.mkdir(parents=True, exist_ok=True)
 
-        monkeypatch.setenv("BASIC_MEMORY_PROJECT_ROOT", str(project_root_path))
+        monkeypatch.setenv("AGENT_BRAIN_PROJECT_ROOT", str(project_root_path))
 
         # Invalidate config cache
-        from basic_memory import config as config_module
+        from agent_brain import config as config_module
 
         config_module._CONFIG_CACHE = None
         config_module._CONFIG_MTIME = None

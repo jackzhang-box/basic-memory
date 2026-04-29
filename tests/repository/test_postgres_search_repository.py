@@ -9,15 +9,15 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy import text
 
-from basic_memory import db
-from basic_memory.config import BasicMemoryConfig, DatabaseBackend
-from basic_memory.repository.postgres_search_repository import (
+from agent_brain import db
+from agent_brain.config import AgentBrainConfig, DatabaseBackend
+from agent_brain.repository.postgres_search_repository import (
     PostgresSearchRepository,
     _strip_nul_from_row,
 )
-from basic_memory.repository.semantic_errors import SemanticSearchDisabledError
-from basic_memory.repository.search_index_row import SearchIndexRow
-from basic_memory.schemas.search import SearchItemType, SearchRetrievalMode
+from agent_brain.repository.semantic_errors import SemanticSearchDisabledError
+from agent_brain.repository.search_index_row import SearchIndexRow
+from agent_brain.schemas.search import SearchItemType, SearchRetrievalMode
 
 
 pytestmark = pytest.mark.postgres
@@ -61,7 +61,7 @@ async def _skip_if_pgvector_unavailable(session_maker) -> None:
 def _require_postgres_backend(db_backend):
     """Ensure these tests never run under SQLite."""
     if db_backend != "postgres":
-        pytest.skip("PostgresSearchRepository tests require BASIC_MEMORY_TEST_POSTGRES=1")
+        pytest.skip("PostgresSearchRepository tests require AGENT_BRAIN_TEST_POSTGRES=1")
 
 
 @pytest.mark.asyncio
@@ -228,7 +228,7 @@ async def test_postgres_search_repository_reraises_non_tsquery_db_errors(
     repo = PostgresSearchRepository(session_maker, project_id=test_project.id)
 
     from sqlalchemy import text
-    from basic_memory import db
+    from agent_brain import db
 
     async with db.scoped_session(session_maker) as session:
         await session.execute(text("DROP TABLE search_index"))
@@ -314,9 +314,9 @@ def test_strip_nul_from_row():
 async def test_postgres_semantic_vector_search_returns_ranked_entities(session_maker, test_project):
     """Vector mode ranks entities via pgvector distance."""
     await _skip_if_pgvector_unavailable(session_maker)
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         database_backend=DatabaseBackend.POSTGRES,
         semantic_search_enabled=True,
@@ -381,9 +381,9 @@ async def test_postgres_semantic_vector_search_returns_ranked_entities(session_m
 async def test_postgres_semantic_hybrid_search_combines_fts_and_vector(session_maker, test_project):
     """Hybrid mode fuses FTS and vector results with score-based fusion."""
     await _skip_if_pgvector_unavailable(session_maker)
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         database_backend=DatabaseBackend.POSTGRES,
         semantic_search_enabled=True,
@@ -445,9 +445,9 @@ async def test_postgres_semantic_hybrid_search_combines_fts_and_vector(session_m
 @pytest.mark.asyncio
 async def test_postgres_vector_mode_rejects_non_text_query(session_maker, test_project):
     """Vector mode should fail fast for title-only queries."""
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         database_backend=DatabaseBackend.POSTGRES,
         semantic_search_enabled=True,
@@ -470,9 +470,9 @@ async def test_postgres_vector_mode_rejects_non_text_query(session_maker, test_p
 @pytest.mark.asyncio
 async def test_postgres_vector_mode_fails_when_semantic_disabled(session_maker, test_project):
     """Vector mode should fail fast when semantic search is disabled."""
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         database_backend=DatabaseBackend.POSTGRES,
         semantic_search_enabled=False,
@@ -510,9 +510,9 @@ async def test_postgres_dimension_mismatch_triggers_table_recreation(session_mak
     await _skip_if_pgvector_unavailable(session_maker)
 
     # --- First, create tables with 4 dimensions ---
-    app_config_4d = BasicMemoryConfig(
+    app_config_4d = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         database_backend=DatabaseBackend.POSTGRES,
         semantic_search_enabled=True,
@@ -542,9 +542,9 @@ async def test_postgres_dimension_mismatch_triggers_table_recreation(session_mak
         assert int(row[0]) == 4
 
     # --- Now create a repo with 8 dimensions; should detect mismatch and recreate ---
-    app_config_8d = BasicMemoryConfig(
+    app_config_8d = AgentBrainConfig(
         env="test",
-        projects={"test-project": "/tmp/basic-memory-test"},
+        projects={"test-project": "/tmp/agent-brain-test"},
         default_project="test-project",
         database_backend=DatabaseBackend.POSTGRES,
         semantic_search_enabled=True,

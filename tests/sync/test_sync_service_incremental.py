@@ -17,8 +17,8 @@ from textwrap import dedent
 
 import pytest
 
-from basic_memory.config import ProjectConfig
-from basic_memory.sync.sync_service import SyncService
+from agent_brain.config import ProjectConfig
+from agent_brain.sync.sync_service import SyncService
 
 
 async def create_test_file(path: Path, content: str = "test content") -> None:
@@ -663,7 +663,7 @@ async def test_incremental_scan_respects_gitignore(
     (project_dir / ".gitignore").write_text("*.ignored\n.hidden/\n")
 
     # Reload ignore patterns
-    from basic_memory.ignore_utils import load_gitignore_patterns
+    from agent_brain.ignore_utils import load_gitignore_patterns
 
     sync_service._ignore_patterns = load_gitignore_patterns(project_dir)
 

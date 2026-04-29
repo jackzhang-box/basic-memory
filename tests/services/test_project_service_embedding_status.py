@@ -7,12 +7,12 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError as SAOperationalError
 
-from basic_memory.schemas.project_info import EmbeddingStatus
-from basic_memory.services.project_service import ProjectService
+from agent_brain.schemas.project_info import EmbeddingStatus
+from agent_brain.services.project_service import ProjectService
 
 
 def _is_postgres() -> bool:
-    return os.environ.get("BASIC_MEMORY_TEST_POSTGRES", "").lower() in ("1", "true", "yes")
+    return os.environ.get("AGENT_BRAIN_TEST_POSTGRES", "").lower() in ("1", "true", "yes")
 
 
 @pytest.mark.asyncio
@@ -315,7 +315,7 @@ async def test_get_project_info_includes_embedding_status(
 
 def _config_manager_with(semantic_search_enabled: bool):
     """Create a ConfigManager whose config has the given semantic_search_enabled value."""
-    from basic_memory.config import ConfigManager
+    from agent_brain.config import ConfigManager
 
     cm = ConfigManager()
     # Patch the config object in-place

@@ -19,7 +19,7 @@ def test_bm_version_exits_cleanly():
         cwd=Path(__file__).parent.parent.parent,  # Project root
     )
     assert result.returncode == 0
-    assert "Basic Memory version:" in result.stdout
+    assert "Agent Brain version:" in result.stdout
 
 
 def test_bm_help_exits_cleanly():
@@ -32,7 +32,7 @@ def test_bm_help_exits_cleanly():
         cwd=Path(__file__).parent.parent.parent,
     )
     assert result.returncode == 0
-    assert "Basic Memory" in result.stdout
+    assert "Agent Brain" in result.stdout
 
 
 def test_bm_tool_help_exits_cleanly():
@@ -53,7 +53,7 @@ def test_bm_version_does_not_import_heavy_modules():
 
     The fast-path guard in cli/main.py skips command registration when
     argv is exactly ['--version']. This test verifies that modules like
-    basic_memory.mcp (which pull in FastAPI, SQLAlchemy, etc.) are NOT
+    agent_brain.mcp (which pull in FastAPI, SQLAlchemy, etc.) are NOT
     loaded during a version-only invocation.
     """
     # Run a Python snippet that imports main.py the same way the entrypoint does,
@@ -61,8 +61,8 @@ def test_bm_version_does_not_import_heavy_modules():
     check_script = (
         "import sys; "
         "sys.argv = ['bm', '--version']; "
-        "import basic_memory.cli.main; "
-        "heavy = [m for m in sys.modules if m.startswith('basic_memory.mcp')]; "
+        "import agent_brain.cli.main; "
+        "heavy = [m for m in sys.modules if m.startswith('agent_brain.mcp')]; "
         "print(','.join(heavy) if heavy else 'CLEAN')"
     )
     result = subprocess.run(

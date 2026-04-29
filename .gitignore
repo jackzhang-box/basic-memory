@@ -48,7 +48,7 @@ ENV/
 # obsidian docs:
 /docs/.obsidian/
 /examples/.obsidian/
-/examples/.basic-memory/
+/examples/.agent-brain/
 
 
 # claude action

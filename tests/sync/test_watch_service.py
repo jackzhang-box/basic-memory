@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from watchfiles import Change
 
-from basic_memory.models.project import Project
-from basic_memory.sync.watch_service import WatchServiceState
+from agent_brain.models.project import Project
+from agent_brain.sync.watch_service import WatchServiceState
 
 
 async def create_test_file(path: Path, content: str = "test content") -> None:
@@ -494,7 +494,7 @@ async def test_handle_changes_skips_deleted_project(
 
     # Also add to config
     config = project_service.config_manager.load_config()
-    from basic_memory.config import ProjectEntry
+    from agent_brain.config import ProjectEntry
 
     config.projects["other-project"] = ProjectEntry(path=other_project_path)
     config.default_project = "other-project"

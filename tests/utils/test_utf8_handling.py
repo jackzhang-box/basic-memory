@@ -2,7 +2,7 @@
 
 import pytest
 
-from basic_memory.file_utils import compute_checksum, write_file_atomic
+from agent_brain.file_utils import compute_checksum, write_file_atomic
 
 
 @pytest.mark.asyncio

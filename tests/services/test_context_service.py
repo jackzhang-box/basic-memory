@@ -5,12 +5,12 @@ from datetime import datetime, timedelta, UTC
 import pytest
 import pytest_asyncio
 
-from basic_memory.repository.search_repository import SearchIndexRow
-from basic_memory.schemas.memory import memory_url, memory_url_path
-from basic_memory.schemas.search import SearchItemType
-from basic_memory.services.context_service import ContextService
-from basic_memory.models.knowledge import Entity, Relation
-from basic_memory.models.project import Project
+from agent_brain.repository.search_repository import SearchIndexRow
+from agent_brain.schemas.memory import memory_url, memory_url_path
+from agent_brain.schemas.search import SearchItemType
+from agent_brain.services.context_service import ContextService
+from agent_brain.models.knowledge import Entity, Relation
+from agent_brain.models.project import Project
 
 
 @pytest_asyncio.fixture
@@ -58,7 +58,7 @@ async def test_find_connected_timeframe(
     2. There is a valid path to them through other items in the timeframe
     """
     # Skip for Postgres - needs investigation of duplicate key violations
-    from basic_memory.config import DatabaseBackend
+    from agent_brain.config import DatabaseBackend
 
     if app_config.database_backend == DatabaseBackend.POSTGRES:
         pytest.skip("Not yet supported for Postgres - duplicate key violation issue")
@@ -235,12 +235,12 @@ async def test_context_metadata(context_service, test_graph):
 @pytest.mark.asyncio
 async def test_project_isolation_in_find_related(session_maker, app_config):
     """Test that find_related respects project boundaries and doesn't leak data."""
-    from basic_memory.repository.entity_repository import EntityRepository
-    from basic_memory.repository.observation_repository import ObservationRepository
-    from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
-    from basic_memory.repository.postgres_search_repository import PostgresSearchRepository
-    from basic_memory.config import DatabaseBackend
-    from basic_memory import db
+    from agent_brain.repository.entity_repository import EntityRepository
+    from agent_brain.repository.observation_repository import ObservationRepository
+    from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
+    from agent_brain.repository.postgres_search_repository import PostgresSearchRepository
+    from agent_brain.config import DatabaseBackend
+    from agent_brain import db
 
     # Create database session
     async with db.scoped_session(session_maker) as db_session:

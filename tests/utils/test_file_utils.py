@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.config import BasicMemoryConfig
-from basic_memory.file_utils import (
+from agent_brain.config import AgentBrainConfig
+from agent_brain.file_utils import (
     FileError,
     FileWriteError,
     ParseError,
@@ -248,7 +248,7 @@ async def test_format_file_disabled_by_default(tmp_path: Path):
     test_file = tmp_path / "test.md"
     test_file.write_text("# Test\n")
 
-    config = BasicMemoryConfig()
+    config = AgentBrainConfig()
     assert config.format_on_save is False
 
     result = await format_file(test_file, config)
@@ -262,7 +262,7 @@ async def test_format_file_no_formatter_uses_builtin_for_markdown(tmp_path: Path
     test_file.write_text("# Test\n")
 
     # No external formatter configured - should use built-in mdformat for markdown
-    config = BasicMemoryConfig(format_on_save=True, formatter_command=None)
+    config = AgentBrainConfig(format_on_save=True, formatter_command=None)
 
     result = await format_file(test_file, config, is_markdown=True)
     # mdformat should return formatted content
@@ -277,7 +277,7 @@ async def test_format_file_no_formatter_for_non_markdown(tmp_path: Path):
     test_file.write_text("Some text\n")
 
     # No external formatter configured - should return None for non-markdown
-    config = BasicMemoryConfig(format_on_save=True, formatter_command=None)
+    config = AgentBrainConfig(format_on_save=True, formatter_command=None)
 
     result = await format_file(test_file, config, is_markdown=False)
     assert result is None
@@ -292,7 +292,7 @@ async def test_format_file_with_global_formatter(tmp_path: Path):
     test_file.write_text(original_content)
 
     # Use a simple formatter that just echoes content (cat)
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="cat {file}",  # This doesn't modify the file but runs successfully
     )
@@ -309,7 +309,7 @@ async def test_format_file_with_extension_specific_formatter(tmp_path: Path):
     original_content = '{"key": "value"}'
     test_file.write_text(original_content)
 
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="echo global",  # This should NOT be used
         formatters={"json": "cat {file}"},  # Extension-specific should be used
@@ -329,7 +329,7 @@ async def test_format_file_extension_specific_overrides_global(tmp_path: Path):
 
     # Use different commands to verify which one is used
     # Since cat just reads the file, we can tell which was used by the content
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="cat /dev/null",  # Would return empty
         formatters={"md": "cat {file}"},  # Should return original content
@@ -347,7 +347,7 @@ async def test_format_file_falls_back_to_global(tmp_path: Path):
     original_content = "Some text\n"
     test_file.write_text(original_content)
 
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="cat {file}",
         formatters={"md": "echo wrong"},  # Only for .md, not .txt
@@ -363,7 +363,7 @@ async def test_format_file_handles_nonexistent_formatter(tmp_path: Path):
     test_file = tmp_path / "test.md"
     test_file.write_text("# Test\n")
 
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="nonexistent_formatter_executable_12345 {file}",
     )
@@ -379,7 +379,7 @@ async def test_format_file_handles_timeout(tmp_path: Path):
     test_file = tmp_path / "test.md"
     test_file.write_text("# Test\n")
 
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="sleep 10",  # Will timeout
         formatter_timeout=0.1,  # Very short timeout
@@ -397,7 +397,7 @@ async def test_format_file_handles_nonzero_exit(tmp_path: Path):
     original_content = "# Test\n"
     test_file.write_text(original_content)
 
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="sh -c 'exit 1'",  # Non-zero exit
     )
@@ -416,7 +416,7 @@ async def test_format_file_returns_modified_content(tmp_path: Path):
     test_file.write_text(original_content)
 
     # This formatter modifies the file to contain different content
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="sh -c 'echo modified > {file}'",
     )
@@ -436,7 +436,7 @@ async def test_format_file_with_spaces_in_path(tmp_path: Path):
     original_content = "# Test\n"
     test_file.write_text(original_content)
 
-    config = BasicMemoryConfig(
+    config = AgentBrainConfig(
         format_on_save=True,
         formatter_command="cat {file}",
     )

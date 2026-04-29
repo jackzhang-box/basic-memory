@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.sync.git_sync import GitSyncBackend, GitPushResult, GitPullResult, GitSyncStatus
+from agent_brain.sync.git_sync import GitSyncBackend, GitPushResult, GitPullResult, GitSyncStatus
 
 
 def _init_bare_remote(tmp_path: Path) -> Path:
@@ -80,7 +80,7 @@ class TestInitRepo:
         assert gitignore.exists()
         content = gitignore.read_text()
         assert "*.db" in content
-        assert ".basic-memory/" in content
+        assert ".agent-brain/" in content
 
     @pytest.mark.asyncio
     async def test_init_preserves_existing_gitignore(self, tmp_path):

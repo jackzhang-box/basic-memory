@@ -4,7 +4,7 @@ import pytest
 from textwrap import dedent
 from types import SimpleNamespace
 
-from basic_memory.markdown.entity_parser import EntityParser
+from agent_brain.markdown.entity_parser import EntityParser
 
 
 @pytest.mark.asyncio
@@ -344,7 +344,7 @@ async def test_frontmatter_roundtrip_preserves_user_metadata(tmp_path):
     Users reported that after cloud sync, their custom frontmatter fields like 'citekey'
     were being lost and replaced with defaults. This test ensures user metadata is preserved.
     """
-    from basic_memory.file_utils import dump_frontmatter
+    from agent_brain.file_utils import dump_frontmatter
     import frontmatter
 
     # Create a file with user's custom frontmatter (like the bug report)
@@ -397,8 +397,8 @@ async def test_schema_to_markdown_empty_metadata_no_metadata_key():
     incorrect Post() construction. This test ensures the guard (`if entity_metadata:`) prevents
     that — an empty dict is falsy and should skip the update entirely.
     """
-    from basic_memory.markdown.utils import schema_to_markdown
-    from basic_memory.file_utils import dump_frontmatter
+    from agent_brain.markdown.utils import schema_to_markdown
+    from agent_brain.file_utils import dump_frontmatter
 
     schema = SimpleNamespace(
         title="Empty Metadata Test",

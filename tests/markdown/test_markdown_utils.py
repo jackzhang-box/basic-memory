@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.markdown.schemas import EntityMarkdown, EntityFrontmatter, Observation
-from basic_memory.markdown.utils import entity_model_from_markdown
-from basic_memory.models import Entity
+from agent_brain.markdown.schemas import EntityMarkdown, EntityFrontmatter, Observation
+from agent_brain.markdown.utils import entity_model_from_markdown
+from agent_brain.models import Entity
 
 
 class TestEntityModelFromMarkdown:

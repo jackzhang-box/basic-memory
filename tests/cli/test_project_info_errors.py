@@ -8,10 +8,10 @@ import typer
 from mcp.server.fastmcp.exceptions import ToolError
 from typer.testing import CliRunner
 
-from basic_memory.cli.app import app
-from basic_memory.mcp.clients.project import ProjectClient
-import basic_memory.cli.commands.command_utils as command_utils
-import basic_memory.cli.commands.project as project_cmd  # noqa: F401
+from agent_brain.cli.app import app
+from agent_brain.mcp.clients.project import ProjectClient
+import agent_brain.cli.commands.command_utils as command_utils
+import agent_brain.cli.commands.project as project_cmd  # noqa: F401
 
 runner = CliRunner()
 

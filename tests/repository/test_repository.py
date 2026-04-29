@@ -5,8 +5,8 @@ import pytest
 from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
-from basic_memory.models import Base
-from basic_memory.repository.repository import Repository
+from agent_brain.models import Base
+from agent_brain.repository.repository import Repository
 
 
 class ModelTest(Base):

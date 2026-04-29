@@ -96,15 +96,15 @@ async def test_temp_store_configured(engine_factory, db_backend):
 )
 async def test_windows_locking_mode_when_on_windows(tmp_path, monkeypatch, config_manager):
     """Test that Windows-specific locking mode is set when running on Windows."""
-    from basic_memory.db import engine_session_factory, DatabaseType
-    from basic_memory.config import DatabaseBackend
+    from agent_brain.db import engine_session_factory, DatabaseType
+    from agent_brain.config import DatabaseBackend
 
     # Force SQLite backend for this SQLite-specific test
     config_manager.config.database_backend = DatabaseBackend.SQLITE
 
     # Set HOME environment variable
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path / "basic-memory"))
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path / "agent-brain"))
 
     db_path = tmp_path / "test_windows.db"
 
@@ -127,12 +127,12 @@ async def test_windows_locking_mode_when_on_windows(tmp_path, monkeypatch, confi
 )
 async def test_null_pool_on_windows(tmp_path, monkeypatch):
     """Test that NullPool is used on Windows to avoid connection pooling issues."""
-    from basic_memory.db import engine_session_factory, DatabaseType
+    from agent_brain.db import engine_session_factory, DatabaseType
     from sqlalchemy.pool import NullPool
 
     # Set HOME environment variable
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path / "basic-memory"))
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path / "agent-brain"))
 
     db_path = tmp_path / "test_windows_pool.db"
 
@@ -152,12 +152,12 @@ async def test_memory_database_no_null_pool_on_windows(tmp_path, monkeypatch):
     NullPool closes connections immediately, which destroys in-memory databases.
     This test ensures in-memory databases maintain connection pooling.
     """
-    from basic_memory.db import engine_session_factory, DatabaseType
+    from agent_brain.db import engine_session_factory, DatabaseType
     from sqlalchemy.pool import NullPool
 
     # Set HOME environment variable
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("BASIC_MEMORY_HOME", str(tmp_path / "basic-memory"))
+    monkeypatch.setenv("AGENT_BRAIN_HOME", str(tmp_path / "agent-brain"))
 
     db_path = tmp_path / "test_memory.db"
 

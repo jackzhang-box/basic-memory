@@ -1,4 +1,4 @@
-from basic_memory.schemas.response import RelationResponse
+from agent_brain.schemas.response import RelationResponse
 
 
 def test_relation_response_resolves_from_to_from_dict_fallbacks():

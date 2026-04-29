@@ -4,8 +4,8 @@ from textwrap import dedent
 
 import pytest
 
-from basic_memory.mcp.tools import write_note, read_note
-from basic_memory.utils import normalize_newlines
+from agent_brain.mcp.tools import write_note, read_note
+from agent_brain.utils import normalize_newlines
 
 
 @pytest.mark.asyncio
@@ -35,9 +35,9 @@ async def test_read_note_title_search_fallback_fetches_by_permalink(monkeypatch,
     )
 
     import importlib
-    from basic_memory.schemas.memory import memory_url_path
+    from agent_brain.schemas.memory import memory_url_path
 
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
     OriginalKnowledgeClient = clients_mod.KnowledgeClient
     direct_identifier = memory_url_path("Fallback Title Note")
 
@@ -61,8 +61,8 @@ async def test_read_note_returns_related_results_when_text_search_finds_matches(
     """Exercise the related-results message when no exact note match exists."""
     import importlib
 
-    read_note_module = importlib.import_module("basic_memory.mcp.tools.read_note")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    read_note_module = importlib.import_module("agent_brain.mcp.tools.read_note")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
     OriginalKnowledgeClient = clients_mod.KnowledgeClient
 
     async def fake_search_notes_fn(*, query, search_type, **kwargs):
@@ -118,8 +118,8 @@ async def test_read_note_title_fallback_requires_exact_title_match(monkeypatch, 
 
     import importlib
 
-    read_note_module = importlib.import_module("basic_memory.mcp.tools.read_note")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    read_note_module = importlib.import_module("agent_brain.mcp.tools.read_note")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
     OriginalKnowledgeClient = clients_mod.KnowledgeClient
 
     class StrictFailingKnowledgeClient(OriginalKnowledgeClient):
@@ -278,8 +278,8 @@ async def test_read_note_memory_url_fallback_uses_search_tool_normalization(
 
     import importlib
 
-    read_note_module = importlib.import_module("basic_memory.mcp.tools.read_note")
-    clients_mod = importlib.import_module("basic_memory.mcp.clients")
+    read_note_module = importlib.import_module("agent_brain.mcp.tools.read_note")
+    clients_mod = importlib.import_module("agent_brain.mcp.clients")
     OriginalKnowledgeClient = clients_mod.KnowledgeClient
 
     fallback_memory_url = f"memory://{test_project.name}/test/memory-url-fallback-note"

@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.config import BasicMemoryConfig, ProjectConfig
-from basic_memory.deps.services import get_task_scheduler
+from agent_brain.config import AgentBrainConfig, ProjectConfig
+from agent_brain.deps.services import get_task_scheduler
 
 
 class StubEntityService:
@@ -47,7 +47,7 @@ async def test_reindex_entity_task_chains_vector_sync_when_semantic_enabled(tmp_
     entity_service = StubEntityService()
     sync_service = StubSyncService()
     search_service = StubSearchService()
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
         projects={"test-project": str(tmp_path)},
         default_project="test-project",
@@ -77,7 +77,7 @@ async def test_reindex_entity_task_skips_vector_sync_when_semantic_disabled(tmp_
     entity_service = StubEntityService()
     sync_service = StubSyncService()
     search_service = StubSearchService()
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
         projects={"test-project": str(tmp_path)},
         default_project="test-project",
@@ -107,7 +107,7 @@ async def test_sync_entity_vectors_task_maps_to_search_service(tmp_path):
     entity_service = StubEntityService()
     sync_service = StubSyncService()
     search_service = StubSearchService()
-    app_config = BasicMemoryConfig(
+    app_config = AgentBrainConfig(
         env="test",
         projects={"test-project": str(tmp_path)},
         default_project="test-project",

@@ -13,9 +13,9 @@ from textwrap import dedent
 import pytest
 from httpx import AsyncClient
 
-from basic_memory.models import Project
-from basic_memory.schemas.base import Entity as EntitySchema
-from basic_memory.services.file_service import FileService
+from agent_brain.models import Project
+from agent_brain.schemas.base import Entity as EntitySchema
+from agent_brain.services.file_service import FileService
 
 
 # --- Helpers ---

@@ -14,11 +14,11 @@ from statistics import mean
 import pytest
 from sqlalchemy import text
 
-from basic_memory import db
-from basic_memory.config import DatabaseBackend
-from basic_memory.repository.fastembed_provider import FastEmbedEmbeddingProvider
-from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
-from basic_memory.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
+from agent_brain import db
+from agent_brain.config import DatabaseBackend
+from agent_brain.repository.fastembed_provider import FastEmbedEmbeddingProvider
+from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
+from agent_brain.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
 
 
 TOPIC_TERMS = {
@@ -153,7 +153,7 @@ def _enforce_max_threshold(metric_name: str, actual: float, env_var: str) -> Non
 
 
 def _write_benchmark_artifact(name: str, metrics: dict[str, float | int | str]) -> None:
-    output_path = os.getenv("BASIC_MEMORY_BENCHMARK_OUTPUT")
+    output_path = os.getenv("AGENT_BRAIN_BENCHMARK_OUTPUT")
     if not output_path:
         return
 
@@ -304,12 +304,12 @@ async def test_benchmark_search_index_cold_start_300_notes(search_service, app_c
     _enforce_min_threshold(
         metric_name="cold.notes_per_sec",
         actual=float(metrics["notes_per_sec"]),
-        env_var="BASIC_MEMORY_BENCH_MIN_COLD_NOTES_PER_SEC",
+        env_var="AGENT_BRAIN_BENCH_MIN_COLD_NOTES_PER_SEC",
     )
     _enforce_max_threshold(
         metric_name="cold.sqlite_size_mb",
         actual=float(metrics["sqlite_size_mb"]),
-        env_var="BASIC_MEMORY_BENCH_MAX_COLD_SQLITE_SIZE_MB",
+        env_var="AGENT_BRAIN_BENCH_MAX_COLD_SQLITE_SIZE_MB",
     )
 
 
@@ -361,12 +361,12 @@ async def test_benchmark_search_query_latency_by_mode(search_service, app_config
         _enforce_max_threshold(
             metric_name=f"{mode.value}.p95_ms",
             actual=float(metrics["p95_ms"]),
-            env_var=f"BASIC_MEMORY_BENCH_MAX_{mode.value.upper()}_P95_MS",
+            env_var=f"AGENT_BRAIN_BENCH_MAX_{mode.value.upper()}_P95_MS",
         )
         _enforce_max_threshold(
             metric_name=f"{mode.value}.p99_ms",
             actual=float(metrics["p99_ms"]),
-            env_var=f"BASIC_MEMORY_BENCH_MAX_{mode.value.upper()}_P99_MS",
+            env_var=f"AGENT_BRAIN_BENCH_MAX_{mode.value.upper()}_P99_MS",
         )
 
 
@@ -417,12 +417,12 @@ async def test_benchmark_search_incremental_reindex_80_of_800_notes(search_servi
     _enforce_min_threshold(
         metric_name="incremental.notes_per_sec",
         actual=float(metrics["notes_per_sec"]),
-        env_var="BASIC_MEMORY_BENCH_MIN_INCREMENTAL_NOTES_PER_SEC",
+        env_var="AGENT_BRAIN_BENCH_MIN_INCREMENTAL_NOTES_PER_SEC",
     )
     _enforce_max_threshold(
         metric_name="incremental.sqlite_size_mb",
         actual=float(metrics["sqlite_size_mb"]),
-        env_var="BASIC_MEMORY_BENCH_MAX_INCREMENTAL_SQLITE_SIZE_MB",
+        env_var="AGENT_BRAIN_BENCH_MAX_INCREMENTAL_SQLITE_SIZE_MB",
     )
 
 
@@ -487,10 +487,10 @@ async def test_benchmark_search_quality_recall_by_mode(search_service, app_confi
             _enforce_min_threshold(
                 metric_name=f"{suite_name}.{mode.value}.recall_at_5",
                 actual=float(metrics["recall_at_5"]),
-                env_var=f"BASIC_MEMORY_BENCH_MIN_{suite_env}_{mode_env}_RECALL_AT_5",
+                env_var=f"AGENT_BRAIN_BENCH_MIN_{suite_env}_{mode_env}_RECALL_AT_5",
             )
             _enforce_min_threshold(
                 metric_name=f"{suite_name}.{mode.value}.mrr_at_10",
                 actual=float(metrics["mrr_at_10"]),
-                env_var=f"BASIC_MEMORY_BENCH_MIN_{suite_env}_{mode_env}_MRR_AT_10",
+                env_var=f"AGENT_BRAIN_BENCH_MIN_{suite_env}_{mode_env}_MRR_AT_10",
             )

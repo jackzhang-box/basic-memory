@@ -2,13 +2,13 @@
 
 import pytest
 
-from basic_memory.cli.container import (
+from agent_brain.cli.container import (
     CliContainer,
     get_container,
     set_container,
     get_or_create_container,
 )
-from basic_memory.runtime import RuntimeMode
+from agent_brain.runtime import RuntimeMode
 
 
 class TestCliContainer:
@@ -26,7 +26,7 @@ class TestContainerAccessors:
 
     def test_get_container_raises_when_not_set(self, monkeypatch):
         """get_container raises RuntimeError when container not initialized."""
-        import basic_memory.cli.container as container_module
+        import agent_brain.cli.container as container_module
 
         monkeypatch.setattr(container_module, "_container", None)
 
@@ -35,7 +35,7 @@ class TestContainerAccessors:
 
     def test_set_and_get_container(self, app_config, monkeypatch):
         """set_container allows get_container to return the container."""
-        import basic_memory.cli.container as container_module
+        import agent_brain.cli.container as container_module
 
         container = CliContainer(config=app_config, mode=RuntimeMode.LOCAL)
         monkeypatch.setattr(container_module, "_container", None)
@@ -49,7 +49,7 @@ class TestGetOrCreateContainer:
 
     def test_creates_new_when_none_exists(self, monkeypatch):
         """get_or_create_container creates a new container when none exists."""
-        import basic_memory.cli.container as container_module
+        import agent_brain.cli.container as container_module
 
         monkeypatch.setattr(container_module, "_container", None)
 
@@ -59,7 +59,7 @@ class TestGetOrCreateContainer:
 
     def test_returns_existing_when_set(self, app_config, monkeypatch):
         """get_or_create_container returns existing container if already set."""
-        import basic_memory.cli.container as container_module
+        import agent_brain.cli.container as container_module
 
         existing = CliContainer(config=app_config, mode=RuntimeMode.LOCAL)
         monkeypatch.setattr(container_module, "_container", existing)
@@ -69,7 +69,7 @@ class TestGetOrCreateContainer:
 
     def test_sets_module_level_container(self, monkeypatch):
         """get_or_create_container sets the module-level container."""
-        import basic_memory.cli.container as container_module
+        import agent_brain.cli.container as container_module
 
         monkeypatch.setattr(container_module, "_container", None)
 

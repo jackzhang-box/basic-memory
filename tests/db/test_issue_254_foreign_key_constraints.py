@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from basic_memory.services.project_service import ProjectService
+from agent_brain.services.project_service import ProjectService
 
 
 # @pytest.mark.skip(reason="Issue #254 not fully resolved yet - foreign key constraint errors still occur")
@@ -48,9 +48,9 @@ async def test_issue_254_foreign_key_constraint_fix(project_service: ProjectServ
         assert project is not None, "Project should be created successfully"
 
         # Step 2: Create related entities that would cause foreign key constraint issues
-        from basic_memory.repository.entity_repository import EntityRepository
-        from basic_memory.repository.observation_repository import ObservationRepository
-        from basic_memory.repository.relation_repository import RelationRepository
+        from agent_brain.repository.entity_repository import EntityRepository
+        from agent_brain.repository.observation_repository import ObservationRepository
+        from agent_brain.repository.relation_repository import RelationRepository
 
         entity_repo = EntityRepository(
             project_service.repository.session_maker, project_id=project.id
@@ -138,7 +138,7 @@ async def test_issue_254_reproduction(project_service: ProjectService):
         await project_service.add_project(test_project_name, test_project_path)
         project = await project_service.get_project(test_project_name)
 
-        from basic_memory.repository.entity_repository import EntityRepository
+        from agent_brain.repository.entity_repository import EntityRepository
 
         entity_repo = EntityRepository(
             project_service.repository.session_maker, project_id=project.id

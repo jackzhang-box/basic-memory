@@ -8,7 +8,7 @@ import json
 
 from typer.testing import CliRunner
 
-from basic_memory.cli.main import app as cli_app
+from agent_brain.cli.main import app as cli_app
 
 runner = CliRunner()
 
@@ -80,7 +80,7 @@ def test_write_note_then_read_note_roundtrip(app, app_config, test_project, conf
 
 def test_recent_activity_empty_project(app, app_config, test_project, config_manager, monkeypatch):
     """recent-activity on empty project returns valid empty JSON list."""
-    monkeypatch.setenv("BASIC_MEMORY_MCP_PROJECT", test_project.name)
+    monkeypatch.setenv("AGENT_BRAIN_MCP_PROJECT", test_project.name)
 
     result = runner.invoke(
         cli_app,

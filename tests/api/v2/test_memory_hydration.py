@@ -11,9 +11,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from basic_memory.api.v2.utils import to_graph_context
-from basic_memory.schemas.search import SearchItemType
-from basic_memory.services.context_service import (
+from agent_brain.api.v2.utils import to_graph_context
+from agent_brain.schemas.search import SearchItemType
+from agent_brain.services.context_service import (
     ContextMetadata,
     ContextResult as ServiceContextResult,
     ContextResultItem,

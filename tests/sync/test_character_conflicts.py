@@ -6,10 +6,10 @@ from textwrap import dedent
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from basic_memory.config import ProjectConfig
-from basic_memory.repository import EntityRepository
-from basic_memory.sync.sync_service import SyncService
-from basic_memory.utils import (
+from agent_brain.config import ProjectConfig
+from agent_brain.repository import EntityRepository
+from agent_brain.sync.sync_service import SyncService
+from agent_brain.utils import (
     generate_permalink,
     normalize_file_path_for_comparison,
     detect_potential_file_conflicts,
@@ -72,7 +72,7 @@ class TestPermalinkGeneration:
         """Test that hyphens in filenames are handled consistently."""
         # File with existing hyphens
         assert generate_permalink("docs/my-feature.md") == "docs/my-feature"
-        assert generate_permalink("docs/basic-memory bug.md") == "docs/basic-memory-bug"
+        assert generate_permalink("docs/agent-brain bug.md") == "docs/agent-brain-bug"
 
         # File with spaces that become hyphens
         assert generate_permalink("docs/my feature.md") == "docs/my-feature"
@@ -190,7 +190,7 @@ class TestSyncConflictHandling:
         ---
         type: knowledge  
         ---
-        # Basic Memory Bug
+        # Agent Brain Bug
         This file has spaces in the name.
         """)
 
@@ -199,12 +199,12 @@ class TestSyncConflictHandling:
         ---
         type: knowledge
         ---
-        # Basic Memory Bug Report
+        # Agent Brain Bug Report
         This file has hyphens in the name.
         """)
 
         await create_test_file(project_dir / "basic memory bug.md", content1)
-        await create_test_file(project_dir / "basic-memory-bug.md", content2)
+        await create_test_file(project_dir / "agent-brain-bug.md", content2)
 
         # Sync should handle this without conflict
         await sync_service.sync(project_config.home)

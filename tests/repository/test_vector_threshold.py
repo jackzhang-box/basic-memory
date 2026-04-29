@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from basic_memory.repository.search_repository_base import (
+from agent_brain.repository.search_repository_base import (
     SMALL_NOTE_CONTENT_LIMIT,
     TOP_CHUNKS_PER_RESULT,
     SearchRepositoryBase,
@@ -123,7 +123,7 @@ async def test_threshold_zero_returns_all():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -154,7 +154,7 @@ async def test_threshold_filters_low_scores():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -189,7 +189,7 @@ async def test_threshold_returns_empty_when_all_below():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -218,7 +218,7 @@ async def test_per_query_min_similarity_overrides_instance_default():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -251,7 +251,7 @@ async def test_per_query_min_similarity_tightens_threshold():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -284,7 +284,7 @@ async def test_matched_chunk_text_populated_on_vector_results():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -342,7 +342,7 @@ async def test_top_n_chunks_joined_in_matched_chunk_text():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -385,7 +385,7 @@ async def test_small_note_returns_full_content_as_matched_chunk():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),
@@ -419,7 +419,7 @@ async def test_large_note_returns_chunks_not_full_content():
 
     with (
         patch(
-            "basic_memory.repository.search_repository_base.db.scoped_session", fake_scoped_session
+            "agent_brain.repository.search_repository_base.db.scoped_session", fake_scoped_session
         ),
         patch.object(repo, "_ensure_vector_tables", new_callable=AsyncMock),
         patch.object(repo, "_prepare_vector_session", new_callable=AsyncMock),

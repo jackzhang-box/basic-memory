@@ -35,7 +35,7 @@ jobs:
       - name: Check if this is a dev version
         id: check_version
         run: |
-          VERSION=$(uv run python -c "import basic_memory; print(basic_memory.__version__)")
+          VERSION=$(uv run python -c "import agent_brain; print(agent_brain.__version__)")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           if [[ "$VERSION" == *"dev"* ]]; then
             echo "is_dev=true" >> $GITHUB_OUTPUT

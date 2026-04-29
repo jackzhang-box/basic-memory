@@ -1,1 +1,1 @@
-"""Integration tests for the Basic Memory schema system."""
+"""Integration tests for the Agent Brain schema system."""

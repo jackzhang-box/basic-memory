@@ -2,12 +2,12 @@
 
 import pytest
 
-from basic_memory.repository.semantic_errors import (
+from agent_brain.repository.semantic_errors import (
     SemanticDependenciesMissingError,
     SemanticSearchDisabledError,
 )
-from basic_memory.repository.sqlite_search_repository import SQLiteSearchRepository
-from basic_memory.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
+from agent_brain.repository.sqlite_search_repository import SQLiteSearchRepository
+from agent_brain.schemas.search import SearchItemType, SearchQuery, SearchRetrievalMode
 
 
 def _sqlite_repo(search_service) -> SQLiteSearchRepository:

@@ -1,6 +1,6 @@
 """Tests for runtime mode resolution."""
 
-from basic_memory.runtime import RuntimeMode, resolve_runtime_mode
+from agent_brain.runtime import RuntimeMode, resolve_runtime_mode
 
 
 class TestRuntimeMode:

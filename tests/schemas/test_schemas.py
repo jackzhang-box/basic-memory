@@ -5,7 +5,7 @@ import pytest
 from datetime import datetime, timedelta
 from pydantic import ValidationError, BaseModel
 
-from basic_memory.schemas import (
+from agent_brain.schemas import (
     Entity,
     EntityResponse,
     Relation,
@@ -13,8 +13,8 @@ from basic_memory.schemas import (
     GetEntitiesRequest,
     RelationResponse,
 )
-from basic_memory.schemas.request import EditEntityRequest
-from basic_memory.schemas.base import to_snake_case, TimeFrame, parse_timeframe, validate_timeframe
+from agent_brain.schemas.request import EditEntityRequest
+from agent_brain.schemas.base import to_snake_case, TimeFrame, parse_timeframe, validate_timeframe
 
 
 def test_entity_project_name():
@@ -243,7 +243,7 @@ def test_open_nodes_input():
 def test_path_sanitization():
     """Test to_snake_case() handles various inputs correctly."""
     test_cases = [
-        ("BasicMemory", "basic_memory"),  # CamelCase
+        ("AgentBrain", "agent_brain"),  # CamelCase
         ("Memory Service", "memory_service"),  # Spaces
         ("memory-service", "memory_service"),  # Hyphens
         ("Memory_Service", "memory_service"),  # Already has underscore
@@ -263,7 +263,7 @@ def test_path_sanitization():
 def test_permalink_generation():
     """Test permalink property generates correct paths."""
     test_cases = [
-        ({"title": "BasicMemory", "directory": "test"}, "test/basic-memory"),
+        ({"title": "AgentBrain", "directory": "test"}, "test/agent-brain"),
         ({"title": "Memory Service", "directory": "test"}, "test/memory-service"),
         ({"title": "API Gateway", "directory": "test"}, "test/api-gateway"),
         ({"title": "TestCase1", "directory": "test"}, "test/test-case1"),
@@ -576,7 +576,7 @@ class TestProjectItemSchema:
 
     def test_project_item_defaults(self):
         """ProjectItem has sensible defaults for cloud-injected fields."""
-        from basic_memory.schemas.project_info import ProjectItem
+        from agent_brain.schemas.project_info import ProjectItem
 
         project = ProjectItem(
             id=1,
@@ -590,7 +590,7 @@ class TestProjectItemSchema:
 
     def test_project_item_with_display_name(self):
         """ProjectItem accepts display_name from cloud proxy enrichment."""
-        from basic_memory.schemas.project_info import ProjectItem
+        from agent_brain.schemas.project_info import ProjectItem
 
         project = ProjectItem(
             id=1,
@@ -608,9 +608,9 @@ class TestProjectItemSchema:
         """ProjectItem correctly deserializes display_name and is_private from JSON.
 
         This is the actual path: the cloud proxy enriches the JSON response from
-        basic-memory API, and the MCP tools deserialize it back into ProjectItem.
+        agent-brain API, and the MCP tools deserialize it back into ProjectItem.
         """
-        from basic_memory.schemas.project_info import ProjectItem
+        from agent_brain.schemas.project_info import ProjectItem
 
         json_data = {
             "id": 1,
@@ -627,7 +627,7 @@ class TestProjectItemSchema:
 
     def test_project_item_deserialization_without_cloud_fields(self):
         """ProjectItem works when cloud fields are absent (non-cloud usage)."""
-        from basic_memory.schemas.project_info import ProjectItem
+        from agent_brain.schemas.project_info import ProjectItem
 
         json_data = {
             "id": 1,
@@ -642,7 +642,7 @@ class TestProjectItemSchema:
 
     def test_project_list_with_mixed_projects(self):
         """ProjectList can contain a mix of regular and private projects."""
-        from basic_memory.schemas.project_info import ProjectItem, ProjectList
+        from agent_brain.schemas.project_info import ProjectItem, ProjectList
 
         projects = ProjectList(
             projects=[
@@ -676,7 +676,7 @@ class TestObservationContentLength:
 
     def test_observation_accepts_long_content(self):
         """Observation content should accept unlimited length to match DB Text column."""
-        from basic_memory.schemas.base import Observation
+        from agent_brain.schemas.base import Observation
 
         # Very long content that would have failed with old MaxLen(1000) limit
         long_content = "x" * 10000
@@ -686,7 +686,7 @@ class TestObservationContentLength:
 
     def test_observation_accepts_very_long_content(self):
         """Observation content should accept very long content like JSON schemas."""
-        from basic_memory.schemas.base import Observation
+        from agent_brain.schemas.base import Observation
 
         # Simulate the JSON schema content from issue #385 (1458+ chars)
         json_schema_content = '{"$schema": "http://json-schema.org/draft-07/schema#"' + "x" * 50000
@@ -696,7 +696,7 @@ class TestObservationContentLength:
 
     def test_observation_still_requires_non_empty_content(self):
         """Observation content must still be non-empty after stripping."""
-        from basic_memory.schemas.base import Observation
+        from agent_brain.schemas.base import Observation
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
@@ -707,7 +707,7 @@ class TestObservationContentLength:
 
     def test_observation_strips_whitespace(self):
         """Observation content should have whitespace stripped."""
-        from basic_memory.schemas.base import Observation
+        from agent_brain.schemas.base import Observation
 
         obs = Observation(category="test", content="  some content  ")
         assert obs.content == "some content"
